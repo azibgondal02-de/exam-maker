@@ -552,6 +552,20 @@ export default function Step5ConfigReview() {
   };
 
   const initState = (sections) => {
+    // Restore saved state when coming back from Step 6
+    try {
+      const saved = localStorage.getItem('step5_config');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.sectionRows && Object.keys(parsed.sectionRows).length > 0) {
+          setSectionRows(parsed.sectionRows);
+          setLongBlocks(parsed.longBlocks || {});
+          return;
+        }
+      }
+    } catch (e) {}
+
+    // Fresh init
     const rows = {};
     const longs = {};
     sections.forEach(s => {
