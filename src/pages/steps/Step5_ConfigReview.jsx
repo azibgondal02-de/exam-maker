@@ -315,7 +315,7 @@ function SelectCell({ qt, sectionKey, rowIndex, rowData, onChange, onPickQuestio
       setLoadingQ(true);
       setPickerOpen(true);
       // Pass the raw chapter_ids array - handlePickQuestions decides what to do
-      const qs = await onPickQuestions(qt.type_id, rowData.chapter_ids || []);
+      const qs = await onPickQuestions(qt.type_id, rowData.chapter_codes || []);
       setQuestions(qs);
       setLoadingQ(false);
     }
@@ -358,7 +358,7 @@ function ShortQRow({ section, rowIndex, rowData, onChange, onRemove, canRemove, 
       setLoadingQ(true);
       setPickerOpen(true);
       // Pass the raw chapter_ids array - handlePickQuestions decides what to do
-      const qs = await onPickQuestions(qt.type_id, rowData.chapter_ids || []);
+      const qs = await onPickQuestions(qt.type_id, rowData.chapter_codes || []);
       setQuestions(qs);
       setLoadingQ(false);
     }

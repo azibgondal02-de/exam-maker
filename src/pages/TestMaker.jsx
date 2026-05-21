@@ -50,10 +50,8 @@ export default function TestMaker() {
 
   return (
     <div className="test-maker-layout">
-      <ProgressBar currentStep={currentStep} onStepClick={goToStep} />
 
       <div className="test-maker-content">
-        <Sidebar selections={sidebarSelections} onEdit={handleEditSection} />
 
         <main className="test-maker-main">
           <StepComponent />
