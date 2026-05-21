@@ -2,563 +2,154 @@ import React, { useEffect } from 'react';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorAlert from '../../components/ErrorAlert';
+import logo from '../../assets/logo1.png';
+
+const classPalette = [
+  { bg: '#e3f2fd', border: '#2196f3', icon: '#1565c0' },
+  { bg: '#f3e5f5', border: '#9c27b0', icon: '#6a1b9a' },
+  { bg: '#e8f5e9', border: '#4caf50', icon: '#2e7d32' },
+  { bg: '#fff3e0', border: '#ff9800', icon: '#e65100' },
+  { bg: '#fce4ec', border: '#e91e63', icon: '#880e4f' },
+  { bg: '#e0f2f1', border: '#009688', icon: '#004d40' },
+  { bg: '#ede7f6', border: '#673ab7', icon: '#311b92' },
+  { bg: '#e8eaf6', border: '#3f51b5', icon: '#1a237e' },
+  { bg: '#ffebee', border: '#f44336', icon: '#b71c1c' },
+  { bg: '#f1f8e9', border: '#8bc34a', icon: '#33691e' },
+];
 
 export default function Step2ClassSelect() {
-  const {
-    selectedBoard,
-    classes,
-    selectedClass,
-    isLoading,
-    errors,
-    loadClasses,
-    setSelectedClass,
-    goNext,
-    goBack,
-    clearError,
-  } = useTestMaker();
+  const { selectedBoard, classes, selectedClass, isLoading, errors, loadClasses, setSelectedClass, goBack, clearError } = useTestMaker();
 
   useEffect(() => {
-    const boardId = selectedBoard?.board_id || localStorage.getItem("board_id"); if (boardId) {
-      loadClasses(boardId);
-    }
+    const boardId = selectedBoard?.board_id || localStorage.getItem("board_id");
+    if (boardId) loadClasses(boardId);
   }, [selectedBoard]);
 
-  const handleSelectClass = (cls) => {
-    setSelectedClass(cls);
-  };
-
   const handleNext = () => {
-    if (!selectedClass) {
-      alert('Please select a class');
-      return;
-    }
-    localStorage.setItem("class_id", selectedClass?.class_id); window.location.href = "/test-maker/step-3";
+    if (!selectedClass) { alert('Please select a class'); return; }
+    localStorage.setItem("class_id", selectedClass?.class_id);
+    localStorage.setItem("class_name", selectedClass?.class_name || '');
+    window.location.href = "/test-maker/step-3";
   };
 
   return (
-    <div className="step-page">
-      {/* Header */}
-      <div className="step-header-section">
-        <div className="step-header-content">
-          <div className="breadcrumb">
-            <span className="breadcrumb-item">{selectedBoard?.board_name}</span>
-            <i className="ti ti-chevron-right"></i>
-            <span className="breadcrumb-item active">Select Class</span>
-          </div>
-          <h1 className="step-heading">
-            <span className="step-number">02</span>
-            Choose Your Class
-          </h1>
-          <p className="step-description">
-            Select the class level to filter the curriculum and content
-          </p>
-        </div>
+    <div className="page">
+      {/* Logo - click to go home */}
+      <div onClick={() => window.location.href = '/test-maker/step-1'}
+        style={{ position: 'fixed', top: '12px', left: '16px', zIndex: 200, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '6px 12px', background: 'linear-gradient(135deg, #2563eb, #7c3aed)', borderRadius: '10px', boxShadow: '0 2px 12px rgba(37,99,235,0.3)' }}>
+        <i className="ti ti-book" style={{ fontSize: '16px', color: 'white' }} />
+        <span style={{ fontWeight: '800', fontSize: '13px', color: 'white', letterSpacing: '0.5px' }}>TM</span>
       </div>
 
-      {/* Content */}
-      <div className="step-content">
-        {errors.classes && (
-          <ErrorAlert
-            message={errors.classes}
-            onClose={() => clearError('classes')}
-          />
-        )}
 
-        {isLoading ? (
-          <LoadingSpinner message="Loading classes..." />
-        ) : (
+      <div className="blob blob1" /><div className="blob blob2" />
+
+      <div className="breadcrumb">
+        <span className="bc-item">{selectedBoard?.board_name || 'Board'}</span>
+        <i className="ti ti-chevron-right bc-sep" />
+        <span className="bc-item bc-active">Select Class</span>
+      </div>
+
+      <div className="header">
+        <div className="step-badge">Step 02 of 06</div>
+        <h1 className="title">Choose Your Class</h1>
+        <p className="subtitle">Select the class level to filter curriculum and content</p>
+      </div>
+
+      <div className="content">
+        {errors.classes && <ErrorAlert message={errors.classes} onClose={() => clearError('classes')} />}
+
+        {isLoading ? <LoadingSpinner message="Loading classes..." /> : (
           <>
-            {/* Classes Horizontal Scroll */}
-            <div className="classes-section">
-              {classes.length > 0 ? (
-                <>
-                  <div className="classes-wrapper">
-                    <div className="classes-scroll">
-                      {classes.map((cls) => (
-                        <div
-                          key={cls.class_id}
-                          onClick={() => handleSelectClass(cls)}
-                          className={`class-button ${
-                            selectedClass?.class_id === cls.class_id ? 'active' : ''
-                          }`}
-                        >
-                          <div className="button-content">
-                            <i className="ti ti-book-2"></i>
-                            <span className="class-text">{cls.class_name}</span>
-                          </div>
-                          {selectedClass?.class_id === cls.class_id && (
-                            <div className="active-indicator">
-                              <i className="ti ti-check"></i>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Selected Class Info Card */}
-                  {selectedClass && (
-                    <div className="selected-info">
-                      <div className="info-content">
-                        <h3>Selected Class</h3>
-                        <p className="selected-name">{selectedClass.class_name}</p>
-                        <p className="info-text">Ready to proceed to the next step</p>
-                      </div>
-                      <i className="ti ti-check-circle"></i>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="empty-state">
-                  <div className="empty-icon">
-                    <i className="ti ti-inbox"></i>
-                  </div>
-                  <p className="empty-text">No classes available</p>
+            {classes.length > 0 ? (
+              <div className="card">
+                <div className="card-head">
+                  <i className="ti ti-book-2" style={{ color: '#0097a7', fontSize: '18px' }} />
+                  <span className="card-head-title">Available Classes</span>
+                  <span className="count-badge">{classes.length}</span>
                 </div>
-              )}
-            </div>
+                <div className="class-scroll">
+                  {classes.map((cls, idx) => {
+                    const sel = selectedClass?.class_id === cls.class_id;
+                    const c = classPalette[idx % classPalette.length];
+                    return (
+                      <div key={cls.class_id} onClick={() => setSelectedClass(cls)}
+                        className={`class-tile ${sel ? 'tile-selected' : ''}`}
+                        style={sel ? { background: `linear-gradient(135deg, ${c.border}, ${c.icon})`, borderColor: c.border, boxShadow: `0 6px 20px ${c.border}44` } : { background: c.bg, borderColor: c.border }}>
+                        <i className="ti ti-book-2" style={{ fontSize: '22px', color: sel ? 'white' : c.icon, marginBottom: '6px' }} />
+                        <span className="tile-label" style={{ color: sel ? 'white' : c.icon }}>{cls.class_name}</span>
+                        {sel && <div className="tile-check"><i className="ti ti-check" /></div>}
+                      </div>
+                    );
+                  })}
+                </div>
 
-            {/* Action Footer */}
-            <div className="step-actions">
-              <button onClick={goBack} className="btn btn-ghost">
-                <i className="ti ti-arrow-left"></i>
-                <span>Back</span>
-              </button>
-              <button
-                onClick={handleNext}
-                disabled={!selectedClass || isLoading}
-                className={`btn btn-primary ${!selectedClass || isLoading ? 'disabled' : ''}`}
-              >
-                <span>Next</span>
-                <i className="ti ti-arrow-right"></i>
+                {selectedClass && (
+                  <div className="sel-banner">
+                    <div>
+                      <div className="sel-label">Selected Class</div>
+                      <div className="sel-name">{selectedClass.class_name}</div>
+                    </div>
+                    <i className="ti ti-check-circle" style={{ fontSize: '26px', color: '#00bcd4' }} />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="empty"><i className="ti ti-inbox" /><p>No classes available</p></div>
+            )}
+
+            <div className="actions">
+              <button onClick={() => window.location.href = '/test-maker/step-1'} className="btn btn-ghost"><i className="ti ti-arrow-left" /> Back</button>
+              <button onClick={handleNext} disabled={!selectedClass || isLoading}
+                className={`btn btn-primary ${!selectedClass || isLoading ? 'btn-disabled' : ''}`}>
+                Next <i className="ti ti-arrow-right" />
               </button>
             </div>
           </>
         )}
       </div>
 
-      <style jsx>{`
-        .step-page {
-          min-height: 100vh;
-          background: linear-gradient(135deg, #f5f7fa 0%, #f0f4f8 100%);
-          padding: 40px 20px;
-        }
-
-        .step-header-section {
-          max-width: 1200px;
-          margin: 0 auto 50px;
-        }
-
-        .step-header-content {
-          text-align: center;
-        }
-
-        .breadcrumb {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-          margin-bottom: 24px;
-          font-size: 14px;
-          color: #999;
-        }
-
-        .breadcrumb-item {
-          padding: 6px 12px;
-          background: rgba(255, 255, 255, 0.6);
-          border-radius: 8px;
-          transition: all 0.3s ease;
-        }
-
-        .breadcrumb-item:hover {
-          background: white;
-          color: #00bcd4;
-        }
-
-        .breadcrumb-item.active {
-          color: #00bcd4;
-          font-weight: 600;
-          background: white;
-        }
-
-        .breadcrumb i {
-          font-size: 16px;
-        }
-
-        .step-heading {
-          font-size: 42px;
-          font-weight: 700;
-          color: #1a1a1a;
-          margin: 0 0 16px 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 16px;
-          letter-spacing: -0.5px;
-        }
-
-        .step-number {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 56px;
-          height: 56px;
-          background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
-          color: white;
-          border-radius: 50%;
-          font-size: 24px;
-          font-weight: 600;
-        }
-
-        .step-description {
-          font-size: 16px;
-          color: #666;
-          max-width: 600px;
-          margin: 0 auto;
-          line-height: 1.6;
-        }
-
-        .step-content {
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-
-        .classes-section {
-          background: white;
-          border-radius: 16px;
-          padding: 40px;
-          margin-bottom: 40px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-
-        .classes-wrapper {
-          position: relative;
-          margin-bottom: 30px;
-        }
-
-        .classes-scroll {
-          display: flex;
-          gap: 12px;
-          overflow-x: auto;
-          padding: 8px 0;
-          scroll-behavior: smooth;
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: thin;
-          scrollbar-color: #00bcd4 #f0f0f0;
-        }
-
-        .classes-scroll::-webkit-scrollbar {
-          height: 6px;
-        }
-
-        .classes-scroll::-webkit-scrollbar-track {
-          background: #f0f0f0;
-          border-radius: 3px;
-        }
-
-        .classes-scroll::-webkit-scrollbar-thumb {
-          background: #00bcd4;
-          border-radius: 3px;
-        }
-
-        .classes-scroll::-webkit-scrollbar-thumb:hover {
-          background: #0097a7;
-        }
-
-        .class-button {
-          flex-shrink: 0;
-          min-width: 160px;
-          height: 120px;
-          background: linear-gradient(135deg, #f5f7fa 0%, #eef2f7 100%);
-          border: 2px solid #e0e0e0;
-          border-radius: 12px;
-          padding: 16px;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-        }
-
-        .class-button:hover {
-          border-color: #00bcd4;
-          background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
-          box-shadow: 0 8px 24px rgba(0, 188, 212, 0.15);
-          transform: translateY(-4px);
-        }
-
-        .class-button.active {
-          background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
-          border-color: #00bcd4;
-          color: white;
-          box-shadow: 0 12px 32px rgba(0, 188, 212, 0.3);
-          transform: translateY(-6px);
-        }
-
-        .button-content {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 8px;
-          width: 100%;
-        }
-
-        .button-content i {
-          font-size: 28px;
-          color: #00bcd4;
-        }
-
-        .class-button.active .button-content i {
-          color: white;
-        }
-
-        .class-text {
-          font-size: 14px;
-          font-weight: 600;
-          text-align: center;
-          color: #333;
-          word-wrap: break-word;
-          line-height: 1.3;
-        }
-
-        .class-button.active .class-text {
-          color: white;
-        }
-
-        .active-indicator {
-          position: absolute;
-          top: -8px;
-          right: -8px;
-          width: 32px;
-          height: 32px;
-          background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          font-size: 18px;
-          box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-          animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes scaleIn {
-          from {
-            transform: scale(0);
-          }
-          to {
-            transform: scale(1);
-          }
-        }
-
-        .selected-info {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-          border: 2px solid #4caf50;
-          border-radius: 12px;
-          padding: 20px 24px;
-          animation: slideIn 0.4s ease;
-        }
-
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .info-content h3 {
-          font-size: 14px;
-          font-weight: 600;
-          color: #2e7d32;
-          margin: 0 0 4px 0;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .selected-name {
-          font-size: 18px;
-          font-weight: 700;
-          color: #1b5e20;
-          margin: 0 0 4px 0;
-        }
-
-        .info-text {
-          font-size: 13px;
-          color: #558b2f;
-          margin: 0;
-        }
-
-        .selected-info i {
-          font-size: 32px;
-          color: #4caf50;
-        }
-
-        .empty-state {
-          text-align: center;
-          padding: 60px 20px;
-          color: #999;
-        }
-
-        .empty-icon {
-          font-size: 80px;
-          margin-bottom: 24px;
-          opacity: 0.2;
-          display: block;
-        }
-
-        .empty-text {
-          font-size: 16px;
-          margin: 0;
-        }
-
-        .step-actions {
-          display: flex;
-          justify-content: space-between;
-          gap: 16px;
-          padding-top: 30px;
-          border-top: 1px solid rgba(0, 0, 0, 0.08);
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-
-        .btn {
-          padding: 14px 28px;
-          font-size: 15px;
-          font-weight: 600;
-          border: none;
-          border-radius: 10px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          text-transform: capitalize;
-        }
-
-        .btn i {
-          font-size: 18px;
-        }
-
-        .btn-primary {
-          background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
-          color: white;
-          box-shadow: 0 6px 20px rgba(0, 188, 212, 0.3);
-        }
-
-        .btn-primary:hover:not(.disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 30px rgba(0, 188, 212, 0.4);
-        }
-
-        .btn-primary:active:not(.disabled) {
-          transform: translateY(0);
-        }
-
-        .btn-ghost {
-          background: transparent;
-          color: #999;
-          border: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-ghost:hover:not(.disabled) {
-          background: white;
-          border-color: rgba(0, 0, 0, 0.2);
-          color: #00bcd4;
-        }
-
-        .btn.disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        @media (max-width: 768px) {
-          .step-page {
-            padding: 24px 16px;
-          }
-
-          .breadcrumb {
-            font-size: 13px;
-          }
-
-          .step-heading {
-            font-size: 28px;
-            gap: 12px;
-            flex-direction: column;
-          }
-
-          .step-number {
-            width: 48px;
-            height: 48px;
-            font-size: 20px;
-          }
-
-          .step-description {
-            font-size: 14px;
-          }
-
-          .classes-section {
-            padding: 24px;
-          }
-
-          .class-button {
-            min-width: 140px;
-            height: 110px;
-            padding: 12px;
-          }
-
-          .class-text {
-            font-size: 12px;
-          }
-
-          .button-content i {
-            font-size: 24px;
-          }
-
-          .selected-info {
-            flex-direction: column;
-            gap: 12px;
-            text-align: center;
-          }
-
-          .selected-info i {
-            font-size: 28px;
-          }
-
-          .step-actions {
-            flex-direction: column;
-            gap: 12px;
-          }
-
-          .btn {
-            width: 100%;
-            justify-content: center;
-          }
-        }
-
+      <style>{`
+        * { box-sizing: border-box; }
+        .page { min-height: 100vh; background: #f0f4f8; padding: 20px 16px 40px; font-family: 'Segoe UI', system-ui, sans-serif; position: relative; overflow-x: hidden; }
+        .blob { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; }
+        .blob1 { top: -100px; right: -100px; width: 350px; height: 350px; background: radial-gradient(circle, rgba(0,188,212,0.08) 0%, transparent 70%); }
+        .blob2 { bottom: -60px; left: -60px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(0,150,136,0.07) 0%, transparent 70%); }
+        .breadcrumb { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 20px; position: relative; z-index: 1; flex-wrap: wrap; }
+        .bc-item { padding: 4px 12px; background: rgba(255,255,255,0.7); border-radius: 20px; font-size: 12px; color: #64748b; font-weight: 500; }
+        .bc-active { background: white; color: #0097a7; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .bc-sep { color: #cbd5e1; font-size: 13px; }
+        .header { text-align: center; margin-bottom: 24px; position: relative; z-index: 1; }
+        .step-badge { display: inline-flex; padding: 5px 16px; background: linear-gradient(135deg, #00bcd4, #0097a7); color: white; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 12px; }
+        .title { font-size: clamp(22px, 5vw, 36px); font-weight: 800; color: #0f1f35; margin: 0 0 8px; letter-spacing: -0.5px; }
+        .subtitle { font-size: clamp(13px, 3vw, 15px); color: #64748b; margin: 0 auto; max-width: 440px; line-height: 1.6; }
+        .content { max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
+        .card { background: white; border-radius: 20px; padding: 24px 20px; box-shadow: 0 4px 24px rgba(0,0,0,0.07); margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.04); }
+        .card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #f0f4f8; }
+        .card-head-title { font-size: 14px; font-weight: 700; color: #0f1f35; }
+        .count-badge { margin-left: auto; background: #e0f7fa; color: #0097a7; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 12px; }
+        .class-scroll { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+        .class-tile { position: relative; padding: 14px 12px; min-width: 90px; border-radius: 14px; border: 2px solid #e8eef5; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1); -webkit-tap-highlight-color: transparent; min-height: 80px; justify-content: center; }
+        .class-tile:active { transform: scale(0.95); }
+        .tile-selected { transform: translateY(-3px) scale(1.02); }
+        .tile-label { font-size: 12px; font-weight: 700; color: #1a2332; text-align: center; line-height: 1.3; }
+        .tile-selected .tile-label { color: white; }
+        .tile-check { position: absolute; top: -8px; right: -8px; width: 22px; height: 22px; background: #4caf50; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; box-shadow: 0 2px 8px rgba(76,175,80,0.4); }
+        .sel-banner { display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #e0f7fa, #b2ebf2); border-radius: 12px; padding: 14px 18px; border: 1px solid #80deea; margin-top: 4px; }
+        .sel-label { font-size: 11px; font-weight: 700; color: #0097a7; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+        .sel-name { font-size: 16px; font-weight: 700; color: #006064; }
+        .empty { text-align: center; padding: 60px 20px; color: #94a3b8; }
+        .empty i { font-size: 60px; opacity: 0.15; display: block; margin-bottom: 12px; }
+        .actions { display: flex; gap: 12px; padding-top: 16px; }
+        .btn { flex: 1; padding: 13px 20px; font-size: 14px; font-weight: 700; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; font-family: inherit; min-height: 48px; -webkit-tap-highlight-color: transparent; }
+        .btn-primary { background: linear-gradient(135deg, #00bcd4, #006064); color: white; box-shadow: 0 4px 16px rgba(0,188,212,0.3); }
+        .btn-primary:active:not(.btn-disabled) { transform: scale(0.97); }
+        .btn-ghost { background: white; color: #64748b; border: 1px solid #e0e7ef; }
+        .btn-disabled { opacity: 0.5; cursor: not-allowed; }
         @media (max-width: 480px) {
-          .step-heading {
-            font-size: 22px;
-          }
-
-          .class-button {
-            min-width: 120px;
-            height: 100px;
-          }
-
-          .classes-section {
-            padding: 20px;
-            margin-bottom: 30px;
-          }
+          .page { padding: 16px 12px 32px; }
+          .class-tile { min-width: 78px; padding: 12px 10px; min-height: 72px; }
+          .card { padding: 18px 14px; border-radius: 16px; }
         }
       `}</style>
     </div>

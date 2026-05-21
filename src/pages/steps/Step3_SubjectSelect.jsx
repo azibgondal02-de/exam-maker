@@ -1,661 +1,192 @@
 import React, { useEffect, useMemo } from 'react';
+import logo from '../../assets/logo.svg';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorAlert from '../../components/ErrorAlert';
 
 export default function Step3SubjectSelect() {
-  const {
-    selectedClass,
-    subjects,
-    selectedSubject,
-    isLoading,
-    errors,
-    loadSubjects,
-    setSelectedSubject,
-    goNext,
-    goBack,
-    clearError,
-  } = useTestMaker();
+  const { selectedClass, subjects, selectedSubject, isLoading, errors, loadSubjects, setSelectedSubject, goBack, clearError } = useTestMaker();
 
   useEffect(() => {
-    const classId = selectedClass?.class_id || localStorage.getItem("class_id"); if (classId) {
-      loadSubjects(classId);
-    }
+    const classId = selectedClass?.class_id || localStorage.getItem("class_id");
+    if (classId) loadSubjects(classId);
   }, [selectedClass]);
 
-  // Separate old and new subjects
-  const { oldSubjects, newSubjects } = useMemo(() => {
-    return {
-      newSubjects: subjects.filter(s => s.old_subject === 0),
-      oldSubjects: subjects.filter(s => s.old_subject === 1),
-    };
-  }, [subjects]);
+  const { newSubjects, oldSubjects } = useMemo(() => ({
+    newSubjects: subjects.filter(s => s.old_subject === 0),
+    oldSubjects: subjects.filter(s => s.old_subject === 1),
+  }), [subjects]);
 
-  // Random color palette for subject buttons
-  const colorPalette = [
-    { bg: '#fce4ec', border: '#e91e63', icon: '#c2185b', text: '#880e4f' },
-    { bg: '#f3e5f5', border: '#9c27b0', icon: '#7b1fa2', text: '#4a148c' },
-    { bg: '#ede7f6', border: '#673ab7', icon: '#512da8', text: '#311b92' },
-    { bg: '#e8eaf6', border: '#3f51b5', icon: '#283593', text: '#1a237e' },
-    { bg: '#e3f2fd', border: '#2196f3', icon: '#1565c0', text: '#0d47a1' },
-    { bg: '#e0f2f1', border: '#009688', icon: '#00695c', text: '#004d40' },
-    { bg: '#e8f5e9', border: '#4caf50', icon: '#2e7d32', text: '#1b5e20' },
-    { bg: '#f1f8e9', border: '#8bc34a', icon: '#558b2f', text: '#33691e' },
-    { bg: '#fffde7', border: '#cddc39', icon: '#9e9d24', text: '#6d6d00' },
-    { bg: '#fff3e0', border: '#ff9800', icon: '#e65100', text: '#bf360c' },
-    { bg: '#ffe0b2', border: '#ff9800', icon: '#e65100', text: '#bf360c' },
-    { bg: '#ffebee', border: '#f44336', icon: '#d32f2f', text: '#b71c1c' },
+  const palette = [
+    { bg: '#fce4ec', border: '#e91e63', text: '#880e4f' },
+    { bg: '#f3e5f5', border: '#9c27b0', text: '#4a148c' },
+    { bg: '#ede7f6', border: '#673ab7', text: '#311b92' },
+    { bg: '#e8eaf6', border: '#3f51b5', text: '#1a237e' },
+    { bg: '#e3f2fd', border: '#2196f3', text: '#0d47a1' },
+    { bg: '#e0f2f1', border: '#009688', text: '#004d40' },
+    { bg: '#e8f5e9', border: '#4caf50', text: '#1b5e20' },
+    { bg: '#fff3e0', border: '#ff9800', text: '#bf360c' },
+    { bg: '#ffebee', border: '#f44336', text: '#b71c1c' },
+    { bg: '#f1f8e9', border: '#8bc34a', text: '#33691e' },
   ];
 
-  const getRandomColor = (index) => {
-    return colorPalette[index % colorPalette.length];
-  };
+  const getColor = (i) => palette[i % palette.length];
 
   const handleSelectSubject = (subject) => {
-    setSelectedSubject(subject); localStorage.setItem("subject_id", subject.subject_id);
+    setSelectedSubject(subject);
+    localStorage.setItem("subject_id", subject.subject_id);
+    localStorage.setItem("subject_name", subject.subject_name || '');
   };
 
   const handleNext = () => {
-    if (!selectedSubject) {
-      alert('Please select a subject');
-      return;
-    }
-    localStorage.setItem("subject_id", selectedSubject?.subject_id); window.location.href = "/test-maker/step-4";
+    if (!selectedSubject) { alert('Please select a subject'); return; }
+    localStorage.setItem("subject_id", selectedSubject?.subject_id);
+    localStorage.setItem("subject_name", selectedSubject?.subject_name || '');
+    // Clear old step5 config so new subject starts fresh
+    localStorage.removeItem('step5_config');
+    localStorage.removeItem('step5_chapters');
+    localStorage.removeItem('topics');
+    localStorage.removeItem('chapter_ids');
+    localStorage.removeItem('exercise_question');
+    window.location.href = "/test-maker/step-4";
   };
 
-  const SubjectButton = ({ subject, isSelected, colorIndex }) => {
-    const color = getRandomColor(colorIndex);
+  const SubjectBtn = ({ subject, isSelected, colorIndex }) => {
+    const c = getColor(colorIndex);
     return (
-      <button
-        onClick={() => handleSelectSubject(subject)}
-        className={`subject-btn ${isSelected ? 'active' : ''}`}
-        style={isSelected ? {
-          background: `linear-gradient(135deg, ${color.border} 0%, ${color.icon} 100%)`,
-          borderColor: color.border,
-          color: 'white',
-        } : {
-          background: color.bg,
-          borderColor: color.border,
-        }}
-        title={subject.subject_name}
-      >
-        <div className="btn-content">
-          <i className="ti ti-book" style={isSelected ? { color: 'white' } : { color: color.border }}></i>
-          <span className="btn-text">{subject.subject_name}</span>
-        </div>
-        {isSelected && (
-          <div className="btn-check">
-            <i className="ti ti-check"></i>
-          </div>
-        )}
+      <button onClick={() => handleSelectSubject(subject)}
+        className={`subj-btn ${isSelected ? 'subj-selected' : ''}`}
+        style={isSelected ? { background: `linear-gradient(135deg, ${c.border}, ${c.text})`, borderColor: c.border } : { background: c.bg, borderColor: c.border }}>
+        <i className="ti ti-book" style={{ fontSize: '22px', color: isSelected ? 'white' : c.border }} />
+        <span className="subj-name" style={{ color: isSelected ? 'white' : c.text }}>{subject.subject_name}</span>
+        {isSelected && <div className="subj-check"><i className="ti ti-check" /></div>}
       </button>
     );
   };
 
-  return (
-    <div className="step-page">
-      {/* Header */}
-      <div className="step-header-section">
-        <div className="breadcrumb">
-          <span className="breadcrumb-item">{selectedClass?.class_name}</span>
-          <i className="ti ti-chevron-right"></i>
-          <span className="breadcrumb-item active">Select Subject</span>
+  const Section = ({ title, badge, subjects: list, offset = 0 }) => (
+    <div className="section">
+      <div className="section-head">
+        <div className={`badge ${badge}`}>{title === 'Latest' ? '⭐' : '📚'}</div>
+        <div>
+          <h2 className="section-title">{title} Curriculum</h2>
+          <span className="section-count">{list.length} subjects</span>
         </div>
-        <h1 className="step-heading">
-          <span className="step-number">03</span>
-          Choose Your Subject
-        </h1>
-        <p className="step-description">
-          Select from new or old curriculum subjects
-        </p>
+      </div>
+      <div className="subj-grid">
+        {list.map((s, i) => (
+          <SubjectBtn key={s.subject_id} subject={s} isSelected={selectedSubject?.subject_id === s.subject_id} colorIndex={i + offset} />
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="page">
+      {/* Logo - click to go home */}
+      <div onClick={() => window.location.href = '/test-maker/step-1'}
+        style={{ position: 'fixed', top: '12px', left: '16px', zIndex: 200, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '6px 12px', background: 'linear-gradient(135deg, #2563eb, #7c3aed)', borderRadius: '10px', boxShadow: '0 2px 12px rgba(37,99,235,0.3)' }}>
+        <i className="ti ti-book" style={{ fontSize: '16px', color: 'white' }} />
+        <span style={{ fontWeight: '800', fontSize: '13px', color: 'white', letterSpacing: '0.5px' }}>TM</span>
       </div>
 
-      {/* Content */}
-      <div className="step-content">
-        {errors.subjects && (
-          <ErrorAlert
-            message={errors.subjects}
-            onClose={() => clearError('subjects')}
-          />
-        )}
 
-        {isLoading ? (
-          <LoadingSpinner message="Loading subjects..." />
-        ) : (
+      <div className="blob blob1" /><div className="blob blob2" />
+
+      <div className="breadcrumb">
+        <span className="bc-item">{selectedClass?.class_name || 'Class'}</span>
+        <i className="ti ti-chevron-right bc-sep" />
+        <span className="bc-item bc-active">Select Subject</span>
+      </div>
+
+      <div className="header">
+        <div className="step-badge">Step 03 of 06</div>
+        <h1 className="title">Choose Your Subject</h1>
+        <p className="subtitle">Select from new or old curriculum subjects</p>
+      </div>
+
+      <div className="content">
+        {errors.subjects && <ErrorAlert message={errors.subjects} onClose={() => clearError('subjects')} />}
+
+        {isLoading ? <LoadingSpinner message="Loading subjects..." /> : (
           <>
             {subjects.length > 0 ? (
               <>
-                {/* New Curriculum Section */}
-                {newSubjects.length > 0 && (
-                  <div className="section-container">
-                    <div className="section-header">
-                      <div className="badge new-badge">⭐ NEW</div>
-                      <h2 className="section-title">Latest Curriculum</h2>
-                      <span className="section-count">{newSubjects.length} subjects</span>
-                    </div>
-                    <div className="subjects-grid">
-                      {newSubjects.map((subject, index) => (
-                        <SubjectButton
-                          key={subject.subject_id}
-                          subject={subject}
-                          isSelected={selectedSubject?.subject_id === subject.subject_id}
-                          colorIndex={index}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Old Curriculum Section */}
-                {oldSubjects.length > 0 && (
-                  <div className="section-container">
-                    <div className="section-header">
-                      <div className="badge old-badge">📚 OLD</div>
-                      <h2 className="section-title">Previous Curriculum</h2>
-                      <span className="section-count">{oldSubjects.length} subjects</span>
-                    </div>
-                    <div className="subjects-grid">
-                      {oldSubjects.map((subject, index) => (
-                        <SubjectButton
-                          key={subject.subject_id}
-                          subject={subject}
-                          isSelected={selectedSubject?.subject_id === subject.subject_id}
-                          colorIndex={index + newSubjects.length}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {newSubjects.length > 0 && <Section title="Latest" badge="badge-new" subjects={newSubjects} offset={0} />}
+                {oldSubjects.length > 0 && <Section title="Previous" badge="badge-old" subjects={oldSubjects} offset={newSubjects.length} />}
               </>
             ) : (
-              <div className="empty-state">
-                <i className="ti ti-inbox"></i>
-                <p className="empty-text">No subjects available for this class</p>
-              </div>
+              <div className="empty"><i className="ti ti-inbox" /><p>No subjects available</p></div>
             )}
 
-            {/* Selected Subject Info */}
             {selectedSubject && (
-              <div className="selected-info">
-                <div className="info-left">
-                  <p className="info-label">Selected Subject</p>
-                  <h3 className="info-name">{selectedSubject.subject_name}</h3>
-                  <p className="info-type">
-                    {selectedSubject.old_subject === 1 ? '📚 Old Curriculum' : '⭐ New Curriculum'}
-                  </p>
+              <div className="sel-bar">
+                <div>
+                  <div className="sel-label">Selected Subject</div>
+                  <div className="sel-name">{selectedSubject.subject_name}</div>
+                  <div className="sel-type">{selectedSubject.old_subject === 1 ? '📚 Old Curriculum' : '⭐ New Curriculum'}</div>
                 </div>
-                <i className="ti ti-check-circle"></i>
+                <i className="ti ti-check-circle" style={{ fontSize: '28px', color: '#673ab7', flexShrink: 0 }} />
               </div>
             )}
 
-            {/* Action Footer */}
-            <div className="step-actions">
-              <button onClick={goBack} className="btn btn-ghost">
-                <i className="ti ti-arrow-left"></i>
-                Back
-              </button>
-              <button
-                onClick={handleNext}
-                disabled={!selectedSubject || isLoading}
-                className={`btn btn-primary ${!selectedSubject || isLoading ? 'disabled' : ''}`}
-              >
-                Next
-                <i className="ti ti-arrow-right"></i>
+            <div className="actions">
+              <button onClick={() => window.location.href = '/test-maker/step-2'} className="btn btn-ghost"><i className="ti ti-arrow-left" /> Back</button>
+              <button onClick={handleNext} disabled={!selectedSubject || isLoading}
+                className={`btn btn-primary ${!selectedSubject || isLoading ? 'btn-disabled' : ''}`}>
+                Next <i className="ti ti-arrow-right" />
               </button>
             </div>
           </>
         )}
       </div>
 
-      <style jsx>{`
-        .step-page {
-          min-height: 100vh;
-          background: linear-gradient(135deg, #f5f7fa 0%, #f0f4f8 100%);
-          padding: 40px 20px;
-        }
-
-        .step-header-section {
-          max-width: 1000px;
-          margin: 0 auto 40px;
-          text-align: center;
-        }
-
-        .breadcrumb {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          margin-bottom: 24px;
-          font-size: 13px;
-          color: #999;
-          flex-wrap: wrap;
-        }
-
-        .breadcrumb-item {
-          padding: 6px 12px;
-          background: rgba(255, 255, 255, 0.6);
-          border-radius: 6px;
-          transition: all 0.3s ease;
-        }
-
-        .breadcrumb-item.active {
-          color: #673ab7;
-          font-weight: 600;
-          background: white;
-        }
-
-        .step-heading {
-          font-size: 40px;
-          font-weight: 700;
-          color: #1a1a1a;
-          margin: 0 0 12px 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-          flex-wrap: wrap;
-        }
-
-        .step-number {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 56px;
-          height: 56px;
-          background: linear-gradient(135deg, #673ab7 0%, #512da8 100%);
-          color: white;
-          border-radius: 50%;
-          font-size: 24px;
-          font-weight: 600;
-        }
-
-        .step-description {
-          font-size: 16px;
-          color: #666;
-          margin: 0;
-        }
-
-        .step-content {
-          max-width: 1000px;
-          margin: 0 auto;
-        }
-
-        .section-container {
-          background: white;
-          border-radius: 14px;
-          padding: 32px;
-          margin-bottom: 32px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-          animation: fadeInUp 0.5s ease;
-        }
-
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .section-header {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          margin-bottom: 24px;
-          padding-bottom: 16px;
-          border-bottom: 2px solid #f0f0f0;
-        }
-
-        .badge {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          font-size: 20px;
-          font-weight: 700;
-          flex-shrink: 0;
-          color: white;
-        }
-
-        .badge.new-badge {
-          background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
-          box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-        }
-
-        .badge.old-badge {
-          background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
-          box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
-        }
-
-        .section-title {
-          font-size: 20px;
-          font-weight: 600;
-          color: #1a1a1a;
-          margin: 0;
-          flex: 1;
-        }
-
-        .section-count {
-          font-size: 13px;
-          color: #999;
-          background: #f5f5f5;
-          padding: 6px 12px;
-          border-radius: 6px;
-          font-weight: 500;
-        }
-
-        .subjects-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-          gap: 14px;
-        }
-
-        .subject-btn {
-          position: relative;
-          border: 2px solid;
-          border-radius: 12px;
-          padding: 18px 14px;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 10px;
-          font-family: inherit;
-          min-height: 110px;
-          justify-content: center;
-        }
-
-        .btn-content {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 8px;
-          width: 100%;
-        }
-
-        .subject-btn i {
-          font-size: 28px;
-        }
-
-        .btn-text {
-          font-size: 13px;
-          font-weight: 600;
-          text-align: center;
-          line-height: 1.3;
-          color: inherit;
-          overflow: hidden;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          word-break: break-word;
-        }
-
-        .subject-btn:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-        }
-
-        .subject-btn.active {
-          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
-          transform: translateY(-6px);
-        }
-
-        .btn-check {
-          position: absolute;
-          top: -8px;
-          right: -8px;
-          width: 28px;
-          height: 28px;
-          background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          font-size: 16px;
-          box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-          animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes scaleIn {
-          from {
-            transform: scale(0);
-          }
-          to {
-            transform: scale(1);
-          }
-        }
-
-        .empty-state {
-          text-align: center;
-          padding: 60px 20px;
-          color: #999;
-        }
-
-        .empty-state i {
-          font-size: 80px;
-          margin-bottom: 16px;
-          opacity: 0.2;
-        }
-
-        .empty-text {
-          margin: 0;
-          font-size: 16px;
-        }
-
-        .selected-info {
-          background: linear-gradient(135deg, #f3e5f5 0%, #ede7f6 100%);
-          border: 2px solid #673ab7;
-          border-radius: 12px;
-          padding: 20px 24px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 16px;
-          margin-bottom: 32px;
-          animation: slideIn 0.4s ease;
-        }
-
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .info-left {
-          flex: 1;
-        }
-
-        .info-label {
-          font-size: 12px;
-          font-weight: 700;
-          color: #512da8;
-          margin: 0 0 4px 0;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .info-name {
-          font-size: 18px;
-          font-weight: 700;
-          color: #4a148c;
-          margin: 0 0 4px 0;
-        }
-
-        .info-type {
-          font-size: 13px;
-          color: #7b1fa2;
-          margin: 0;
-        }
-
-        .selected-info i {
-          font-size: 32px;
-          color: #673ab7;
-          flex-shrink: 0;
-        }
-
-        .step-actions {
-          display: flex;
-          justify-content: space-between;
-          gap: 12px;
-          padding-top: 20px;
-          border-top: 1px solid rgba(0, 0, 0, 0.06);
-        }
-
-        .btn {
-          padding: 12px 24px;
-          font-size: 14px;
-          font-weight: 600;
-          border: none;
-          border-radius: 8px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          flex: 1;
-          justify-content: center;
-        }
-
-        .btn i {
-          font-size: 16px;
-        }
-
-        .btn-primary {
-          background: linear-gradient(135deg, #673ab7 0%, #512da8 100%);
-          color: white;
-          box-shadow: 0 4px 12px rgba(103, 58, 183, 0.25);
-        }
-
-        .btn-primary:hover:not(.disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 16px rgba(103, 58, 183, 0.3);
-        }
-
-        .btn-ghost {
-          background: transparent;
-          color: #999;
-          border: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-ghost:hover:not(.disabled) {
-          background: white;
-          color: #673ab7;
-        }
-
-        .btn.disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        @media (max-width: 768px) {
-          .step-page {
-            padding: 24px 16px;
-          }
-
-          .step-heading {
-            font-size: 28px;
-          }
-
-          .step-number {
-            width: 48px;
-            height: 48px;
-            font-size: 20px;
-          }
-
-          .section-container {
-            padding: 24px;
-            margin-bottom: 24px;
-          }
-
-          .section-header {
-            margin-bottom: 20px;
-            gap: 12px;
-          }
-
-          .badge {
-            width: 44px;
-            height: 44px;
-            font-size: 18px;
-          }
-
-          .section-title {
-            font-size: 16px;
-          }
-
-          .subjects-grid {
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 12px;
-          }
-
-          .subject-btn {
-            padding: 14px 10px;
-            min-height: 100px;
-          }
-
-          .subject-btn i {
-            font-size: 24px;
-          }
-
-          .btn-text {
-            font-size: 12px;
-          }
-        }
-
+      <style>{`
+        * { box-sizing: border-box; }
+        .page { min-height: 100vh; background: #f0f4f8; padding: 20px 16px 40px; font-family: 'Segoe UI', system-ui, sans-serif; position: relative; overflow-x: hidden; }
+        .blob { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; }
+        .blob1 { top: -100px; right: -100px; width: 350px; height: 350px; background: radial-gradient(circle, rgba(103,58,183,0.07) 0%, transparent 70%); }
+        .blob2 { bottom: -60px; left: -60px; width: 260px; height: 260px; background: radial-gradient(circle, rgba(233,30,99,0.05) 0%, transparent 70%); }
+        .breadcrumb { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 18px; position: relative; z-index: 1; flex-wrap: wrap; }
+        .bc-item { padding: 4px 12px; background: rgba(255,255,255,0.7); border-radius: 20px; font-size: 12px; color: #64748b; font-weight: 500; }
+        .bc-active { background: white; color: #673ab7; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .bc-sep { color: #cbd5e1; font-size: 13px; }
+        .header { text-align: center; margin-bottom: 24px; position: relative; z-index: 1; }
+        .step-badge { display: inline-flex; padding: 5px 16px; background: linear-gradient(135deg, #673ab7, #512da8); color: white; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 12px; }
+        .title { font-size: clamp(22px, 5vw, 36px); font-weight: 800; color: #0f1f35; margin: 0 0 8px; letter-spacing: -0.5px; }
+        .subtitle { font-size: clamp(13px, 3vw, 15px); color: #64748b; margin: 0 auto; max-width: 440px; line-height: 1.6; }
+        .content { max-width: 1000px; margin: 0 auto; position: relative; z-index: 1; }
+        .section { background: white; border-radius: 18px; padding: 20px 16px; margin-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.04); }
+        .section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #f0f4f8; }
+        .badge { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .badge-new { background: linear-gradient(135deg, #43a047, #2e7d32); box-shadow: 0 3px 10px rgba(67,160,71,0.3); }
+        .badge-old { background: linear-gradient(135deg, #2196f3, #1565c0); box-shadow: 0 3px 10px rgba(33,150,243,0.3); }
+        .section-title { font-size: 15px; font-weight: 700; color: #0f1f35; margin: 0 0 2px; }
+        .section-count { font-size: 12px; color: #94a3b8; }
+        .subj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(120px, 45%), 1fr)); gap: 10px; }
+        .subj-btn { position: relative; border: 2px solid; border-radius: 14px; padding: 14px 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: inherit; min-height: 90px; justify-content: flex-start; transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1); -webkit-tap-highlight-color: transparent; word-break: break-word; }
+        .subj-btn:active { transform: scale(0.96); }
+        .subj-selected { box-shadow: 0 8px 24px rgba(0,0,0,0.18); transform: translateY(-4px); }
+        .subj-name { font-size: 11px; font-weight: 600; text-align: center; line-height: 1.35; word-break: break-word; white-space: normal; width: 100%; }
+        .subj-check { position: absolute; top: -8px; right: -8px; width: 22px; height: 22px; background: linear-gradient(135deg, #43a047, #2e7d32); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; box-shadow: 0 2px 8px rgba(67,160,71,0.4); }
+        .sel-bar { background: linear-gradient(135deg, #f3e5f5, #ede7f6); border: 2px solid #673ab7; border-radius: 14px; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+        .sel-label { font-size: 11px; font-weight: 700; color: #673ab7; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+        .sel-name { font-size: 16px; font-weight: 700; color: #4a148c; margin-bottom: 2px; }
+        .sel-type { font-size: 12px; color: #7b1fa2; }
+        .empty { text-align: center; padding: 60px 20px; color: #94a3b8; }
+        .empty i { font-size: 60px; opacity: 0.15; display: block; margin-bottom: 12px; }
+        .actions { display: flex; gap: 12px; padding-top: 16px; }
+        .btn { flex: 1; padding: 13px 20px; font-size: 14px; font-weight: 700; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; font-family: inherit; min-height: 48px; -webkit-tap-highlight-color: transparent; }
+        .btn-primary { background: linear-gradient(135deg, #673ab7, #4527a0); color: white; box-shadow: 0 4px 16px rgba(103,58,183,0.3); }
+        .btn-primary:active:not(.btn-disabled) { transform: scale(0.97); }
+        .btn-ghost { background: white; color: #64748b; border: 1px solid #e0e7ef; }
+        .btn-disabled { opacity: 0.5; cursor: not-allowed; }
         @media (max-width: 480px) {
-          .step-heading {
-            font-size: 22px;
-          }
-
-          .section-container {
-            padding: 20px;
-            margin-bottom: 20px;
-          }
-
-          .section-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
-          }
-
-          .section-title {
-            font-size: 14px;
-          }
-
-          .subjects-grid {
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 10px;
-          }
-
-          .subject-btn {
-            padding: 12px 8px;
-            min-height: 90px;
-          }
-
-          .btn-text {
-            font-size: 11px;
-          }
-
-          .selected-info {
-            padding: 16px;
-            flex-direction: column;
-            text-align: center;
-          }
-
-          .selected-info i {
-            font-size: 28px;
-          }
+          .page { padding: 16px 12px 32px; }
+          .section { padding: 16px 12px; border-radius: 14px; }
+          .subj-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+          .subj-btn { min-height: 84px; padding: 12px 8px; }
+          .subj-name { font-size: 11px; }
         }
       `}</style>
     </div>

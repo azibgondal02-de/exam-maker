@@ -1,106 +1,68 @@
 import React, { useEffect, useState } from 'react';
+import logo from '../../assets/logo1.png';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorAlert from '../../components/ErrorAlert';
 
 export default function Step4TopicSelect() {
-  const {
-    selectedSubject,
-    selectedClass,
-    chapters,
-    selectedTopics,
-    isLoading,
-    errors,
-    loadTopics,
-    setSelectedTopics,
-    goBack,
-    clearError,
-  } = useTestMaker();
-
+  const { selectedSubject, selectedClass, chapters, selectedTopics, isLoading, errors, loadTopics, setSelectedTopics, goBack, clearError } = useTestMaker();
   const [expandedChapters, setExpandedChapters] = useState({});
-
-  // Controlled exercise question types
-  // exercise=1, additional=0, past=2, conceptual=3, examples=4
-  const [exerciseTypes, setExerciseTypes] = useState({
-    exercise: true,
-    additional: true,
-    past: false,
-    conceptual: false,
-    examples: false,
-  });
+  const [exerciseTypes, setExerciseTypes] = useState({ exercise: true, additional: true, past: false, conceptual: false, examples: false });
 
   useEffect(() => {
     const subjectId = selectedSubject?.subject_id || localStorage.getItem("subject_id");
-    if (subjectId) {
-      loadTopics(subjectId);
-    }
+    if (subjectId) loadTopics(subjectId);
   }, [selectedSubject]);
 
-  const toggleChapter = (chapterCode) => {
-    setExpandedChapters(prev => ({
-      ...prev,
-      [chapterCode]: !prev[chapterCode]
-    }));
-  };
+  // Restore previously selected topics from localStorage when chapters load
+  useEffect(() => {
+    if (chapters.length > 0 && selectedTopics.length === 0) {
+      const savedTopicIds = (localStorage.getItem('topics') || '').split(',').filter(Boolean);
+      if (savedTopicIds.length > 0) {
+        const allTopics = chapters.flatMap(ch => ch.topics || []);
+        const restored = allTopics.filter(t => savedTopicIds.includes(String(t.topic_id)));
+        if (restored.length > 0) setSelectedTopics(restored);
+      }
+    }
+  }, [chapters]);
+
+  const toggleChapter = (code) => setExpandedChapters(p => ({ ...p, [code]: !p[code] }));
 
   const toggleTopic = (topic) => {
-    const isSelected = selectedTopics.some(t => t.topic_id === topic.topic_id);
-    if (isSelected) {
-      setSelectedTopics(selectedTopics.filter(t => t.topic_id !== topic.topic_id));
-    } else {
-      setSelectedTopics([...selectedTopics, topic]);
-    }
+    const sel = selectedTopics.some(t => t.topic_id === topic.topic_id);
+    setSelectedTopics(sel ? selectedTopics.filter(t => t.topic_id !== topic.topic_id) : [...selectedTopics, topic]);
   };
 
-  const toggleAllTopicsInChapter = (chapter) => {
-    const allSelected = chapter.topics.every(t =>
-      selectedTopics.some(st => st.topic_id === t.topic_id)
-    );
-    if (allSelected) {
-      const chapterTopicIds = new Set(chapter.topics.map(t => t.topic_id));
-      setSelectedTopics(selectedTopics.filter(t => !chapterTopicIds.has(t.topic_id)));
+  const toggleAllInChapter = (chapter) => {
+    const allSel = chapter.topics.every(t => selectedTopics.some(st => st.topic_id === t.topic_id));
+    if (allSel) {
+      const ids = new Set(chapter.topics.map(t => t.topic_id));
+      setSelectedTopics(selectedTopics.filter(t => !ids.has(t.topic_id)));
     } else {
-      const newTopics = chapter.topics.filter(t =>
-        !selectedTopics.some(st => st.topic_id === t.topic_id)
-      );
-      setSelectedTopics([...selectedTopics, ...newTopics]);
+      const newT = chapter.topics.filter(t => !selectedTopics.some(st => st.topic_id === t.topic_id));
+      setSelectedTopics([...selectedTopics, ...newT]);
     }
   };
 
   const handleNext = () => {
-    if (selectedTopics.length === 0) {
-      alert('Please select at least one topic');
-      return;
-    }
-
-    // Build exercise_question string from controlled state
-    const exerciseMap = [];
-    if (exerciseTypes.exercise) exerciseMap.push('1');
-    if (exerciseTypes.additional) exerciseMap.push('0');
-    if (exerciseTypes.past) exerciseMap.push('2');
-    if (exerciseTypes.conceptual) exerciseMap.push('3');
-    if (exerciseTypes.examples) exerciseMap.push('4');
-    const exerciseQuestion = exerciseMap.length > 0 ? exerciseMap.join(',') : '1';
-
-    // Only save topic IDs from SELECTED topics
+    if (selectedTopics.length === 0) { alert('Please select at least one topic'); return; }
+    const map = [];
+    if (exerciseTypes.exercise) map.push('1');
+    if (exerciseTypes.additional) map.push('0');
+    if (exerciseTypes.past) map.push('2');
+    if (exerciseTypes.conceptual) map.push('3');
+    if (exerciseTypes.examples) map.push('4');
     const topicIds = selectedTopics.map(t => t.topic_id).join(',');
-
-    // Only save chapter IDs of chapters that have at least one selected topic
-    const selectedChapterIds = chapters
-      .filter(ch => ch.topics?.some(t => selectedTopics.some(st => st.topic_id === t.topic_id)))
-      .map(c => c.chapter_id)
-      .join(',');
-
+    const chapterIds = chapters.filter(ch => ch.topics?.some(t => selectedTopics.some(st => st.topic_id === t.topic_id))).map(c => c.chapter_id).join(',');
     localStorage.setItem('topics', topicIds);
-    localStorage.setItem('chapter_ids', selectedChapterIds);
-    localStorage.setItem('exercise_question', exerciseQuestion);
+    localStorage.setItem('chapter_ids', chapterIds);
+    localStorage.setItem('exercise_question', map.length > 0 ? map.join(',') : '1');
     localStorage.setItem('subject_id', selectedSubject?.subject_id || localStorage.getItem('subject_id'));
     localStorage.setItem('class_id', selectedClass?.class_id || localStorage.getItem('class_id'));
-
     window.location.href = '/test-maker/step-5';
   };
 
-  const colorPalette = [
+  const palette = [
     { border: '#e91e63', bg: '#fce4ec', text: '#c2185b' },
     { border: '#9c27b0', bg: '#f3e5f5', text: '#7b1fa2' },
     { border: '#673ab7', bg: '#ede7f6', text: '#512da8' },
@@ -110,117 +72,90 @@ export default function Step4TopicSelect() {
     { border: '#4caf50', bg: '#e8f5e9', text: '#2e7d32' },
     { border: '#ff9800', bg: '#fff3e0', text: '#e65100' },
   ];
+  const getColor = (i) => palette[i % palette.length];
 
-  const getChapterColor = (index) => colorPalette[index % colorPalette.length];
+  const exTypes = [
+    { key: 'exercise', icon: 'ti-pencil', label: 'Exercise Questions', desc: 'Practice from chapters' },
+    { key: 'additional', icon: 'ti-file-text', label: 'Additional Papers', desc: 'Extra question papers' },
+    { key: 'past', icon: 'ti-history', label: 'Past Papers', desc: 'Previous exam questions' },
+    { key: 'conceptual', icon: 'ti-lightbulb', label: 'Conceptual', desc: 'Concept-based problems' },
+    { key: 'examples', icon: 'ti-bulb', label: 'Exercise Examples', desc: 'Worked examples' },
+  ];
 
   return (
-    <div className="step-page">
-      <div className="step-header-section">
-        <div className="breadcrumb">
-          <span className="breadcrumb-item">{selectedSubject?.subject_name}</span>
-          <i className="ti ti-chevron-right"></i>
-          <span className="breadcrumb-item active">Select Topics</span>
-        </div>
-        <h1 className="step-heading">
-          <span className="step-number">04</span>
-          Choose Topics & Chapters
-        </h1>
-        <p className="step-description">Select the topics you want to include in your test</p>
+    <div className="page">
+      {/* Logo - click to go home */}
+      <div onClick={() => window.location.href = '/test-maker/step-1'}
+        style={{ position: 'fixed', top: '12px', left: '16px', zIndex: 200, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '6px 12px', background: 'linear-gradient(135deg, #2563eb, #7c3aed)', borderRadius: '10px', boxShadow: '0 2px 12px rgba(37,99,235,0.3)' }}>
+        <i className="ti ti-book" style={{ fontSize: '16px', color: 'white' }} />
+        <span style={{ fontWeight: '800', fontSize: '13px', color: 'white', letterSpacing: '0.5px' }}>TM</span>
       </div>
 
-      <div className="step-content">
-        {errors.topics && (
-          <ErrorAlert message={errors.topics} onClose={() => clearError('topics')} />
-        )}
 
-        {isLoading ? (
-          <LoadingSpinner message="Loading chapters and topics..." />
-        ) : (
+      <div className="blob blob1" /><div className="blob blob2" />
+
+      <div className="breadcrumb">
+        <span className="bc-item">{selectedSubject?.subject_name || 'Subject'}</span>
+        <i className="ti ti-chevron-right bc-sep" />
+        <span className="bc-item bc-active">Select Topics</span>
+      </div>
+
+      <div className="header">
+        <div className="step-badge">Step 04 of 06</div>
+        <h1 className="title">Choose Topics & Chapters</h1>
+        <p className="subtitle">Select topics and question types for your test</p>
+      </div>
+
+      <div className="content">
+        {errors.topics && <ErrorAlert message={errors.topics} onClose={() => clearError('topics')} />}
+
+        {isLoading ? <LoadingSpinner message="Loading chapters and topics..." /> : (
           <>
             {chapters.length > 0 ? (
               <>
-                <div className="select-all-section">
+                {/* Select All */}
+                <div className="select-all-card">
                   <label className="select-all-label">
-                    <input
-                      type="checkbox"
-                      className="select-all-checkbox"
-                      checked={selectedTopics.length > 0 && chapters.every(ch =>
-                        ch.topics?.every(t => selectedTopics.some(st => st.topic_id === t.topic_id))
-                      )}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedTopics(chapters.flatMap(ch => ch.topics || []));
-                        } else {
-                          setSelectedTopics([]);
-                        }
-                      }}
-                    />
+                    <input type="checkbox" className="checkbox"
+                      checked={selectedTopics.length > 0 && chapters.every(ch => ch.topics?.every(t => selectedTopics.some(st => st.topic_id === t.topic_id)))}
+                      onChange={e => e.target.checked ? setSelectedTopics(chapters.flatMap(ch => ch.topics || [])) : setSelectedTopics([])} />
                     <span>Select All Topics</span>
+                    <span className="sel-count">{selectedTopics.length} selected</span>
                   </label>
                 </div>
 
-                <div className="chapters-list">
-                  {chapters.map((chapter, index) => {
-                    const color = getChapterColor(index);
-                    const isExpanded = expandedChapters[chapter.chapter_code];
-                    const allTopicsSelected = chapter.topics?.every(t =>
-                      selectedTopics.some(st => st.topic_id === t.topic_id)
-                    );
-
+                {/* Chapters */}
+                <div className="chapters">
+                  {chapters.map((chapter, idx) => {
+                    const c = getColor(idx);
+                    const isExp = expandedChapters[chapter.chapter_code];
+                    const allSel = chapter.topics?.every(t => selectedTopics.some(st => st.topic_id === t.topic_id));
                     return (
-                      <div key={chapter.chapter_code} className="chapter-card">
-                        <button
-                          className="chapter-header"
-                          style={{ backgroundColor: color.bg, borderLeftColor: color.border }}
-                          onClick={() => toggleChapter(chapter.chapter_code)}
-                        >
-                          <div className="chapter-checkbox-wrapper">
-                            <input
-                              type="checkbox"
-                              className="chapter-checkbox"
-                              checked={allTopicsSelected || false}
-                              onChange={() => toggleAllTopicsInChapter(chapter)}
-                              onClick={(e) => e.stopPropagation()}
-                              style={{ borderColor: color.border, accentColor: color.border }}
-                            />
-                          </div>
+                      <div key={chapter.chapter_code} className="chapter-card" style={{ borderLeftColor: c.border }}>
+                        <button className="chapter-header" style={{ background: c.bg }} onClick={() => toggleChapter(chapter.chapter_code)}>
+                          <input type="checkbox" className="checkbox" checked={allSel || false}
+                            onChange={() => toggleAllInChapter(chapter)} onClick={e => e.stopPropagation()}
+                            style={{ accentColor: c.border }} />
                           <div className="chapter-info">
-                            <h3 className="chapter-name" style={{ color: color.text }}>{chapter.chapter_name_en}</h3>
-                            {chapter.chapter_name_ur && (
-                              <p className="chapter-name-ur" style={{ color: color.text }}>{chapter.chapter_name_ur}</p>
-                            )}
-                            <p className="chapter-meta">{chapter.topics?.length || 0} topics</p>
+                            <div className="chapter-name" style={{ color: c.text }}>{chapter.chapter_name_en}</div>
+                            {chapter.chapter_name_ur && <div className="chapter-name-ur" style={{ color: c.text }}>{chapter.chapter_name_ur}</div>}
+                            <div className="chapter-meta">{chapter.topics?.length || 0} topics</div>
                           </div>
-                          <div className="expand-icon" style={{ color: color.text }}>
-                            <i className="ti ti-chevron-down" style={{
-                              transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)',
-                              transition: 'transform 0.3s ease'
-                            }}></i>
-                          </div>
+                          <i className="ti ti-chevron-down chapter-arrow" style={{ color: c.text, transform: isExp ? 'rotate(180deg)' : 'none' }} />
                         </button>
 
-                        {isExpanded && chapter.topics && chapter.topics.length > 0 && (
+                        {isExp && chapter.topics?.length > 0 && (
                           <div className="topics-list">
-                            {chapter.topics.map((topic) => {
-                              const isSelected = selectedTopics.some(t => t.topic_id === topic.topic_id);
+                            {chapter.topics.map(topic => {
+                              const isSel = selectedTopics.some(t => t.topic_id === topic.topic_id);
                               return (
-                                <div key={topic.topic_id} className="topic-item">
-                                  <input
-                                    type="checkbox"
-                                    className="topic-checkbox"
-                                    checked={isSelected}
-                                    onChange={() => toggleTopic(topic)}
-                                    style={{ accentColor: color.border }}
-                                  />
-                                  <label className="topic-label" style={{ color: isSelected ? color.border : '#333' }}>
-                                    <span>{topic.topic_name_en}</span>
-                                    {topic.topic_name_urdu && (
-                                      <span style={{ display: 'block', fontSize: '11px', color: isSelected ? color.border : '#999', direction: 'rtl', textAlign: 'right' }}>
-                                        {topic.topic_name_urdu}
-                                      </span>
-                                    )}
-                                  </label>
-                                </div>
+                                <label key={topic.topic_id} className={`topic-item ${isSel ? 'topic-selected' : ''}`} style={{ '--accent': c.border }}>
+                                  <input type="checkbox" className="checkbox" checked={isSel} onChange={() => toggleTopic(topic)} style={{ accentColor: c.border }} />
+                                  <div>
+                                    <div style={{ color: isSel ? c.border : '#334155', fontSize: '13px', fontWeight: '500' }}>{topic.topic_name_en}</div>
+                                    {topic.topic_name_urdu && <div style={{ color: isSel ? c.border : '#94a3b8', fontSize: '11px', direction: 'rtl', textAlign: 'right' }}>{topic.topic_name_urdu}</div>}
+                                  </div>
+                                </label>
                               );
                             })}
                           </div>
@@ -230,176 +165,134 @@ export default function Step4TopicSelect() {
                   })}
                 </div>
 
+                {/* Selected Topics Summary */}
                 {selectedTopics.length > 0 && (
-                  <div className="selected-summary">
-                    <div className="summary-content">
-                      <p className="summary-label">Selected Topics</p>
-                      <h3 className="summary-count">{selectedTopics.length} selected</h3>
-                      <div className="selected-tags">
-                        {selectedTopics.map((topic) => (
-                          <div key={topic.topic_id} className="tag">
-                            <span>{topic.topic_name_en || topic.topic_name_urdu}</span>
-                            <button onClick={() => toggleTopic(topic)} className="tag-close">✕</button>
-                          </div>
-                        ))}
-                      </div>
+                  <div className="sel-summary">
+                    <div className="sel-summary-header">
+                      <i className="ti ti-check-circle" style={{ color: '#2196f3', fontSize: '18px' }} />
+                      <span className="sel-summary-title">Selected Topics</span>
+                      <span className="sel-summary-count">{selectedTopics.length} selected</span>
+                      <button className="sel-clear" onClick={() => setSelectedTopics([])}>Clear all</button>
                     </div>
-                    <i className="ti ti-check-circle"></i>
+                    <div className="sel-tags">
+                      {selectedTopics.map(topic => (
+                        <div key={topic.topic_id} className="sel-tag">
+                          <span>{topic.topic_name_en || topic.topic_name_urdu}</span>
+                          <button className="tag-x" onClick={() => toggleTopic(topic)}>✕</button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
-                {/* Question Types - CONTROLLED CHECKBOXES */}
-                <div className="question-types-section">
-                  <h3 className="section-title">Question Level & Types</h3>
-                  <p className="section-subtitle">Select the types of questions to include</p>
-                  <div className="question-types-grid">
-
-                    <label className="question-type-card">
-                      <input type="checkbox" className="type-checkbox"
-                        checked={exerciseTypes.exercise}
-                        onChange={e => setExerciseTypes(p => ({ ...p, exercise: e.target.checked }))} />
-                      <div className="type-content">
-                        <i className="ti ti-pencil"></i>
-                        <span className="type-name">Exercise Questions</span>
-                        <p className="type-desc">Practice questions from chapters</p>
-                      </div>
-                    </label>
-
-                    <label className="question-type-card">
-                      <input type="checkbox" className="type-checkbox"
-                        checked={exerciseTypes.additional}
-                        onChange={e => setExerciseTypes(p => ({ ...p, additional: e.target.checked }))} />
-                      <div className="type-content">
-                        <i className="ti ti-file-text"></i>
-                        <span className="type-name">Additional Papers</span>
-                        <p className="type-desc">Extra question papers</p>
-                      </div>
-                    </label>
-
-                    <label className="question-type-card">
-                      <input type="checkbox" className="type-checkbox"
-                        checked={exerciseTypes.past}
-                        onChange={e => setExerciseTypes(p => ({ ...p, past: e.target.checked }))} />
-                      <div className="type-content">
-                        <i className="ti ti-history"></i>
-                        <span className="type-name">Past Papers</span>
-                        <p className="type-desc">Previous exam questions</p>
-                      </div>
-                    </label>
-
-                    <label className="question-type-card">
-                      <input type="checkbox" className="type-checkbox"
-                        checked={exerciseTypes.conceptual}
-                        onChange={e => setExerciseTypes(p => ({ ...p, conceptual: e.target.checked }))} />
-                      <div className="type-content">
-                        <i className="ti ti-lightbulb"></i>
-                        <span className="type-name">Conceptual Questions</span>
-                        <p className="type-desc">Concept-based problems</p>
-                      </div>
-                    </label>
-
-                    <label className="question-type-card">
-                      <input type="checkbox" className="type-checkbox"
-                        checked={exerciseTypes.examples}
-                        onChange={e => setExerciseTypes(p => ({ ...p, examples: e.target.checked }))} />
-                      <div className="type-content">
-                        <i className="ti ti-bulb"></i>
-                        <span className="type-name">Exercise Examples</span>
-                        <p className="type-desc">Worked examples</p>
-                      </div>
-                    </label>
-
+                {/* Question Types */}
+                <div className="qtype-section">
+                  <div className="qtype-header">
+                    <div className="qtype-icon"><i className="ti ti-adjustments" /></div>
+                    <div>
+                      <h3 className="qtype-title">Question Types</h3>
+                      <p className="qtype-sub">Select which types of questions to include</p>
+                    </div>
+                  </div>
+                  <div className="qtype-grid">
+                    {exTypes.map(({ key, icon, label, desc }) => (
+                      <label key={key} className={`qtype-card ${exerciseTypes[key] ? 'qtype-active' : ''}`}>
+                        <input type="checkbox" checked={exerciseTypes[key]} onChange={e => setExerciseTypes(p => ({ ...p, [key]: e.target.checked }))} style={{ display: 'none' }} />
+                        <i className={`ti ${icon} qtype-card-icon`} />
+                        <span className="qtype-name">{label}</span>
+                        <span className="qtype-desc">{desc}</span>
+                      </label>
+                    ))}
                   </div>
                 </div>
               </>
             ) : (
-              <div className="empty-state">
-                <i className="ti ti-inbox"></i>
-                <p className="empty-text">No chapters or topics available</p>
-              </div>
+              <div className="empty"><i className="ti ti-inbox" /><p>No chapters or topics available</p></div>
             )}
           </>
         )}
       </div>
 
-      <div className="step-actions-bottom">
-        <button onClick={goBack} className="btn btn-ghost">
-          <i className="ti ti-arrow-left"></i>
-          Back
-        </button>
-        <button
-          onClick={handleNext}
-          disabled={selectedTopics.length === 0 || isLoading}
-          className={`btn btn-primary ${selectedTopics.length === 0 || isLoading ? 'disabled' : ''}`}
-        >
-          Next
-          <i className="ti ti-arrow-right"></i>
+      <div className="actions">
+        <button onClick={() => window.location.href = '/test-maker/step-3'} className="btn btn-ghost"><i className="ti ti-arrow-left" /> Back</button>
+        <button onClick={handleNext} disabled={selectedTopics.length === 0 || isLoading}
+          className={`btn btn-primary ${selectedTopics.length === 0 || isLoading ? 'btn-disabled' : ''}`}>
+          Next <i className="ti ti-arrow-right" />
         </button>
       </div>
 
-      <style jsx>{`
-        .step-page { min-height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #f0f4f8 100%); padding: 20px; display: flex; flex-direction: column; }
-        .step-header-section { max-width: 1000px; width: 100%; margin: 0 auto 32px; text-align: center; }
-        .breadcrumb { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; font-size: 13px; color: #999; flex-wrap: wrap; }
-        .breadcrumb-item { padding: 6px 12px; background: rgba(255, 255, 255, 0.6); border-radius: 6px; }
-        .breadcrumb-item.active { color: #2196f3; font-weight: 600; background: white; }
-        .step-heading { font-size: 36px; font-weight: 700; color: #1a1a1a; margin: 0 0 10px 0; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
-        .step-number { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: white; border-radius: 50%; font-size: 22px; font-weight: 600; }
-        .step-description { font-size: 15px; color: #666; margin: 0; }
-        .step-content { max-width: 1000px; width: 100%; margin: 0 auto; flex: 1; }
-        .chapters-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
-        .select-all-section { background: white; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
-        .select-all-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; font-size: 14px; color: #2196f3; user-select: none; }
-        .select-all-checkbox { width: 20px; height: 20px; cursor: pointer; accent-color: #2196f3; }
-        .chapter-card { background: white; border-radius: 10px; border-left: 4px solid; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
-        .chapter-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; transition: all 0.2s ease; border: none; width: 100%; background: inherit; text-align: left; font-family: inherit; }
-        .chapter-header:hover { background-color: rgba(0, 0, 0, 0.02); }
-        .chapter-checkbox-wrapper { display: flex; align-items: center; flex-shrink: 0; }
-        .chapter-checkbox { width: 20px; height: 20px; cursor: pointer; }
-        .chapter-info { flex: 1; text-align: left; min-width: 0; }
-        .chapter-name { font-size: 14px; font-weight: 600; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .chapter-name-ur { font-size: 12px; margin: 2px 0 0 0; direction: rtl; text-align: right; opacity: 0.85; }
-        .chapter-meta { font-size: 11px; color: #999; margin: 3px 0 0 0; }
-        .expand-icon { display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
-        .topics-list { padding: 10px 14px; border-top: 1px solid #f0f0f0; background: #fafafa; display: flex; flex-direction: column; gap: 8px; }
-        .topic-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; }
-        .topic-item:hover { background: rgba(0, 0, 0, 0.04); }
-        .topic-checkbox { width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; }
-        .topic-label { font-size: 13px; font-weight: 500; flex: 1; cursor: pointer; }
-        .selected-summary { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 2px solid #2196f3; border-radius: 10px; padding: 20px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
-        .summary-content { flex: 1; }
-        .summary-label { font-size: 12px; font-weight: 700; color: #1565c0; margin: 0 0 6px 0; text-transform: uppercase; }
-        .summary-count { font-size: 18px; font-weight: 700; color: #0d47a1; margin: 0 0 12px 0; }
-        .selected-tags { display: flex; flex-wrap: wrap; gap: 8px; }
-        .tag { display: inline-flex; align-items: center; gap: 6px; background: white; border: 1px solid #2196f3; border-radius: 20px; padding: 6px 12px; font-size: 12px; font-weight: 500; color: #1565c0; }
-        .tag-close { background: transparent; border: none; color: #1565c0; cursor: pointer; font-size: 13px; padding: 0; }
-        .tag-close:hover { color: #d32f2f; }
-        .selected-summary i { font-size: 32px; color: #2196f3; flex-shrink: 0; }
-        .question-types-section { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); margin-bottom: 24px; }
-        .section-title { font-size: 16px; font-weight: 700; color: #1a1a1a; margin: 0 0 8px 0; }
-        .section-subtitle { font-size: 13px; color: #999; margin: 0 0 16px 0; }
-        .question-types-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
-        .question-type-card { position: relative; background: linear-gradient(135deg, #f5f7fa 0%, #eef2f7 100%); border: 2px solid #e0e0e0; border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.3s ease; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
-        .question-type-card:hover { border-color: #2196f3; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15); }
-        .question-type-card:has(input:checked) { background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); border-color: #2196f3; color: white; }
-        .type-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #2196f3; }
-        .type-content { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; }
-        .type-content i { font-size: 24px; color: #2196f3; }
-        .question-type-card:has(input:checked) .type-content i { color: white; }
-        .type-name { font-size: 13px; font-weight: 600; color: #333; }
-        .question-type-card:has(input:checked) .type-name { color: white; }
-        .type-desc { font-size: 11px; color: #999; margin: 0; line-height: 1.2; }
-        .question-type-card:has(input:checked) .type-desc { color: rgba(255, 255, 255, 0.8); }
-        .empty-state { text-align: center; padding: 50px 20px; color: #999; }
-        .empty-state i { font-size: 70px; margin-bottom: 16px; opacity: 0.2; }
-        .empty-text { margin: 0; font-size: 15px; }
-        .step-actions-bottom { max-width: 1000px; width: 100%; margin: 20px auto 0; display: flex; justify-content: space-between; gap: 12px; padding-top: 20px; border-top: 2px solid rgba(0, 0, 0, 0.08); }
-        .btn { padding: 12px 24px; font-size: 14px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; flex: 1; justify-content: center; }
-        .btn-primary { background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: white; box-shadow: 0 3px 10px rgba(33, 150, 243, 0.2); }
-        .btn-primary:hover:not(.disabled) { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(33, 150, 243, 0.3); }
-        .btn-ghost { background: transparent; color: #999; border: 1px solid rgba(0, 0, 0, 0.1); }
-        .btn-ghost:hover:not(.disabled) { background: white; color: #2196f3; border-color: #2196f3; }
-        .btn.disabled { opacity: 0.5; cursor: not-allowed; }
+      <style>{`
+        * { box-sizing: border-box; }
+        .page { min-height: 100vh; background: #f0f4f8; padding: 20px 16px 100px; font-family: 'Segoe UI', system-ui, sans-serif; position: relative; overflow-x: hidden; }
+        .blob { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; }
+        .blob1 { top: -100px; right: -100px; width: 350px; height: 350px; background: radial-gradient(circle, rgba(33,150,243,0.07) 0%, transparent 70%); }
+        .blob2 { bottom: -60px; left: -60px; width: 260px; height: 260px; background: radial-gradient(circle, rgba(33,150,243,0.05) 0%, transparent 70%); }
+        .breadcrumb { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 18px; position: relative; z-index: 1; flex-wrap: wrap; }
+        .bc-item { padding: 4px 12px; background: rgba(255,255,255,0.7); border-radius: 20px; font-size: 12px; color: #64748b; }
+        .bc-active { background: white; color: #2196f3; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .bc-sep { color: #cbd5e1; font-size: 13px; }
+        .header { text-align: center; margin-bottom: 22px; position: relative; z-index: 1; }
+        .step-badge { display: inline-flex; padding: 5px 16px; background: linear-gradient(135deg, #2196f3, #1565c0); color: white; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 12px; }
+        .title { font-size: clamp(20px, 5vw, 34px); font-weight: 800; color: #0f1f35; margin: 0 0 8px; letter-spacing: -0.5px; }
+        .subtitle { font-size: clamp(13px, 3vw, 15px); color: #64748b; margin: 0 auto; max-width: 440px; }
+        .content { max-width: 1000px; margin: 0 auto; position: relative; z-index: 1; }
+        .select-all-card { background: white; border-radius: 14px; padding: 14px 18px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        .select-all-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700; font-size: 14px; color: #2196f3; user-select: none; }
+        .sel-count { margin-left: auto; background: #e3f2fd; color: #1565c0; font-size: 12px; padding: 3px 10px; border-radius: 12px; font-weight: 700; }
+        .checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #2196f3; flex-shrink: 0; }
+        .chapters { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 18px; align-items: start; }
+        .chapter-card { background: white; border-radius: 14px; border-left: 4px solid; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); min-width: 0; }
+        .chapter-header { display: flex; align-items: center; gap: 10px; padding: 14px 16px; cursor: pointer; border: none; width: 100%; text-align: left; font-family: inherit; -webkit-tap-highlight-color: transparent; min-height: 52px; }
+        .chapter-info { flex: 1; min-width: 0; }
+        .chapter-name { font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 1px; }
+        .chapter-name-ur { font-size: 11px; direction: rtl; text-align: right; opacity: 0.8; }
+        .chapter-meta { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+        .chapter-arrow { font-size: 16px; flex-shrink: 0; transition: transform 0.25s ease; }
+        .topics-list { padding: 8px 14px; border-top: 1px solid rgba(0,0,0,0.05); background: #fafbfc; display: flex; flex-direction: column; gap: 4px; }
+        .topic-item { display: flex; align-items: flex-start; gap: 10px; padding: 9px 10px; border-radius: 10px; cursor: pointer; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
+        .topic-item:active { background: rgba(0,0,0,0.04); }
+        .topic-selected { background: rgba(33,150,243,0.06); }
+        .qtype-section { background: white; border-radius: 18px; padding: 20px 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 16px; }
+        .qtype-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+        .qtype-icon { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #2196f3, #1565c0); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; flex-shrink: 0; }
+        .qtype-title { font-size: 15px; font-weight: 700; color: #0f1f35; margin: 0 0 2px; }
+        .qtype-sub { font-size: 12px; color: #94a3b8; margin: 0; }
+        .qtype-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); gap: 10px; }
+        .qtype-card { border: 2px solid #e8eef5; border-radius: 14px; padding: 16px 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; transition: all 0.2s ease; background: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        .qtype-card:active { transform: scale(0.96); }
+        .qtype-active { background: linear-gradient(135deg, #2196f3, #1565c0); border-color: #2196f3; box-shadow: 0 4px 14px rgba(33,150,243,0.3); }
+        .qtype-card-icon { font-size: 22px; color: #2196f3; }
+        .qtype-active .qtype-card-icon { color: white; }
+        .qtype-name { font-size: 12px; font-weight: 700; color: #334155; }
+        .qtype-active .qtype-name { color: white; }
+        .qtype-desc { font-size: 10px; color: #94a3b8; line-height: 1.3; }
+        .qtype-active .qtype-desc { color: rgba(255,255,255,0.8); }
+        .sel-summary { background: linear-gradient(135deg, #e3f2fd, #bbdefb); border: 2px solid #2196f3; border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+        .sel-summary-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .sel-summary-title { font-size: 14px; font-weight: 700; color: #1565c0; }
+        .sel-summary-count { background: #2196f3; color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+        .sel-clear { margin-left: auto; background: none; border: 1px solid #90caf9; color: #1565c0; font-size: 12px; padding: 3px 10px; border-radius: 8px; cursor: pointer; font-family: inherit; }
+        .sel-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .sel-tag { display: inline-flex; align-items: center; gap: 6px; background: white; border: 1px solid #2196f3; border-radius: 16px; padding: 5px 10px; font-size: 12px; color: #1565c0; font-weight: 500; }
+        .tag-x { background: none; border: none; color: #1565c0; cursor: pointer; font-size: 12px; padding: 0; line-height: 1; }
+        .empty { text-align: center; padding: 60px 20px; color: #94a3b8; }
+        .empty i { font-size: 60px; opacity: 0.15; display: block; margin-bottom: 12px; }
+        .actions { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e8eef5; padding: 12px 16px; display: flex; gap: 12px; z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.08); }
+        .btn { flex: 1; padding: 13px 20px; font-size: 14px; font-weight: 700; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; font-family: inherit; min-height: 48px; -webkit-tap-highlight-color: transparent; }
+        .btn-primary { background: linear-gradient(135deg, #2196f3, #1565c0); color: white; box-shadow: 0 4px 16px rgba(33,150,243,0.35); }
+        .btn-primary:active:not(.btn-disabled) { transform: scale(0.97); }
+        .btn-ghost { background: white; color: #64748b; border: 1px solid #e0e7ef; }
+        .btn-disabled { opacity: 0.5; cursor: not-allowed; }
+        @media (max-width: 600px) {
+          .chapters { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 480px) {
+          .page { padding: 16px 12px 100px; }
+          .qtype-grid { grid-template-columns: repeat(2, 1fr); }
+          .chapter-header { padding: 12px 12px; }
+          .topics-list { padding: 6px 10px; }
+          .chapters { grid-template-columns: 1fr; }
+        }
       `}</style>
     </div>
   );

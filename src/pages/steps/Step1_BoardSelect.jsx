@@ -2,438 +2,176 @@ import React, { useEffect } from 'react';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorAlert from '../../components/ErrorAlert';
+import logo from '../../assets/logo1.png';
 
 export default function Step1BoardSelect() {
-  const {
-    boards,
-    selectedBoard,
-    isLoading,
-    errors,
-    loadBoards,
-    setSelectedBoard,
-    goNext,
-    clearError,
-  } = useTestMaker();
+  const { boards, selectedBoard, isLoading, errors, loadBoards, setSelectedBoard, clearError } = useTestMaker();
 
-  useEffect(() => {
-    loadBoards();
-  }, []);
-
-  const handleSelectBoard = (board) => {
-    setSelectedBoard(board);
-  };
+  useEffect(() => { loadBoards(); }, []);
 
   const handleNext = () => {
-    if (!selectedBoard) {
-      alert('Please select a board');
-      return;
-    }
-    localStorage.setItem("board_id", selectedBoard?.board_id); window.location.href = "/test-maker/step-2";
-  };
-
-  const boardIcons = {
-    default: 'ti-school',
+    if (!selectedBoard) { alert('Please select a board'); return; }
+    localStorage.setItem("board_id", selectedBoard?.board_id);
+    window.location.href = "/test-maker/step-2";
   };
 
   return (
-    <div className="step-page">
+    <div style={s.page}>
+
+      {/* Logo */}
+      <div style={s.logoBox} onClick={() => window.location.href = '/test-maker/step-1'}>
+        <img src={logo} alt="PaperCraft" style={s.logoImg} />
+      </div>
+
       {/* Header */}
-      <div className="step-header-section">
-        <div className="step-header-content">
-          <h1 className="step-heading">
-            <span className="step-number">01</span>
-            Select Your Board
-          </h1>
-          <p className="step-description">
-            Choose your educational board to begin creating the perfect test for your students
-          </p>
-        </div>
+      <div style={s.header}>
+        <div style={s.badge}>Step 01 of 06</div>
+        <h1 style={s.title}>
+          <span style={s.num}>01</span>
+          Select Your Board
+        </h1>
+        <p style={s.sub}>Choose your educational board to begin creating the perfect test</p>
       </div>
 
       {/* Content */}
-      <div className="step-content">
-        {errors.boards && (
-          <ErrorAlert
-            message={errors.boards}
-            onClose={() => clearError('boards')}
-          />
-        )}
+      <div style={s.content}>
+        {errors.boards && <ErrorAlert message={errors.boards} onClose={() => clearError('boards')} />}
 
-        {isLoading ? (
-          <LoadingSpinner message="Loading boards..." />
-        ) : (
+        {isLoading ? <LoadingSpinner message="Loading boards..." /> : (
           <>
-            {/* Boards Grid */}
-            <div className="boards-container">
-              {boards.length > 0 ? (
-                <div className="boards-grid">
-                  {boards.map((board, index) => (
-                    <div
-                      key={board.board_id}
-                      onClick={() => handleSelectBoard(board)}
-                      className={`board-tile ${
-                        selectedBoard?.board_id === board.board_id ? 'selected' : ''
-                      }`}
+            {boards.length > 0 ? (
+              <div style={s.grid}>
+                {boards.map((board, idx) => {
+                  const sel = selectedBoard?.board_id === board.board_id;
+                  return (
+                    <div key={board.board_id} onClick={() => setSelectedBoard(board)}
                       style={{
-                        animationDelay: `${index * 0.1}s`,
-                      }}
-                    >
-                      <div className="tile-inner">
-                        <div className="tile-icon-wrapper">
-                          <i className={`ti ${boardIcons.default}`}></i>
-                        </div>
-                        <h3 className="tile-name">{board.board_name}</h3>
-                        <p className="tile-hint">Click to select</p>
-                        
-                        {selectedBoard?.board_id === board.board_id && (
-                          <div className="tile-badge">
-                            <i className="ti ti-check"></i>
-                          </div>
-                        )}
+                        ...s.card,
+                        border: sel ? '2.5px solid #2196f3' : '2px solid #e2e8f0',
+                        background: sel ? 'linear-gradient(135deg,#e3f2fd,#dbeafe)' : 'white',
+                        boxShadow: sel ? '0 8px 28px rgba(33,150,243,0.2)' : '0 2px 10px rgba(0,0,0,0.06)',
+                        transform: sel ? 'translateY(-4px)' : 'none',
+                      }}>
+                      {/* Icon */}
+                      <div style={{
+                        ...s.iconBox,
+                        background: sel ? 'linear-gradient(135deg,#2196f3,#1565c0)' : 'linear-gradient(135deg,#e3f2fd,#bfdbfe)',
+                      }}>
+                        <i className="ti ti-school" style={{ fontSize: '28px', color: sel ? 'white' : '#2196f3' }}></i>
                       </div>
-                      <div className="tile-overlay"></div>
+                      <h3 style={{ ...s.cardTitle, color: sel ? '#1565c0' : '#0f172a' }}>{board.board_name}</h3>
+                      <p style={{ ...s.cardHint, color: sel ? '#1976d2' : '#94a3b8' }}>
+                        {sel ? '✓ Selected' : 'Tap to select'}
+                      </p>
+                      {sel && (
+                        <div style={s.checkBadge}>
+                          <i className="ti ti-check" style={{ fontSize: '14px' }}></i>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <div className="empty-icon">
-                    <i className="ti ti-inbox"></i>
-                  </div>
-                  <p className="empty-text">No boards available</p>
-                </div>
-              )}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={s.empty}>
+                <i className="ti ti-inbox" style={{ fontSize: '56px', opacity: 0.15, display: 'block', marginBottom: '12px' }}></i>
+                <p style={{ margin: 0, color: '#94a3b8' }}>No boards available</p>
+              </div>
+            )}
 
-            {/* Action Footer */}
-            <div className="step-actions">
-              <button disabled className="btn btn-ghost">
-                <i className="ti ti-arrow-left"></i>
-                <span>Back</span>
+            <div style={s.actions}>
+              <button disabled style={s.btnGhost}>
+                <i className="ti ti-arrow-left"></i> Back
               </button>
-              <button
-                onClick={handleNext}
-                disabled={!selectedBoard || isLoading}
-                className={`btn btn-primary ${!selectedBoard || isLoading ? 'disabled' : ''}`}
-              >
-                <span>Next</span>
-                <i className="ti ti-arrow-right"></i>
+              <button onClick={handleNext} disabled={!selectedBoard || isLoading}
+                style={{ ...s.btnPrimary, opacity: !selectedBoard || isLoading ? 0.5 : 1 }}>
+                Next <i className="ti ti-arrow-right"></i>
               </button>
             </div>
           </>
         )}
       </div>
-
-      <style jsx>{`
-        .step-page {
-          min-height: 100vh;
-          background: linear-gradient(135deg, #f5f7fa 0%, #f0f4f8 100%);
-          padding: 40px 20px;
-        }
-
-        .step-header-section {
-          max-width: 1200px;
-          margin: 0 auto 50px;
-        }
-
-        .step-header-content {
-          text-align: center;
-        }
-
-        .step-heading {
-          font-size: 42px;
-          font-weight: 700;
-          color: #1a1a1a;
-          margin: 0 0 16px 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 16px;
-          letter-spacing: -0.5px;
-        }
-
-        .step-number {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 56px;
-          height: 56px;
-          background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
-          color: white;
-          border-radius: 50%;
-          font-size: 24px;
-          font-weight: 600;
-        }
-
-        .step-description {
-          font-size: 16px;
-          color: #666;
-          max-width: 600px;
-          margin: 0 auto;
-          line-height: 1.6;
-        }
-
-        .step-content {
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-
-        .boards-container {
-          margin-bottom: 50px;
-        }
-
-        .boards-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-          gap: 28px;
-          margin-bottom: 40px;
-        }
-
-        .board-tile {
-          position: relative;
-          cursor: pointer;
-          animation: fadeInUp 0.6s ease forwards;
-          opacity: 0;
-        }
-
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .tile-inner {
-          position: relative;
-          background: white;
-          border-radius: 16px;
-          padding: 40px 28px;
-          text-align: center;
-          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-          border: 2px solid transparent;
-          z-index: 2;
-        }
-
-        .board-tile:hover .tile-inner {
-          transform: translateY(-8px);
-          border-color: #2196f3;
-          box-shadow: 0 20px 40px rgba(33, 150, 243, 0.15);
-        }
-
-        .board-tile.selected .tile-inner {
-          background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
-          border-color: #2196f3;
-          box-shadow: 0 12px 32px rgba(33, 150, 243, 0.2);
-        }
-
-        .tile-overlay {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, rgba(33, 150, 243, 0.05) 0%, rgba(33, 150, 243, 0) 100%);
-          border-radius: 16px;
-          pointer-events: none;
-        }
-
-        .tile-icon-wrapper {
-          width: 80px;
-          height: 80px;
-          background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto 24px;
-          font-size: 40px;
-          color: white;
-          transition: all 0.4s ease;
-        }
-
-        .board-tile:hover .tile-icon-wrapper {
-          transform: scale(1.1);
-          box-shadow: 0 12px 28px rgba(33, 150, 243, 0.3);
-        }
-
-        .tile-name {
-          font-size: 18px;
-          font-weight: 600;
-          color: #1a1a1a;
-          margin: 0 0 8px 0;
-          word-break: break-word;
-        }
-
-        .tile-hint {
-          font-size: 13px;
-          color: #999;
-          margin: 0;
-          font-weight: 500;
-        }
-
-        .tile-badge {
-          position: absolute;
-          top: -12px;
-          right: -12px;
-          width: 44px;
-          height: 44px;
-          background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          font-size: 22px;
-          box-shadow: 0 6px 16px rgba(76, 175, 80, 0.3);
-          animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes scaleIn {
-          from {
-            transform: scale(0);
-          }
-          to {
-            transform: scale(1);
-          }
-        }
-
-        .empty-state {
-          text-align: center;
-          padding: 80px 20px;
-          color: #999;
-        }
-
-        .empty-icon {
-          font-size: 80px;
-          margin-bottom: 24px;
-          opacity: 0.2;
-          display: block;
-        }
-
-        .empty-text {
-          font-size: 16px;
-          margin: 0;
-        }
-
-        .step-actions {
-          display: flex;
-          justify-content: space-between;
-          gap: 16px;
-          padding-top: 30px;
-          border-top: 1px solid rgba(0, 0, 0, 0.08);
-        }
-
-        .btn {
-          padding: 14px 28px;
-          font-size: 15px;
-          font-weight: 600;
-          border: none;
-          border-radius: 10px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          text-transform: capitalize;
-        }
-
-        .btn i {
-          font-size: 18px;
-        }
-
-        .btn-primary {
-          background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
-          color: white;
-          box-shadow: 0 6px 20px rgba(33, 150, 243, 0.3);
-        }
-
-        .btn-primary:hover:not(.disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 30px rgba(33, 150, 243, 0.4);
-        }
-
-        .btn-primary:active:not(.disabled) {
-          transform: translateY(0);
-        }
-
-        .btn-ghost {
-          background: transparent;
-          color: #999;
-          border: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-ghost:hover:not(.disabled) {
-          background: white;
-          border-color: rgba(0, 0, 0, 0.2);
-        }
-
-        .btn.disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        @media (max-width: 768px) {
-          .step-page {
-            padding: 24px 16px;
-          }
-
-          .step-heading {
-            font-size: 28px;
-            gap: 12px;
-            flex-direction: column;
-          }
-
-          .step-number {
-            width: 48px;
-            height: 48px;
-            font-size: 20px;
-          }
-
-          .step-description {
-            font-size: 14px;
-          }
-
-          .boards-grid {
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-          }
-
-          .tile-inner {
-            padding: 32px 20px;
-          }
-
-          .tile-icon-wrapper {
-            width: 64px;
-            height: 64px;
-            font-size: 32px;
-          }
-
-          .tile-name {
-            font-size: 16px;
-          }
-
-          .step-actions {
-            flex-direction: column;
-            gap: 12px;
-          }
-
-          .btn {
-            width: 100%;
-            justify-content: center;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .step-heading {
-            font-size: 22px;
-          }
-
-          .boards-grid {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
     </div>
   );
 }
+
+const s = {
+  page: {
+    minHeight: '100vh',
+    background: 'linear-gradient(135deg,#f0f4f8 0%,#e8eef5 100%)',
+    padding: '24px 20px 48px',
+    fontFamily: "'Segoe UI',system-ui,sans-serif",
+  },
+  logoBox: {
+    position: 'fixed', top: '12px', left: '16px', zIndex: 200,
+    background: 'white', borderRadius: '12px', padding: '6px 14px',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.10)', cursor: 'pointer',
+    display: 'flex', alignItems: 'center',
+  },
+  logoImg: { height: '100px', width: 'auto', objectFit: 'contain', display: 'block' },
+  header: { maxWidth: '900px', margin: '72px auto 32px', textAlign: 'center' },
+  badge: {
+    display: 'inline-flex', alignItems: 'center', padding: '5px 18px',
+    background: 'linear-gradient(135deg,#2196f3,#1565c0)', color: 'white',
+    borderRadius: '20px', fontSize: '12px', fontWeight: '700', letterSpacing: '0.5px',
+    marginBottom: '16px',
+  },
+  title: {
+    fontSize: 'clamp(22px,5vw,38px)', fontWeight: '800', color: '#0f172a',
+    margin: '0 0 10px', display: 'flex', alignItems: 'center',
+    justifyContent: 'center', gap: '12px', letterSpacing: '-0.5px', flexWrap: 'wrap',
+  },
+  num: {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    width: '50px', height: '50px', background: 'linear-gradient(135deg,#2196f3,#1565c0)',
+    color: 'white', borderRadius: '50%', fontSize: '20px', fontWeight: '800', flexShrink: 0,
+  },
+  sub: { fontSize: '15px', color: '#64748b', margin: '0 auto', maxWidth: '480px', lineHeight: '1.7' },
+  content: { maxWidth: '900px', margin: '0 auto' },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+    gap: '18px',
+    marginBottom: '32px',
+  },
+  card: {
+    position: 'relative', borderRadius: '18px', padding: '32px 20px 24px',
+    textAlign: 'center', cursor: 'pointer',
+    transition: 'all 0.25s cubic-bezier(0.34,1.56,0.64,1)',
+    WebkitTapHighlightColor: 'transparent',
+  },
+  iconBox: {
+    width: '64px', height: '64px', borderRadius: '18px',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    margin: '0 auto 16px', transition: 'all 0.25s ease',
+  },
+  cardTitle: { fontSize: '16px', fontWeight: '700', margin: '0 0 6px' },
+  cardHint: { fontSize: '12px', margin: 0, fontWeight: '500' },
+  checkBadge: {
+    position: 'absolute', top: '-10px', right: '-10px',
+    width: '28px', height: '28px',
+    background: 'linear-gradient(135deg,#22c55e,#16a34a)',
+    borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    color: 'white', boxShadow: '0 3px 10px rgba(34,197,94,0.4)',
+  },
+  empty: { textAlign: 'center', padding: '60px 20px' },
+  actions: {
+    display: 'flex', justifyContent: 'space-between', gap: '12px',
+    paddingTop: '24px', borderTop: '1px solid #e2e8f0',
+  },
+  btnPrimary: {
+    padding: '13px 32px', fontSize: '14px', fontWeight: '700',
+    background: 'linear-gradient(135deg,#2196f3,#1565c0)', color: 'white',
+    border: 'none', borderRadius: '12px', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', gap: '8px',
+    boxShadow: '0 4px 16px rgba(33,150,243,0.35)', minHeight: '48px',
+    fontFamily: 'inherit',
+  },
+  btnGhost: {
+    padding: '13px 32px', fontSize: '14px', fontWeight: '700',
+    background: 'white', color: '#94a3b8',
+    border: '1px solid #e2e8f0', borderRadius: '12px', cursor: 'not-allowed',
+    display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.5, minHeight: '48px',
+    fontFamily: 'inherit',
+  },
+};
