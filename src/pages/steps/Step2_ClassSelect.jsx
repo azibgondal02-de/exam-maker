@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorAlert from '../../components/ErrorAlert';
-import logo from '../../assets/logo1.png';
+import logo from '../../assets/logo.png';
 
 const classPalette = [
   { bg: '#e3f2fd', border: '#2196f3', icon: '#1565c0' },
@@ -36,11 +36,9 @@ export default function Step2ClassSelect() {
     <div className="page">
       {/* Logo - click to go home */}
       <div onClick={() => window.location.href = '/test-maker/step-1'}
-        style={{ position: 'fixed', top: '12px', left: '16px', zIndex: 200, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '6px 12px', background: 'linear-gradient(135deg, #2563eb, #7c3aed)', borderRadius: '10px', boxShadow: '0 2px 12px rgba(37,99,235,0.3)' }}>
-        <i className="ti ti-book" style={{ fontSize: '16px', color: 'white' }} />
-        <span style={{ fontWeight: '800', fontSize: '13px', color: 'white', letterSpacing: '0.5px' }}>TM</span>
+        style={{ position: 'fixed', top: '-40px', left: '50px', zIndex: 200, cursor: 'pointer' }}>
+        <img src={logo} alt="Logo" style={{ height: '245px', width: '200px', objectFit: 'contain' }} />
       </div>
-
 
       <div className="blob blob1" /><div className="blob blob2" />
 

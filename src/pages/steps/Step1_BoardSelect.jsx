@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorAlert from '../../components/ErrorAlert';
-import logo from '../../assets/logo1.png';
+import logo from '../../assets/logo.png';
 
 export default function Step1BoardSelect() {
   const { boards, selectedBoard, isLoading, errors, loadBoards, setSelectedBoard, clearError } = useTestMaker();
@@ -19,8 +19,9 @@ export default function Step1BoardSelect() {
     <div style={s.page}>
 
       {/* Logo */}
-      <div style={s.logoBox} onClick={() => window.location.href = '/test-maker/step-1'}>
-        <img src={logo} alt="PaperCraft" style={s.logoImg} />
+      <div onClick={() => window.location.href = '/test-maker/step-1'}
+        style={{ position: 'fixed', top: '-40px', left: '50px', zIndex: 200, cursor: 'pointer' }}>
+        <img src={logo} alt="Logo" style={{ height: '245px', width: '200px', objectFit: 'contain' }} />
       </div>
 
       {/* Header */}
@@ -102,13 +103,30 @@ const s = {
     padding: '24px 20px 48px',
     fontFamily: "'Segoe UI',system-ui,sans-serif",
   },
-  logoBox: {
-    position: 'fixed', top: '12px', left: '16px', zIndex: 200,
-    background: 'white', borderRadius: '12px', padding: '6px 14px',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.10)', cursor: 'pointer',
-    display: 'flex', alignItems: 'center',
-  },
-  logoImg: { height: '100px', width: 'auto', objectFit: 'contain', display: 'block' },
+  // logoBox: {
+  //   position: 'fixed', 
+  //   top: '20px', 
+  //   left: '24px', 
+  //   zIndex: 200,
+  //   background: 'white',
+  //   borderRadius: '12px',
+  //   padding: '8px 16px',
+  //   boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+  //   cursor: 'pointer',
+  //   display: 'flex', 
+  //   alignItems: 'center',
+  //   transition: 'all 0.2s ease',
+  //   ':hover': {
+  //     transform: 'translateY(-2px)',
+  //     boxShadow: '0 4px 16px rgba(0,0,0,0.12)'
+  //   }
+  // },
+  // logoImg: { 
+  //   height: '35px', 
+  //   width: 'auto', 
+  //   objectFit: 'contain', 
+  //   display: 'block' 
+  // },
   header: { maxWidth: '900px', margin: '72px auto 32px', textAlign: 'center' },
   badge: {
     display: 'inline-flex', alignItems: 'center', padding: '5px 18px',

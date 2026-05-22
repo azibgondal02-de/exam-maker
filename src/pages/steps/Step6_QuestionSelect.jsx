@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useTestMaker } from '../../hooks/useTestMaker';
-import logo from '../../assets/logo1.png';
+import logo from '../../assets/logo.png';
 
 const IMAGE_BASE = 'https://testmaker.pk';
 

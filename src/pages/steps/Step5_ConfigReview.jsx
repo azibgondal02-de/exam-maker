@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
+import logo from '../../assets/logo.png';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorAlert from '../../components/ErrorAlert';
@@ -695,6 +696,10 @@ export default function Step5ConfigReview() {
 
   return (
     <div className="step-page">
+      <div onClick={() => window.location.href = '/test-maker/step-1'}
+        style={{ position: 'fixed', top: '-40px', left: '50px', zIndex: 200, cursor: 'pointer' }}>
+        <img src={logo} alt="Logo" style={{ height: '245px', width: '200px', objectFit: 'contain' }} />
+      </div>
       {/* Header */}
       <div style={{ maxWidth: '1100px', width: '100%', margin: '0 auto 24px', textAlign: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '16px', fontSize: '13px', color: '#999' }}>
