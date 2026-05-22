@@ -1,7 +1,5 @@
 import React from 'react';
 import { useTestMaker } from '../hooks/useTestMaker';
-import ProgressBar from '../components/ProgressBar';
-import Sidebar from '../components/Sidebar';
 
 import Step1BoardSelect from './steps/Step1_BoardSelect';
 import Step2ClassSelect from './steps/Step2_ClassSelect';
@@ -22,37 +20,13 @@ const stepComponents = {
 export default function TestMaker() {
   const {
     currentStep,
-    selectedBoard,
-    selectedClass,
-    selectedSubject,
-    selectedTopics,
-    goToStep,
   } = useTestMaker();
 
   const StepComponent = stepComponents[currentStep];
 
-  const sidebarSelections = {
-    board: selectedBoard,
-    class: selectedClass,
-    subject: selectedSubject,
-    topics: selectedTopics,
-  };
-
-  const handleEditSection = (section) => {
-    const stepMap = {
-      board: 1,
-      class: 2,
-      subject: 3,
-      topics: 4,
-    };
-    goToStep(stepMap[section]);
-  };
-
   return (
     <div className="test-maker-layout">
-
       <div className="test-maker-content">
-
         <main className="test-maker-main">
           <StepComponent />
         </main>
