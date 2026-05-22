@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import logo from '../../assets/logo.png';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import ProfileMenu from '../../components/ProfileMenu';
 import ErrorAlert from '../../components/ErrorAlert';
 
 export default function Step4TopicSelect() {
@@ -90,6 +91,7 @@ export default function Step4TopicSelect() {
         <img src={logo} alt="Logo" style={{ height: '245px', width: '200px', objectFit: 'contain' }} />
       </div>
 
+      <ProfileMenu/>
 
       <div className="blob blob1" /><div className="blob blob2" />
 

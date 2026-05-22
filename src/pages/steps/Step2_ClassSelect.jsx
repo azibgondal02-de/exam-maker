@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorAlert from '../../components/ErrorAlert';
+import ProfileMenu from '../../components/ProfileMenu';
 import logo from '../../assets/logo.png';
 
 const classPalette = [
@@ -39,6 +40,9 @@ export default function Step2ClassSelect() {
         style={{ position: 'fixed', top: '-40px', left: '50px', zIndex: 200, cursor: 'pointer' }}>
         <img src={logo} alt="Logo" style={{ height: '245px', width: '200px', objectFit: 'contain' }} />
       </div>
+
+      {/* Profile Button */}
+      <ProfileMenu />
 
       <div className="blob blob1" /><div className="blob blob2" />
 

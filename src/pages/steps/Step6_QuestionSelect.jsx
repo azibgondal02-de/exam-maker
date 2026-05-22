@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useTestMaker } from '../../hooks/useTestMaker';
+import ProfileMenu from '../../components/ProfileMenu';
 import logo from '../../assets/logo.png';
 
 const IMAGE_BASE = 'https://testmaker.pk';
@@ -316,15 +317,15 @@ function PaperPreview({ paper, medium, schoolName, subject, className, editMode,
             <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td(), ...eStyle }}>{subject || ''}</td>
             <td style={th()}>Date:</td>
             <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td(), ...eStyle }}></td>
-            <td style={th()}>Marks:</td>
+            <td style={th()}>Total Marks:</td>
             <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td(), ...eStyle }}>{totalMarks}</td>
           </tr>
           <tr>
             <td style={th()}>Time:</td>
             <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td(), ...eStyle }}>{examTime || ''}</td>
-            <td style={th()}>Type:</td>
+            <td style={th()}>Exam Type:</td>
             <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td(), ...eStyle }}>{examType || ''}</td>
-            <td style={th()}>P.Time:</td>
+            <td style={th()}>Teacher Name:</td>
             <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td(), ...eStyle }}></td>
           </tr>
         </tbody>
@@ -553,6 +554,8 @@ export default function Step6QuestionSelect() {
             💡 Answers {showAnswers ? 'ON' : 'OFF'}
           </button>
         </div>
+
+        <ProfileMenu/>
 
         {/* Row 2: Settings with labels */}
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px', flexWrap: 'wrap' }}>

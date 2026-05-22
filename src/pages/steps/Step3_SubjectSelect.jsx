@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import logo from '../../assets/logo.png';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import ProfileMenu from '../../components/ProfileMenu';
 import ErrorAlert from '../../components/ErrorAlert';
 
 export default function Step3SubjectSelect() {
@@ -88,6 +89,8 @@ export default function Step3SubjectSelect() {
         style={{ position: 'fixed', top: '-40px', left: '50px', zIndex: 200, cursor: 'pointer' }}>
         <img src={logo} alt="Logo" style={{ height: '245px', width: '200px', objectFit: 'contain' }} />
       </div>
+
+      <ProfileMenu />
 
 
       <div className="blob blob1" /><div className="blob blob2" />
