@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import logo from '../assets/logo.png';
 import ProfileMenu from '../components/ProfileMenu';
 
-const API = 'http://localhost:8000';
+import API_BASE_URL  from '../services/config';
+const API = API_BASE_URL
 
 export default function ChangePasswordPage() {
   const [form, setForm] = useState({ previous_password: '', new_password: '', confirm_password: '' });

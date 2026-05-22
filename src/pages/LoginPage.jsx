@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 
 const WA_NUMBER = '923040427647';
-
+import API_BASE_URL  from '../services/config';
+const API = API_BASE_URL
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,7 +16,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/identity/login', {
+      const response = await fetch(`${API_BASE_URL}/identity/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: email, password: password }),

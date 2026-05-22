@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import logo from '../assets/logo.png';
 
-const API = 'http://localhost:8000';
+import API_BASE_URL  from '../services/config';
+const API = API_BASE_URL
 const WA_NUMBER = '923040427647';
 
 const PROVINCES = ['Punjab', 'Sindh', 'KPK', 'Balochistan', 'Gilgit-Baltistan', 'AJK', 'Islamabad'];
