@@ -179,7 +179,7 @@ function buildPayload(step5Config, chaptersFromState) {
 }
 
 // ── MCQOption: re-renders when medium changes (fix language bug) ──
-function MCQOption({ opt, medium, editMode, letter, showAnswers }) {
+function MCQOption({ opt, medium, editMode, letter, showAnswers, enFont, urFont, fontSize }) {
   const enRef = useRef(null);
   const urRef = useRef(null);
 
@@ -191,37 +191,39 @@ function MCQOption({ opt, medium, editMode, letter, showAnswers }) {
   const isCorrect = showAnswers && opt.is_correct;
   const eStyle = editMode ? { outline: '1px dashed #2563eb', padding: '1px 3px', borderRadius: '3px', background: '#f0f7ff' } : {};
   const answerStyle = isCorrect ? { background: '#dcfce7', borderRadius: '4px', padding: '1px 6px', fontWeight: '700', color: '#15803d' } : {};
+  // MCQ options scale slightly smaller than main question font (1px less, min 10px)
+  const optFontSize = Math.max((fontSize || 13) - 1, 10);
 
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', fontSize: '12px', ...answerStyle }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', fontSize: optFontSize + 'px', ...answerStyle }}>
       <span style={{ fontWeight: '600', flexShrink: 0 }}>{letter})</span>
       <span style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         {(medium === 'en' || medium === 'both') && (
-          <span ref={enRef} contentEditable={editMode} suppressContentEditableWarning style={eStyle} />
+          <span ref={enRef} contentEditable={editMode} suppressContentEditableWarning style={{ ...eStyle, fontFamily: enFont, fontSize: optFontSize + 'px' }} />
         )}
         {(medium === 'ur' || medium === 'both') && opt.option_ur && (
-          <span ref={urRef} contentEditable={editMode} suppressContentEditableWarning style={{ ...eStyle, direction: 'rtl' }} />
+          <span ref={urRef} contentEditable={editMode} suppressContentEditableWarning style={{ ...eStyle, direction: 'rtl', fontFamily: urFont, fontSize: optFontSize + 'px' }} />
         )}
       </span>
     </div>
   );
 }
 
-function MCQOptions({ options, medium, editMode, showAnswers }) {
+function MCQOptions({ options, medium, editMode, showAnswers, enFont, urFont, fontSize }) {
   if (!options || options.length === 0) return null;
   const letters = ['a', 'b', 'c', 'd', 'e'];
   const cols = options.length <= 4 ? 4 : 2;
   return (
     <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '4px 16px', marginTop: '6px' }}>
       {options.map((opt, i) => (
-        <MCQOption key={opt.option_id} opt={opt} medium={medium} editMode={editMode} letter={letters[i]} showAnswers={showAnswers} />
+        <MCQOption key={opt.option_id} opt={opt} medium={medium} editMode={editMode} letter={letters[i]} showAnswers={showAnswers} enFont={enFont} urFont={urFont} fontSize={fontSize} />
       ))}
     </div>
   );
 }
 
 // ── QuestionItem: re-renders when medium changes (fix language bug) ──
-function QuestionItem({ q, index, showNumber = true, medium, editMode, showAnswers, enFont, urFont }) {
+function QuestionItem({ q, index, showNumber = true, medium, editMode, showAnswers, enFont, urFont, fontSize }) {
   const stEn = [q.statement_en, q.description_en].filter(Boolean).join(' ');
   const stUr = [q.statement_ur, q.description_ur].filter(Boolean).join(' ');
   const enRef = useRef(null);
@@ -251,7 +253,7 @@ function QuestionItem({ q, index, showNumber = true, medium, editMode, showAnswe
               <span ref={urRef} contentEditable={editMode} suppressContentEditableWarning style={eStyle({ flex: 1, minWidth: '200px', direction: 'rtl', textAlign: 'right', fontFamily: urFont, color: '#000' })} />
             )}
           </div>
-          {q.options && q.options.length > 0 && <MCQOptions options={q.options} medium={medium} editMode={editMode} showAnswers={showAnswers} />}
+          {q.options && q.options.length > 0 && <MCQOptions options={q.options} medium={medium} editMode={editMode} showAnswers={showAnswers} enFont={enFont} urFont={urFont} fontSize={fontSize} />}
         </div>
       </div>
     </div>
@@ -356,7 +358,7 @@ function PaperPreview({ paper, medium, schoolName, subject, className, editMode,
                         <div key={q.question_id} style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
                           {group.part_id && <span style={{ fontWeight: '600', flexShrink: 0 }}>{String.fromCharCode(96 + pi + 1)})</span>}
                           <div style={{ flex: 1 }}>
-                            <QuestionItem q={q} showNumber={false} medium={medium} editMode={editMode} showAnswers={showAnswers} enFont={enFont} urFont={urFont} />
+                            <QuestionItem q={q} showNumber={false} medium={medium} editMode={editMode} showAnswers={showAnswers} enFont={enFont} urFont={urFont} fontSize={fs} />
                           </div>
                         </div>
                       ))}
@@ -381,7 +383,7 @@ function PaperPreview({ paper, medium, schoolName, subject, className, editMode,
                       </span>
                     </div>
                     {group.questions?.map((q, qi) => (
-                      <QuestionItem key={q.question_id} q={q} index={qi + 1} medium={medium} editMode={editMode} showAnswers={showAnswers} enFont={enFont} urFont={urFont} />
+                      <QuestionItem key={q.question_id} q={q} index={qi + 1} medium={medium} editMode={editMode} showAnswers={showAnswers} enFont={enFont} urFont={urFont} fontSize={fs} />
                     ))}
                   </div>
                 );
@@ -400,7 +402,7 @@ export default function Step6QuestionSelect() {
   const [error, setError] = useState('');
   const [paper, setPaper] = useState(null);
   const [medium, setMedium] = useState('both');
-  const [schoolName, setSchoolName] = useState('');
+  const [schoolName, setSchoolName] = useState(() => localStorage.getItem('school_name') || '');
   const [editMode, setEditMode] = useState(false);
   const [fontSize, setFontSize] = useState(13);
   const [showAnswers, setShowAnswers] = useState(false);
@@ -415,9 +417,9 @@ export default function Step6QuestionSelect() {
 
   useEffect(() => {
     generatePaperFromConfig();
-    // Load Urdu font
+    // Load Urdu fonts (famous ones from Google Fonts)
     const link = document.createElement('link');
-    link.href = 'https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap';
+    link.href = 'https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600;700&family=Gulzar&family=Amiri:wght@400;700&family=Scheherazade+New:wght@400;700&display=swap';
     link.rel = 'stylesheet';
     document.head.appendChild(link);
   }, []);
@@ -484,13 +486,23 @@ export default function Step6QuestionSelect() {
       th.style.backgroundColor = '#1a1a2e';
     });
     
+    // Extract clean font-family names for Google Fonts URL
+    const extractFontName = (fontStr) => {
+      const match = fontStr.match(/'([^']+)'/);
+      return match ? match[1] : fontStr.split(',')[0].trim().replace(/['"]/g, '');
+    };
+    const enFontName = extractFontName(fontFamily);
+    const urFontName = extractFontName(urduFont);
+    const googleFontsUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(enFontName).replace(/%20/g, '+')}:wght@400;700&family=${encodeURIComponent(urFontName).replace(/%20/g, '+')}:wght@400;700&display=swap`;
+    
     const w = window.open('', '_blank');
     w.document.write(`<html><head><title>Paper</title>
+      <link href="${googleFontsUrl}" rel="stylesheet">
       <style>
         body {
           margin: 0;
           padding: 20px;
-          font-family: 'Times New Roman', serif;
+          font-family: ${fontFamily};
           font-size: ${fontSize}px;
           color: #000000 !important;
           background: white;
@@ -519,7 +531,8 @@ export default function Step6QuestionSelect() {
     </head><body>${clone.innerHTML}</body></html>`);
     w.document.close();
     w.focus();
-    setTimeout(() => { w.print(); w.close(); }, 500);
+    // Wait longer for fonts to load before printing
+    setTimeout(() => { w.print(); w.close(); }, 1000);
   };
 
   if (loading) return (
@@ -580,13 +593,26 @@ export default function Step6QuestionSelect() {
                 <option value="ur">Urdu Only</option>
               </select>
             )},
-            { label: 'Font', el: (
+            { label: 'English Font', el: (
               <select value={fontFamily} onChange={e => setFontFamily(e.target.value)} style={selStyle}>
                 <option value="'Times New Roman', Times, serif">Times New Roman</option>
                 <option value="'Arial', sans-serif">Arial</option>
                 <option value="'Georgia', serif">Georgia</option>
                 <option value="'Courier New', monospace">Courier New</option>
-                <option value="'Noto Nastaliq Urdu', serif">Noto Nastaliq (UR)</option>
+                <option value="'Verdana', sans-serif">Verdana</option>
+                <option value="'Tahoma', sans-serif">Tahoma</option>
+                <option value="'Calibri', sans-serif">Calibri</option>
+                <option value="'Cambria', serif">Cambria</option>
+              </select>
+            )},
+            { label: 'Urdu Font', el: (
+              <select value={urduFont} onChange={e => setUrduFont(e.target.value)} style={selStyle}>
+                <option value="'Noto Nastaliq Urdu', serif">Noto Nastaliq Urdu</option>
+                <option value="'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif">Jameel Noori Nastaleeq</option>
+                <option value="'Alvi Nastaleeq', 'Noto Nastaliq Urdu', serif">Alvi Nastaleeq</option>
+                <option value="'Gulzar', 'Noto Nastaliq Urdu', serif">Gulzar</option>
+                <option value="'Amiri', serif">Amiri</option>
+                <option value="'Scheherazade New', serif">Scheherazade New</option>
               </select>
             )},
             { label: 'Font Size', el: (
@@ -628,6 +654,7 @@ export default function Step6QuestionSelect() {
               editMode={editMode} fontSize={fontSize}
               showAnswers={showAnswers} examTime={examTime}
               examType={examType} fontFamily={fontFamily}
+              urduFont={urduFont}
             />
           </div>
         </div>
