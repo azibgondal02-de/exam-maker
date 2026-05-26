@@ -66,7 +66,7 @@ function cleanSectionTitle(title) {
 }
 
 function buildPayload(step5Config, chaptersFromState) {
-  const { sections, sectionRows, longBlocks } = step5Config;
+  const { sections, sectionRows, longBlocks, longSectionChoices } = step5Config;
   const subjectId = parseInt(localStorage.getItem('subject_id') || '0');
   let chapters = chaptersFromState;
   if (!chapters || chapters.length === 0) {
@@ -98,10 +98,13 @@ function buildPayload(step5Config, chaptersFromState) {
     const blocks = longBlocks[section.key] || [];
 
     if (isLong) {
+      // Section-level choice: applies to ALL long questions in this section
+      const sectionChoiceCount = parseInt((longSectionChoices || {})[section.key]) || 0;
+      const totalBlocks = blocks.length;
+      const sectionHasChoice = sectionChoiceCount > 0 && sectionChoiceCount < totalBlocks;
       const sectionQuestions = [];
       blocks.forEach((block, bi) => {
         const parts = section.config?.parts || ['A', 'B'];
-        const choiceCount = parseInt(block.choice) || 0;
         const groupName = `Group ${String.fromCharCode(65 + bi)}`;
         parts.forEach(part => {
           const partData = block.parts?.[part] || {};
@@ -123,7 +126,7 @@ function buildPayload(step5Config, chaptersFromState) {
               count: count || 1, marks_per_question: marks,
               selected_question_ids: isRandom ? [] : pickedIds,
               topics, chapter_ids: chapterIds,
-              has_choice: choiceCount > 0, choice_count: choiceCount,
+              has_choice: sectionHasChoice, choice_count: sectionHasChoice ? sectionChoiceCount : 0,
               part_id: part, group_name: groupName,
             });
           }
@@ -194,15 +197,27 @@ function MCQOption({ opt, medium, editMode, letter, showAnswers, enFont, urFont,
   // MCQ options scale slightly smaller than main question font (1px less, min 10px)
   const optFontSize = Math.max((fontSize || 13) - 1, 10);
 
+  // Effective per-option direction: RTL when only Urdu visible OR user picked Urdu Only
+  const stripped = (s) => (s || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
+  const hasEn = stripped(opt.option_en) !== '';
+  const hasUr = stripped(opt.option_ur) !== '';
+  const showEn = (medium === 'en' || medium === 'both') && hasEn;
+  const showUr = (medium === 'ur' || medium === 'both') && hasUr;
+  const isRTL = (showUr && !showEn) || (medium === 'ur');
+
+  // For Urdu: format is "text (letter" so letter appears to the right after the text when read RTL
+  // For English: format is "letter) text" so letter appears before the text
+  const letterMark = isRTL ? `(${letter}` : `${letter})`;
+
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', fontSize: optFontSize + 'px', ...answerStyle }}>
-      <span style={{ fontWeight: '600', flexShrink: 0 }}>{letter})</span>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', fontSize: optFontSize + 'px', direction: isRTL ? 'rtl' : 'ltr', ...answerStyle }}>
+      <span style={{ fontWeight: '600', flexShrink: 0, fontFamily: enFont, direction: 'ltr', unicodeBidi: 'isolate' }}>{letterMark}</span>
       <span style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-        {(medium === 'en' || medium === 'both') && (
+        {showEn && (
           <span ref={enRef} contentEditable={editMode} suppressContentEditableWarning style={{ ...eStyle, fontFamily: enFont, fontSize: optFontSize + 'px' }} />
         )}
-        {(medium === 'ur' || medium === 'both') && opt.option_ur && (
-          <span ref={urRef} contentEditable={editMode} suppressContentEditableWarning style={{ ...eStyle, direction: 'rtl', fontFamily: urFont, fontSize: optFontSize + 'px' }} />
+        {showUr && (
+          <span ref={urRef} contentEditable={editMode} suppressContentEditableWarning style={{ ...eStyle, direction: 'rtl', textAlign: 'right', fontFamily: urFont, fontSize: optFontSize + 'px' }} />
         )}
       </span>
     </div>
@@ -213,10 +228,155 @@ function MCQOptions({ options, medium, editMode, showAnswers, enFont, urFont, fo
   if (!options || options.length === 0) return null;
   const letters = ['a', 'b', 'c', 'd', 'e'];
   const cols = options.length <= 4 ? 4 : 2;
+
+  // For Urdu, reverse the visual order so option 'a' lands at the RIGHT and 'd' at the LEFT.
+  // Urdu reader scans right-to-left and hits a → b → c → d in natural order.
+  // We keep the original letter assignment per option (option index 0 is still 'a') and only flip column placement.
+  const stripped = (s) => (s || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
+  const anyEn = options.some(o => stripped(o.option_en) !== '');
+  const anyUr = options.some(o => stripped(o.option_ur) !== '');
+  const reverseOrder = (medium === 'ur') || (medium === 'both' && anyUr && !anyEn);
+
+  const renderOrder = reverseOrder
+    ? options.map((opt, i) => ({ opt, letter: letters[i] })).reverse()
+    : options.map((opt, i) => ({ opt, letter: letters[i] }));
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '4px 16px', marginTop: '6px' }}>
-      {options.map((opt, i) => (
-        <MCQOption key={opt.option_id} opt={opt} medium={medium} editMode={editMode} letter={letters[i]} showAnswers={showAnswers} enFont={enFont} urFont={urFont} fontSize={fontSize} />
+      {renderOrder.map(({ opt, letter }) => (
+        <MCQOption key={opt.option_id} opt={opt} medium={medium} editMode={editMode} letter={letter} showAnswers={showAnswers} enFont={enFont} urFont={urFont} fontSize={fontSize} />
+      ))}
+    </div>
+  );
+}
+
+// ── ParagraphSubQuestion: one sub-question with horizontal option boxes ──
+function ParagraphSubQuestion({ sub, num, medium, editMode, showAnswers, enFont, urFont, fontSize }) {
+  const stEnRef = useRef(null);
+  const stUrRef = useRef(null);
+  const optEnRefs = useRef({});
+  const optUrRefs = useRef({});
+
+  // Filter out completely empty options (some entries have blank trailing slots)
+  const visibleOptions = (sub.options || []).filter(o => {
+    const en = (o.name_en || '').trim();
+    const ur = (o.name_ur || '').replace(/&nbsp;/g, '').trim();
+    return en !== '' || ur !== '';
+  });
+
+  useEffect(() => {
+    if (stEnRef.current) stEnRef.current.innerHTML = fixHtml(sub.statement_en || '');
+    if (stUrRef.current) stUrRef.current.innerHTML = fixHtml(sub.statement_ur || '');
+    visibleOptions.forEach((opt, i) => {
+      if (optEnRefs.current[i]) optEnRefs.current[i].innerHTML = fixHtml(opt.name_en || '');
+      if (optUrRefs.current[i]) optUrRefs.current[i].innerHTML = fixHtml(opt.name_ur || '');
+    });
+  }, [medium, sub.statement_en, sub.statement_ur, visibleOptions]);
+
+  const letters = ['a', 'b', 'c', 'd', 'e', 'f'];
+  // Effective per-sub-question direction: RTL when only Urdu visible OR user picked Urdu Only
+  const subHasEn = (sub.statement_en || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim() !== '';
+  const subHasUr = (sub.statement_ur || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim() !== '';
+  const showEn = (medium === 'en' || medium === 'both') && subHasEn;
+  const showUr = (medium === 'ur' || medium === 'both') && subHasUr;
+  const isUr = (showUr && !showEn) || (medium === 'ur');
+  const optFontSize = Math.max((fontSize || 13) - 1, 10);
+
+  const renderOptionBoxes = (lang) => {
+    const isUrLang = lang === 'ur';
+    return (
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: `repeat(${visibleOptions.length}, 1fr)`,
+        gap: '6px',
+        marginTop: '6px',
+        direction: isUrLang ? 'rtl' : 'ltr',
+      }}>
+        {visibleOptions.map((opt, i) => {
+          const isCorrect = showAnswers && (String(opt.is_true) === '1' || opt.is_true === 1 || opt.is_true === true);
+          const text = isUrLang ? opt.name_ur : opt.name_en;
+          if (!text || text.replace(/&nbsp;/g, '').trim() === '') return <div key={i} />;
+          return (
+            <div key={i} style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              border: '1px solid #1a1a2e',
+              borderRadius: '4px',
+              padding: '4px 8px',
+              background: isCorrect ? '#dcfce7' : '#ffffff',
+              minHeight: '26px',
+              fontFamily: isUrLang ? urFont : enFont,
+              direction: isUrLang ? 'rtl' : 'ltr',
+              fontSize: optFontSize + 'px',
+            }}>
+              {/* Circled letter */}
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '18px',
+                height: '18px',
+                minWidth: '18px',
+                borderRadius: '50%',
+                border: '1px solid #1a1a2e',
+                fontSize: Math.max(optFontSize - 2, 9) + 'px',
+                fontWeight: '700',
+                flexShrink: 0,
+                background: '#ffffff',
+                color: '#000000',
+                fontFamily: enFont,
+              }}>{letters[i]}</span>
+              <span
+                ref={el => { if (isUrLang) optUrRefs.current[i] = el; else optEnRefs.current[i] = el; }}
+                contentEditable={editMode}
+                suppressContentEditableWarning
+                style={{
+                  flex: 1,
+                  outline: editMode ? '1px dashed #2563eb' : 'none',
+                  color: isCorrect ? '#15803d' : '#000000',
+                  fontWeight: isCorrect ? '700' : 'normal',
+                  textAlign: isUrLang ? 'right' : 'left',
+                }} />
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ marginBottom: '10px', breakInside: 'avoid' }}>
+      {/* Sub-question statement */}
+      <div style={{ display: 'flex', gap: '6px', flexDirection: isUr ? 'row-reverse' : 'row', alignItems: 'flex-start' }}>
+        <span style={{ fontWeight: '700', flexShrink: 0, color: '#000', minWidth: '22px', textAlign: isUr ? 'right' : 'left' }}>{num})</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', flexDirection: isUr ? 'row-reverse' : 'row' }}>
+            {showEn && (
+              <span ref={stEnRef} className="q-content" contentEditable={editMode} suppressContentEditableWarning
+                style={{ flex: 1, minWidth: '200px', fontFamily: enFont, color: '#000' }} />
+            )}
+            {showUr && (
+              <span ref={stUrRef} className="q-content" contentEditable={editMode} suppressContentEditableWarning
+                style={{ flex: 1, minWidth: '200px', direction: 'rtl', textAlign: 'right', fontFamily: urFont, color: '#000' }} />
+            )}
+          </div>
+        </div>
+      </div>
+      {/* Option boxes — one row per language */}
+      {(medium === 'en' || medium === 'both') && visibleOptions.some(o => (o.name_en || '').trim() !== '') && renderOptionBoxes('en')}
+      {(medium === 'ur' || medium === 'both') && visibleOptions.some(o => (o.name_ur || '').replace(/&nbsp;/g, '').trim() !== '') && renderOptionBoxes('ur')}
+    </div>
+  );
+}
+
+function ParagraphQuestions({ subs, medium, editMode, showAnswers, enFont, urFont, fontSize }) {
+  if (!subs || subs.length === 0) return null;
+  return (
+    <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px dashed #cbd5e1' }}>
+      {subs.map((sub, i) => (
+        <ParagraphSubQuestion key={i} sub={sub} num={i + 1} medium={medium} editMode={editMode}
+          showAnswers={showAnswers} enFont={enFont} urFont={urFont} fontSize={fontSize} />
       ))}
     </div>
   );
@@ -239,35 +399,48 @@ function QuestionItem({ q, index, showNumber = true, medium, editMode, showAnswe
     ? { outline: '1px dashed #2563eb', padding: '2px 4px', borderRadius: '3px', background: '#f0f7ff', minHeight: '18px', ...extra }
     : { ...extra };
 
-  const isUrOnly = medium === 'ur';
+  // ── Determine effective direction per-question (not just global medium) ──
+  // English text presence check — strip HTML tags + entities to detect "really empty"
+  const stripped = (s) => (s || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
+  const hasEn = stripped(stEn) !== '';
+  const hasUr = stripped(stUr) !== '';
+  const showEn = (medium === 'en' || medium === 'both') && hasEn;
+  const showUr = (medium === 'ur' || medium === 'both') && hasUr;
+  // Numbering direction: RTL when only Urdu is visible OR when user picked Urdu Only globally
+  const isRTL = (showUr && !showEn) || (medium === 'ur');
+
   return (
     <div style={{ marginBottom: '10px', breakInside: 'avoid' }}>
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', flexDirection: isUrOnly ? 'row-reverse' : 'row' }}>
-        {showNumber && index && <span style={{ fontWeight: '700', flexShrink: 0, minWidth: '24px', color: '#000' }}>{index}.</span>}
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', flexDirection: isRTL ? 'row-reverse' : 'row' }}>
+        {showNumber && index && <span style={{ fontWeight: '700', flexShrink: 0, minWidth: '24px', color: '#000', textAlign: isRTL ? 'right' : 'left' }}>{index}.</span>}
         <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', flexDirection: isUrOnly ? 'row-reverse' : 'row' }}>
-            {(medium === 'en' || medium === 'both') && stEn && (
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', flexDirection: isRTL ? 'row-reverse' : 'row' }}>
+            {showEn && (
               <span ref={enRef} className="q-content" contentEditable={editMode} suppressContentEditableWarning style={eStyle({ flex: 1, minWidth: '200px', fontFamily: enFont, color: '#000' })} />
             )}
-            {(medium === 'ur' || medium === 'both') && stUr && (
+            {showUr && (
               <span ref={urRef} className="q-content" contentEditable={editMode} suppressContentEditableWarning style={eStyle({ flex: 1, minWidth: '200px', direction: 'rtl', textAlign: 'right', fontFamily: urFont, color: '#000' })} />
             )}
           </div>
           {q.options && q.options.length > 0 && <MCQOptions options={q.options} medium={medium} editMode={editMode} showAnswers={showAnswers} enFont={enFont} urFont={urFont} fontSize={fontSize} />}
+          {q.paragraph_questions && q.paragraph_questions.length > 0 && (
+            <ParagraphQuestions subs={q.paragraph_questions} medium={medium} editMode={editMode}
+              showAnswers={showAnswers} enFont={enFont} urFont={urFont} fontSize={fontSize} />
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function SectionHeader({ title, totalMarks, qNo, editMode, medium }) {
+function SectionHeader({ title, totalMarks, qNo, editMode, medium, choiceInfo }) {
   const isUr = medium === 'ur';
   return (
     <div style={{ margin: '24px 0 10px', pageBreakInside: 'avoid' }}>
       <div style={{ background: '#000000', color: 'white', padding: '10px 18px', display: 'flex', justifyContent: isUr ? 'flex-end' : 'space-between', alignItems: 'center', borderRadius: '4px', direction: isUr ? 'rtl' : 'ltr', flexDirection: isUr ? 'row-reverse' : 'row' }}>
         <span contentEditable={editMode} suppressContentEditableWarning
           style={{ fontWeight: '800', fontSize: '14px', letterSpacing: '0.5px', outline: editMode ? '1px dashed #60a5fa' : 'none', borderRadius: '3px', color: 'white' }}>
-          Q.{qNo}. {title.toUpperCase()}
+          Q.{qNo}. {title.toUpperCase()}{choiceInfo ? ` — ${choiceInfo}` : ''}
         </span>
         {totalMarks > 0 && (
           <span contentEditable={editMode} suppressContentEditableWarning
@@ -373,9 +546,21 @@ function PaperPreview({ paper, medium, schoolName, subject, className, editMode,
 
       {paper.sections?.map((section, si) => {
         const isLong = section.section_key === 'long_question_according_to_board_pattern';
+        // For long sections, read choice info from any group (all groups carry the same section-level choice)
+        let longChoiceInfo = '';
+        if (isLong && section.question_groups?.length > 0) {
+          // Count unique groups (Q1, Q2, etc.) by group_name
+          const uniqueGroups = new Set(section.question_groups.map(g => g.group_name || ''));
+          const totalGroups = uniqueGroups.size;
+          const choice = section.question_groups[0]?.choice_count || 0;
+          const hasChoice = section.question_groups[0]?.has_choice && choice > 0;
+          if (hasChoice) {
+            longChoiceInfo = `Attempt any ${choice} out of ${totalGroups}`;
+          }
+        }
         return (
           <div key={section.section_key}>
-            <SectionHeader title={cleanSectionTitle(section.section_title)} totalMarks={section.total_marks || 0} qNo={si + 1} editMode={editMode} medium={medium} />
+            <SectionHeader title={cleanSectionTitle(section.section_title)} totalMarks={section.total_marks || 0} qNo={si + 1} editMode={editMode} medium={medium} choiceInfo={longChoiceInfo} />
 
             {isLong ? (() => {
               const groupMap = {};
@@ -388,7 +573,7 @@ function PaperPreview({ paper, medium, schoolName, subject, className, editMode,
                 <div key={qi} style={{ marginBottom: '16px' }}>
                   <div contentEditable={editMode} suppressContentEditableWarning
                     style={{ fontWeight: '700', fontSize: '13px', marginBottom: '6px', outline: editMode ? '1px dashed #2563eb' : 'none', padding: editMode ? '1px 4px' : '0', borderRadius: '3px' }}>
-                    Question {qi + 1}:{groups[0]?.has_choice ? ` (Attempt any ${groups[0].choice_count})` : ''}
+                    Question {qi + 1}:
                   </div>
                   {groups.map((group, pi) => (
                     <div key={pi} style={{ marginLeft: '16px', marginBottom: '6px' }}>
@@ -449,6 +634,8 @@ export default function Step6QuestionSelect() {
   const [fontFamily, setFontFamily] = useState("'Times New Roman', Times, serif");
   const [urduFont, setUrduFont] = useState("'Noto Nastaliq Urdu', serif");
   const printRef = useRef(null);
+  // Track whether we've already auto-detected the language from paper data (first load only)
+  const mediumAutoSetRef = useRef(false);
 
   const subjectName = selectedSubject?.subject_name || localStorage.getItem('subject_name') || 'Subject';
   const className = selectedClass?.class_name || localStorage.getItem('class_name') || '';
@@ -474,6 +661,35 @@ export default function Step6QuestionSelect() {
       if (payload.sections.length === 0) { setError('No questions configured. Please go back and add question counts.'); setLoading(false); return; }
       const result = await generatePaper(payload);
       setPaper(result);
+
+      // ── Auto-detect medium from paper content (only on first load) ──
+      if (!mediumAutoSetRef.current && result?.sections) {
+        const stripped = (s) => (s || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
+        let enCount = 0, urCount = 0, total = 0;
+        const walk = (qs) => {
+          (qs || []).forEach(q => {
+            total++;
+            const hasEn = stripped([q.statement_en, q.description_en].filter(Boolean).join(' ')) !== '';
+            const hasUr = stripped([q.statement_ur, q.description_ur].filter(Boolean).join(' ')) !== '';
+            if (hasEn) enCount++;
+            if (hasUr) urCount++;
+            if (q.paragraph_questions) walk(q.paragraph_questions);
+          });
+        };
+        result.sections.forEach(sec => {
+          (sec.question_groups || []).forEach(g => walk(g.questions));
+        });
+        if (total > 0) {
+          const enRatio = enCount / total;
+          const urRatio = urCount / total;
+          // Heuristic: if 80%+ are one-language-only, default to that language; else "both"
+          let detected = 'both';
+          if (urRatio >= 0.8 && enRatio < 0.2) detected = 'ur';
+          else if (enRatio >= 0.8 && urRatio < 0.2) detected = 'en';
+          setMedium(detected);
+        }
+        mediumAutoSetRef.current = true;
+      }
     } catch (err) {
       setError(err.message || 'Failed to generate paper. Please try again.');
     } finally { setLoading(false); }

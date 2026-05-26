@@ -2,8 +2,7 @@ import React, { useEffect } from 'react';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorAlert from '../../components/ErrorAlert';
-import ProfileMenu from '../../components/ProfileMenu';
-import logo from '../../assets/logo.png';
+import TopBar from '../../components/TopBar';
 
 const classPalette = [
   { bg: '#e3f2fd', border: '#2196f3', icon: '#1565c0' },
@@ -19,34 +18,29 @@ const classPalette = [
 ];
 
 export default function Step2ClassSelect() {
-  const { selectedBoard, classes, selectedClass, isLoading, errors, loadClasses, setSelectedClass, goBack, clearError } = useTestMaker();
+  const { selectedBoard, classes, selectedClass, isLoading, errors, loadClasses, setSelectedClass, clearError } = useTestMaker();
 
   useEffect(() => {
     const boardId = selectedBoard?.board_id || localStorage.getItem("board_id");
     if (boardId) loadClasses(boardId);
   }, [selectedBoard]);
 
-  const handleNext = () => {
-    if (!selectedClass) { alert('Please select a class'); return; }
-    localStorage.setItem("class_id", selectedClass?.class_id);
-    localStorage.setItem("class_name", selectedClass?.class_name || '');
+  const handleClassSelect = (cls) => {
+    setSelectedClass(cls);
+    localStorage.setItem("class_id", cls?.class_id);
+    localStorage.setItem("class_name", cls?.class_name || '');
+    // Automatically navigate to next page
     window.location.href = "/test-maker/step-3";
   };
 
   return (
     <div className="page">
-      {/* Logo - click to go home */}
-      <div onClick={() => window.location.href = '/test-maker/step-1'}
-        style={{ position: 'fixed', top: '-40px', left: '50px', zIndex: 200, cursor: 'pointer' }}>
-        <img src={logo} alt="Logo" style={{ height: '245px', width: '200px', objectFit: 'contain' }} />
-      </div>
-
-      {/* Profile Button */}
-      <ProfileMenu />
+      <TopBar />
 
       <div className="blob blob1" /><div className="blob blob2" />
 
-      <div className="breadcrumb">
+      {/* Breadcrumb - hidden on mobile */}
+      <div className="breadcrumb desktop-only">
         <span className="bc-item">{selectedBoard?.board_name || 'Board'}</span>
         <i className="ti ti-chevron-right bc-sep" />
         <span className="bc-item bc-active">Select Class</span>
@@ -75,7 +69,7 @@ export default function Step2ClassSelect() {
                     const sel = selectedClass?.class_id === cls.class_id;
                     const c = classPalette[idx % classPalette.length];
                     return (
-                      <div key={cls.class_id} onClick={() => setSelectedClass(cls)}
+                      <div key={cls.class_id} onClick={() => handleClassSelect(cls)}
                         className={`class-tile ${sel ? 'tile-selected' : ''}`}
                         style={sel ? { background: `linear-gradient(135deg, ${c.border}, ${c.icon})`, borderColor: c.border, boxShadow: `0 6px 20px ${c.border}44` } : { background: c.bg, borderColor: c.border }}>
                         <i className="ti ti-book-2" style={{ fontSize: '22px', color: sel ? 'white' : c.icon, marginBottom: '6px' }} />
@@ -101,10 +95,8 @@ export default function Step2ClassSelect() {
             )}
 
             <div className="actions">
-              <button onClick={() => window.location.href = '/test-maker/step-1'} className="btn btn-ghost"><i className="ti ti-arrow-left" /> Back</button>
-              <button onClick={handleNext} disabled={!selectedClass || isLoading}
-                className={`btn btn-primary ${!selectedClass || isLoading ? 'btn-disabled' : ''}`}>
-                Next <i className="ti ti-arrow-right" />
+              <button onClick={() => window.location.href = '/test-maker/step-1'} className="btn-back">
+                <i className="ti ti-arrow-left" /> Back
               </button>
             </div>
           </>
@@ -117,10 +109,23 @@ export default function Step2ClassSelect() {
         .blob { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; }
         .blob1 { top: -100px; right: -100px; width: 350px; height: 350px; background: radial-gradient(circle, rgba(0,188,212,0.08) 0%, transparent 70%); }
         .blob2 { bottom: -60px; left: -60px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(0,150,136,0.07) 0%, transparent 70%); }
+        
+        /* Breadcrumb styles */
         .breadcrumb { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 20px; position: relative; z-index: 1; flex-wrap: wrap; }
         .bc-item { padding: 4px 12px; background: rgba(255,255,255,0.7); border-radius: 20px; font-size: 12px; color: #64748b; font-weight: 500; }
         .bc-active { background: white; color: #0097a7; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
         .bc-sep { color: #cbd5e1; font-size: 13px; }
+        
+        /* Hide breadcrumb on mobile */
+        @media (max-width: 768px) {
+          .desktop-only {
+            display: none;
+          }
+          .page {
+            padding: 16px 12px 32px;
+          }
+        }
+        
         .header { text-align: center; margin-bottom: 24px; position: relative; z-index: 1; }
         .step-badge { display: inline-flex; padding: 5px 16px; background: linear-gradient(135deg, #00bcd4, #0097a7); color: white; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 12px; }
         .title { font-size: clamp(22px, 5vw, 36px); font-weight: 800; color: #0f1f35; margin: 0 0 8px; letter-spacing: -0.5px; }
@@ -142,16 +147,35 @@ export default function Step2ClassSelect() {
         .sel-name { font-size: 16px; font-weight: 700; color: #006064; }
         .empty { text-align: center; padding: 60px 20px; color: #94a3b8; }
         .empty i { font-size: 60px; opacity: 0.15; display: block; margin-bottom: 12px; }
-        .actions { display: flex; gap: 12px; padding-top: 16px; }
-        .btn { flex: 1; padding: 13px 20px; font-size: 14px; font-weight: 700; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; font-family: inherit; min-height: 48px; -webkit-tap-highlight-color: transparent; }
-        .btn-primary { background: linear-gradient(135deg, #00bcd4, #006064); color: white; box-shadow: 0 4px 16px rgba(0,188,212,0.3); }
-        .btn-primary:active:not(.btn-disabled) { transform: scale(0.97); }
-        .btn-ghost { background: white; color: #64748b; border: 1px solid #e0e7ef; }
-        .btn-disabled { opacity: 0.5; cursor: not-allowed; }
+        .actions { display: flex; gap: 12px; padding-top: 16px; justify-content: center; }
+        .btn-back { 
+          background: linear-gradient(135deg, #00bcd4, #0097a7);
+          color: white;
+          padding: 13px 48px;
+          font-size: 14px;
+          font-weight: 700;
+          border: none;
+          border-radius: 12px;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: all 0.2s;
+          font-family: inherit;
+          min-height: 48px;
+          box-shadow: 0 4px 16px rgba(0,188,212,0.3);
+          letter-spacing: 0.3px;
+        }
+        .btn-back:active { transform: scale(0.97); }
+        
         @media (max-width: 480px) {
           .page { padding: 16px 12px 32px; }
           .class-tile { min-width: 78px; padding: 12px 10px; min-height: 72px; }
           .card { padding: 18px 14px; border-radius: 16px; }
+          .btn-back { padding: 13px 32px; }
+          .title { font-size: 24px; }
+          .subtitle { font-size: 13px; }
         }
       `}</style>
     </div>

@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo } from 'react';
-import logo from '../../assets/logo.png';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import ProfileMenu from '../../components/ProfileMenu';
+import TopBar from '../../components/TopBar';
 import ErrorAlert from '../../components/ErrorAlert';
 
 export default function Step3SubjectSelect() {
-  const { selectedClass, subjects, selectedSubject, isLoading, errors, loadSubjects, setSelectedSubject, goBack, clearError } = useTestMaker();
+  const { selectedClass, subjects, selectedSubject, isLoading, errors, loadSubjects, setSelectedSubject, clearError } = useTestMaker();
 
   useEffect(() => {
     const classId = selectedClass?.class_id || localStorage.getItem("class_id");
@@ -37,18 +36,13 @@ export default function Step3SubjectSelect() {
     setSelectedSubject(subject);
     localStorage.setItem("subject_id", subject.subject_id);
     localStorage.setItem("subject_name", subject.subject_name || '');
-  };
-
-  const handleNext = () => {
-    if (!selectedSubject) { alert('Please select a subject'); return; }
-    localStorage.setItem("subject_id", selectedSubject?.subject_id);
-    localStorage.setItem("subject_name", selectedSubject?.subject_name || '');
     // Clear old step5 config so new subject starts fresh
     localStorage.removeItem('step5_config');
     localStorage.removeItem('step5_chapters');
     localStorage.removeItem('topics');
     localStorage.removeItem('chapter_ids');
     localStorage.removeItem('exercise_question');
+    // Automatically navigate to next page
     window.location.href = "/test-maker/step-4";
   };
 
@@ -84,18 +78,12 @@ export default function Step3SubjectSelect() {
 
   return (
     <div className="page">
-      {/* Logo - click to go home */}
-      <div onClick={() => window.location.href = '/test-maker/step-1'}
-        style={{ position: 'fixed', top: '-40px', left: '50px', zIndex: 200, cursor: 'pointer' }}>
-        <img src={logo} alt="Logo" style={{ height: '245px', width: '200px', objectFit: 'contain' }} />
-      </div>
-
-      <ProfileMenu />
-
+      <TopBar />
 
       <div className="blob blob1" /><div className="blob blob2" />
 
-      <div className="breadcrumb">
+      {/* Breadcrumb - hidden on mobile */}
+      <div className="breadcrumb desktop-only">
         <span className="bc-item">{selectedClass?.class_name || 'Class'}</span>
         <i className="ti ti-chevron-right bc-sep" />
         <span className="bc-item bc-active">Select Subject</span>
@@ -121,22 +109,9 @@ export default function Step3SubjectSelect() {
               <div className="empty"><i className="ti ti-inbox" /><p>No subjects available</p></div>
             )}
 
-            {selectedSubject && (
-              <div className="sel-bar">
-                <div>
-                  <div className="sel-label">Selected Subject</div>
-                  <div className="sel-name">{selectedSubject.subject_name}</div>
-                  <div className="sel-type">{selectedSubject.old_subject === 1 ? '📚 Old Curriculum' : '⭐ New Curriculum'}</div>
-                </div>
-                <i className="ti ti-check-circle" style={{ fontSize: '28px', color: '#673ab7', flexShrink: 0 }} />
-              </div>
-            )}
-
             <div className="actions">
-              <button onClick={() => window.location.href = '/test-maker/step-2'} className="btn btn-ghost"><i className="ti ti-arrow-left" /> Back</button>
-              <button onClick={handleNext} disabled={!selectedSubject || isLoading}
-                className={`btn btn-primary ${!selectedSubject || isLoading ? 'btn-disabled' : ''}`}>
-                Next <i className="ti ti-arrow-right" />
+              <button onClick={() => window.location.href = '/test-maker/step-2'} className="btn btn-back">
+                <i className="ti ti-arrow-left" /> Back
               </button>
             </div>
           </>
@@ -149,10 +124,23 @@ export default function Step3SubjectSelect() {
         .blob { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; }
         .blob1 { top: -100px; right: -100px; width: 350px; height: 350px; background: radial-gradient(circle, rgba(103,58,183,0.07) 0%, transparent 70%); }
         .blob2 { bottom: -60px; left: -60px; width: 260px; height: 260px; background: radial-gradient(circle, rgba(233,30,99,0.05) 0%, transparent 70%); }
+        
+        /* Breadcrumb styles */
         .breadcrumb { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 18px; position: relative; z-index: 1; flex-wrap: wrap; }
         .bc-item { padding: 4px 12px; background: rgba(255,255,255,0.7); border-radius: 20px; font-size: 12px; color: #64748b; font-weight: 500; }
         .bc-active { background: white; color: #673ab7; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
         .bc-sep { color: #cbd5e1; font-size: 13px; }
+        
+        /* Hide breadcrumb on mobile */
+        @media (max-width: 768px) {
+          .desktop-only {
+            display: none;
+          }
+          .page {
+            padding: 16px 12px 32px;
+          }
+        }
+        
         .header { text-align: center; margin-bottom: 24px; position: relative; z-index: 1; }
         .step-badge { display: inline-flex; padding: 5px 16px; background: linear-gradient(135deg, #673ab7, #512da8); color: white; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 12px; }
         .title { font-size: clamp(22px, 5vw, 36px); font-weight: 800; color: #0f1f35; margin: 0 0 8px; letter-spacing: -0.5px; }
@@ -166,29 +154,44 @@ export default function Step3SubjectSelect() {
         .section-title { font-size: 15px; font-weight: 700; color: #0f1f35; margin: 0 0 2px; }
         .section-count { font-size: 12px; color: #94a3b8; }
         .subj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(120px, 45%), 1fr)); gap: 10px; }
-        .subj-btn { position: relative; border: 2px solid; border-radius: 14px; padding: 14px 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: inherit; min-height: 90px; justify-content: flex-start; transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1); -webkit-tap-highlight-color: transparent; word-break: break-word; }
+        .subj-btn { position: relative; border: 2px solid; border-radius: 14px; padding: 14px 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: inherit; min-height: 90px; justify-content: flex-start; transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1); -webkit-tap-highlight-color: transparent; word-break: break-word; width: 100%; background: white; }
         .subj-btn:active { transform: scale(0.96); }
         .subj-selected { box-shadow: 0 8px 24px rgba(0,0,0,0.18); transform: translateY(-4px); }
         .subj-name { font-size: 11px; font-weight: 600; text-align: center; line-height: 1.35; word-break: break-word; white-space: normal; width: 100%; }
         .subj-check { position: absolute; top: -8px; right: -8px; width: 22px; height: 22px; background: linear-gradient(135deg, #43a047, #2e7d32); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; box-shadow: 0 2px 8px rgba(67,160,71,0.4); }
-        .sel-bar { background: linear-gradient(135deg, #f3e5f5, #ede7f6); border: 2px solid #673ab7; border-radius: 14px; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
-        .sel-label { font-size: 11px; font-weight: 700; color: #673ab7; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
-        .sel-name { font-size: 16px; font-weight: 700; color: #4a148c; margin-bottom: 2px; }
-        .sel-type { font-size: 12px; color: #7b1fa2; }
         .empty { text-align: center; padding: 60px 20px; color: #94a3b8; }
         .empty i { font-size: 60px; opacity: 0.15; display: block; margin-bottom: 12px; }
-        .actions { display: flex; gap: 12px; padding-top: 16px; }
-        .btn { flex: 1; padding: 13px 20px; font-size: 14px; font-weight: 700; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; font-family: inherit; min-height: 48px; -webkit-tap-highlight-color: transparent; }
-        .btn-primary { background: linear-gradient(135deg, #673ab7, #4527a0); color: white; box-shadow: 0 4px 16px rgba(103,58,183,0.3); }
-        .btn-primary:active:not(.btn-disabled) { transform: scale(0.97); }
-        .btn-ghost { background: white; color: #64748b; border: 1px solid #e0e7ef; }
-        .btn-disabled { opacity: 0.5; cursor: not-allowed; }
+        .actions { display: flex; gap: 12px; padding-top: 16px; justify-content: center; }
+        .btn-back { 
+          background: linear-gradient(135deg, #673ab7, #512da8);
+          color: white;
+          padding: 13px 48px;
+          font-size: 14px;
+          font-weight: 700;
+          border: none;
+          border-radius: 12px;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: all 0.2s;
+          font-family: inherit;
+          min-height: 48px;
+          box-shadow: 0 4px 16px rgba(103,58,183,0.3);
+          letter-spacing: 0.3px;
+        }
+        .btn-back:active { transform: scale(0.97); }
+        
         @media (max-width: 480px) {
           .page { padding: 16px 12px 32px; }
           .section { padding: 16px 12px; border-radius: 14px; }
           .subj-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
           .subj-btn { min-height: 84px; padding: 12px 8px; }
           .subj-name { font-size: 11px; }
+          .btn-back { padding: 13px 32px; }
+          .title { font-size: 24px; }
+          .subtitle { font-size: 13px; }
         }
       `}</style>
     </div>

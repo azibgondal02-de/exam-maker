@@ -2,31 +2,37 @@ import React, { useEffect } from 'react';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorAlert from '../../components/ErrorAlert';
-import ProfileMenu from '../../components/ProfileMenu';
-import logo from '../../assets/logo.png';
+import TopBar from '../../components/TopBar';
+
+// ── Per-board color identity (cycles if more boards than entries) ──
+const BOARD_THEMES = [
+  { name: 'blue',    icon: 'ti-school',       primary: '#2196f3', dark: '#1565c0', light: '#e3f2fd', lighter: '#dbeafe' },
+  { name: 'emerald', icon: 'ti-building',     primary: '#10b981', dark: '#047857', light: '#d1fae5', lighter: '#a7f3d0' },
+  { name: 'purple',  icon: 'ti-landmark',     primary: '#8b5cf6', dark: '#6d28d9', light: '#ede9fe', lighter: '#ddd6fe' },
+  { name: 'amber',   icon: 'ti-certificate',  primary: '#f59e0b', dark: '#b45309', light: '#fef3c7', lighter: '#fde68a' },
+  { name: 'rose',    icon: 'ti-books',        primary: '#f43f5e', dark: '#be123c', light: '#ffe4e6', lighter: '#fecdd3' },
+  { name: 'cyan',    icon: 'ti-bulb',         primary: '#06b6d4', dark: '#0e7490', light: '#cffafe', lighter: '#a5f3fc' },
+];
+
+const themeFor = (idx) => BOARD_THEMES[idx % BOARD_THEMES.length];
 
 export default function Step1BoardSelect() {
   const { boards, selectedBoard, isLoading, errors, loadBoards, setSelectedBoard, clearError } = useTestMaker();
 
   useEffect(() => { loadBoards(); }, []);
 
-  const handleNext = () => {
-    if (!selectedBoard) { alert('Please select a board'); return; }
-    localStorage.setItem("board_id", selectedBoard?.board_id);
+  const handleBoardSelect = (board) => {
+    setSelectedBoard(board);
+    localStorage.setItem("board_id", board?.board_id);
+    // Navigate instantly with no delay
     window.location.href = "/test-maker/step-2";
   };
 
   return (
     <div style={s.page}>
 
-      {/* Logo */}
-      <div onClick={() => window.location.href = '/test-maker/step-1'}
-        style={{ position: 'fixed', top: '-40px', left: '50px', zIndex: 200, cursor: 'pointer' }}>
-        <img src={logo} alt="Logo" style={{ height: '245px', width: '200px', objectFit: 'contain' }} />
-      </div>
-
-      {/* Profile Button */}
-      <ProfileMenu />
+      {/* Logo + Profile menu, single import */}
+      <TopBar />
 
       {/* Header */}
       <div style={s.header}>
@@ -48,26 +54,48 @@ export default function Step1BoardSelect() {
               <div style={s.grid}>
                 {boards.map((board, idx) => {
                   const sel = selectedBoard?.board_id === board.board_id;
+                  const t = themeFor(idx);
                   return (
-                    <div key={board.board_id} onClick={() => setSelectedBoard(board)}
+                    <div 
+                      key={board.board_id} 
+                      onClick={() => handleBoardSelect(board)}
                       style={{
                         ...s.card,
-                        border: sel ? '2.5px solid #2196f3' : '2px solid #e2e8f0',
-                        background: sel ? 'linear-gradient(135deg,#e3f2fd,#dbeafe)' : 'white',
-                        boxShadow: sel ? '0 8px 28px rgba(33,150,243,0.2)' : '0 2px 10px rgba(0,0,0,0.06)',
+                        border: sel ? `2.5px solid ${t.primary}` : '2px solid #e2e8f0',
+                        background: sel
+                          ? `linear-gradient(135deg, ${t.light}, ${t.lighter})`
+                          : 'white',
+                        boxShadow: sel
+                          ? `0 8px 28px ${hexAlpha(t.primary, 0.22)}`
+                          : '0 2px 10px rgba(0,0,0,0.06)',
                         transform: sel ? 'translateY(-4px)' : 'none',
-                      }}>
-                      {/* Icon */}
-                      <div style={{
-                        ...s.iconBox,
-                        background: sel ? 'linear-gradient(135deg,#2196f3,#1565c0)' : 'linear-gradient(135deg,#e3f2fd,#bfdbfe)',
-                      }}>
-                        <i className="ti ti-school" style={{ fontSize: '28px', color: sel ? 'white' : '#2196f3' }}></i>
+                      }}
+                    >
+                      {/* Clipped content wrapper */}
+                      <div style={s.clippedWrapper}>
+                        {/* Top color stripe */}
+                        <div style={{
+                          ...s.topStripe,
+                          background: `linear-gradient(90deg, ${t.primary}, ${t.dark})`,
+                          opacity: sel ? 1 : 0.7,
+                        }} />
+
+                        {/* Icon */}
+                        <div style={{
+                          ...s.iconBox,
+                          background: sel
+                            ? `linear-gradient(135deg, ${t.primary}, ${t.dark})`
+                            : `linear-gradient(135deg, ${t.light}, ${t.lighter})`,
+                        }}>
+                          <i className={`ti ${t.icon}`} style={{ fontSize: '28px', color: sel ? 'white' : t.dark }}></i>
+                        </div>
+                        <h3 style={{ ...s.cardTitle, color: sel ? t.dark : '#0f172a' }}>{board.board_name}</h3>
+                        <p style={{ ...s.cardHint, color: sel ? t.primary : '#94a3b8' }}>
+                          {sel ? '✓ Selected' : 'Tap to select'}
+                        </p>
                       </div>
-                      <h3 style={{ ...s.cardTitle, color: sel ? '#1565c0' : '#0f172a' }}>{board.board_name}</h3>
-                      <p style={{ ...s.cardHint, color: sel ? '#1976d2' : '#94a3b8' }}>
-                        {sel ? '✓ Selected' : 'Tap to select'}
-                      </p>
+                      
+                      {/* Check badge - half outside half inside */}
                       {sel && (
                         <div style={s.checkBadge}>
                           <i className="ti ti-check" style={{ fontSize: '14px' }}></i>
@@ -83,21 +111,20 @@ export default function Step1BoardSelect() {
                 <p style={{ margin: 0, color: '#94a3b8' }}>No boards available</p>
               </div>
             )}
-
-            <div style={s.actions}>
-              <button disabled style={s.btnGhost}>
-                <i className="ti ti-arrow-left"></i> Back
-              </button>
-              <button onClick={handleNext} disabled={!selectedBoard || isLoading}
-                style={{ ...s.btnPrimary, opacity: !selectedBoard || isLoading ? 0.5 : 1 }}>
-                Next <i className="ti ti-arrow-right"></i>
-              </button>
-            </div>
           </>
         )}
       </div>
     </div>
   );
+}
+
+// Helper — convert hex color to rgba with opacity for shadows
+function hexAlpha(hex, alpha) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
 }
 
 const s = {
@@ -107,30 +134,6 @@ const s = {
     padding: '24px 20px 48px',
     fontFamily: "'Segoe UI',system-ui,sans-serif",
   },
-  // logoBox: {
-  //   position: 'fixed', 
-  //   top: '20px', 
-  //   left: '24px', 
-  //   zIndex: 200,
-  //   background: 'white',
-  //   borderRadius: '12px',
-  //   padding: '8px 16px',
-  //   boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-  //   cursor: 'pointer',
-  //   display: 'flex', 
-  //   alignItems: 'center',
-  //   transition: 'all 0.2s ease',
-  //   ':hover': {
-  //     transform: 'translateY(-2px)',
-  //     boxShadow: '0 4px 16px rgba(0,0,0,0.12)'
-  //   }
-  // },
-  // logoImg: { 
-  //   height: '35px', 
-  //   width: 'auto', 
-  //   objectFit: 'contain', 
-  //   display: 'block' 
-  // },
   header: { maxWidth: '900px', margin: '72px auto 32px', textAlign: 'center' },
   badge: {
     display: 'inline-flex', alignItems: 'center', padding: '5px 18px',
@@ -157,43 +160,67 @@ const s = {
     marginBottom: '32px',
   },
   card: {
-    position: 'relative', borderRadius: '18px', padding: '32px 20px 24px',
-    textAlign: 'center', cursor: 'pointer',
+    position: 'relative',
+    borderRadius: '18px',
+    padding: 0,
+    textAlign: 'center',
+    cursor: 'pointer',
     transition: 'all 0.25s cubic-bezier(0.34,1.56,0.64,1)',
     WebkitTapHighlightColor: 'transparent',
+    overflow: 'visible',
+  },
+  clippedWrapper: {
+    position: 'relative',
+    overflow: 'hidden',
+    borderRadius: '18px',
+    padding: '32px 20px 24px',
+    background: 'inherit',
+  },
+  topStripe: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '4px',
+    borderRadius: '18px 18px 0 0',
   },
   iconBox: {
-    width: '64px', height: '64px', borderRadius: '18px',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    margin: '0 auto 16px', transition: 'all 0.25s ease',
+    width: '64px',
+    height: '64px',
+    borderRadius: '18px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: '0 auto 16px',
+    transition: 'all 0.25s ease',
   },
-  cardTitle: { fontSize: '16px', fontWeight: '700', margin: '0 0 6px' },
-  cardHint: { fontSize: '12px', margin: 0, fontWeight: '500' },
+  cardTitle: {
+    fontSize: '16px',
+    fontWeight: '700',
+    margin: '0 0 6px',
+  },
+  cardHint: {
+    fontSize: '12px',
+    margin: 0,
+    fontWeight: '500',
+  },
   checkBadge: {
-    position: 'absolute', top: '-10px', right: '-10px',
-    width: '28px', height: '28px',
+    position: 'absolute',
+    top: '-10px',
+    right: '-10px',
+    width: '28px',
+    height: '28px',
     background: 'linear-gradient(135deg,#22c55e,#16a34a)',
-    borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    color: 'white', boxShadow: '0 3px 10px rgba(34,197,94,0.4)',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'white',
+    boxShadow: '0 3px 10px rgba(34,197,94,0.4)',
+    zIndex: 10,
   },
-  empty: { textAlign: 'center', padding: '60px 20px' },
-  actions: {
-    display: 'flex', justifyContent: 'space-between', gap: '12px',
-    paddingTop: '24px', borderTop: '1px solid #e2e8f0',
-  },
-  btnPrimary: {
-    padding: '13px 32px', fontSize: '14px', fontWeight: '700',
-    background: 'linear-gradient(135deg,#2196f3,#1565c0)', color: 'white',
-    border: 'none', borderRadius: '12px', cursor: 'pointer',
-    display: 'flex', alignItems: 'center', gap: '8px',
-    boxShadow: '0 4px 16px rgba(33,150,243,0.35)', minHeight: '48px',
-    fontFamily: 'inherit',
-  },
-  btnGhost: {
-    padding: '13px 32px', fontSize: '14px', fontWeight: '700',
-    background: 'white', color: '#94a3b8',
-    border: '1px solid #e2e8f0', borderRadius: '12px', cursor: 'not-allowed',
-    display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.5, minHeight: '48px',
-    fontFamily: 'inherit',
+  empty: {
+    textAlign: 'center',
+    padding: '60px 20px',
   },
 };

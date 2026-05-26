@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import logo from '../../assets/logo.png';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import ProfileMenu from '../../components/ProfileMenu';
+import TopBar from '../../components/TopBar';
 import ErrorAlert from '../../components/ErrorAlert';
 
 export default function Step4TopicSelect() {
@@ -83,19 +82,26 @@ export default function Step4TopicSelect() {
     { key: 'examples', icon: 'ti-bulb', label: 'Exercise Examples', desc: 'Worked examples' },
   ];
 
+  // ── Select-all helper for question types ──
+  const allQTypesSelected = exTypes.every(({ key }) => exerciseTypes[key]);
+  const toggleAllQTypes = () => {
+    if (allQTypesSelected) {
+      // Deselect all
+      setExerciseTypes(exTypes.reduce((acc, { key }) => ({ ...acc, [key]: false }), {}));
+    } else {
+      // Select all
+      setExerciseTypes(exTypes.reduce((acc, { key }) => ({ ...acc, [key]: true }), {}));
+    }
+  };
+
   return (
     <div className="page">
-      {/* Logo - click to go home */}
-      <div onClick={() => window.location.href = '/test-maker/step-1'}
-        style={{ position: 'fixed', top: '-40px', left: '50px', zIndex: 200, cursor: 'pointer' }}>
-        <img src={logo} alt="Logo" style={{ height: '245px', width: '200px', objectFit: 'contain' }} />
-      </div>
-
-      <ProfileMenu/>
+      <TopBar/>
 
       <div className="blob blob1" /><div className="blob blob2" />
 
-      <div className="breadcrumb">
+      {/* Breadcrumb - hidden on mobile */}
+      <div className="breadcrumb desktop-only">
         <span className="bc-item">{selectedSubject?.subject_name || 'Subject'}</span>
         <i className="ti ti-chevron-right bc-sep" />
         <span className="bc-item bc-active">Select Topics</span>
@@ -190,10 +196,21 @@ export default function Step4TopicSelect() {
                 <div className="qtype-section">
                   <div className="qtype-header">
                     <div className="qtype-icon"><i className="ti ti-adjustments" /></div>
-                    <div>
+                    <div className="qtype-header-text">
                       <h3 className="qtype-title">Question Types</h3>
                       <p className="qtype-sub">Select which types of questions to include</p>
                     </div>
+                    <button type="button" className="qtype-select-all-btn" onClick={toggleAllQTypes}>
+                      {allQTypesSelected ? (
+                        <>
+                          <i className="ti ti-square" /> Deselect All
+                        </>
+                      ) : (
+                        <>
+                          <i className="ti ti-checks" /> Select All
+                        </>
+                      )}
+                    </button>
                   </div>
                   <div className="qtype-grid">
                     {exTypes.map(({ key, icon, label, desc }) => (
@@ -228,10 +245,48 @@ export default function Step4TopicSelect() {
         .blob { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; }
         .blob1 { top: -100px; right: -100px; width: 350px; height: 350px; background: radial-gradient(circle, rgba(33,150,243,0.07) 0%, transparent 70%); }
         .blob2 { bottom: -60px; left: -60px; width: 260px; height: 260px; background: radial-gradient(circle, rgba(33,150,243,0.05) 0%, transparent 70%); }
+        
+        /* Breadcrumb styles */
         .breadcrumb { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 18px; position: relative; z-index: 1; flex-wrap: wrap; }
         .bc-item { padding: 4px 12px; background: rgba(255,255,255,0.7); border-radius: 20px; font-size: 12px; color: #64748b; }
         .bc-active { background: white; color: #2196f3; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
         .bc-sep { color: #cbd5e1; font-size: 13px; }
+        
+        /* Hide breadcrumb on mobile and adjust header spacing */
+        @media (max-width: 768px) {
+          .desktop-only {
+            display: none;
+          }
+          .page {
+            padding: 0 12px 100px;
+          }
+          .header {
+            margin-top: 20px;
+            margin-bottom: 22px;
+          }
+          /* Step badge lifts up to the topbar row on mobile — centered between logo + profile */
+          .step-badge {
+            position: fixed;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 0 !important;
+            padding: 4px 12px !important;
+            font-size: 10px !important;
+            letter-spacing: 0.3px;
+            z-index: 199;
+            box-shadow: 0 2px 8px rgba(33,150,243,0.25);
+            white-space: nowrap;
+            max-width: calc(100vw - 130px); /* leaves ~65px on each side for logo + profile circle */
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+          /* Push the title down so it doesn't crash with the now-fixed badge above */
+          .header {
+            margin-top: 56px;
+          }
+        }
+        
         .header { text-align: center; margin-bottom: 22px; position: relative; z-index: 1; }
         .step-badge { display: inline-flex; padding: 5px 16px; background: linear-gradient(135deg, #2196f3, #1565c0); color: white; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 12px; }
         .title { font-size: clamp(20px, 5vw, 34px); font-weight: 800; color: #0f1f35; margin: 0 0 8px; letter-spacing: -0.5px; }
@@ -254,10 +309,37 @@ export default function Step4TopicSelect() {
         .topic-item:active { background: rgba(0,0,0,0.04); }
         .topic-selected { background: rgba(33,150,243,0.06); }
         .qtype-section { background: white; border-radius: 18px; padding: 20px 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 16px; }
-        .qtype-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+        .qtype-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
         .qtype-icon { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #2196f3, #1565c0); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; flex-shrink: 0; }
+        .qtype-header-text { flex: 1; min-width: 0; }
         .qtype-title { font-size: 15px; font-weight: 700; color: #0f1f35; margin: 0 0 2px; }
         .qtype-sub { font-size: 12px; color: #94a3b8; margin: 0; }
+        .qtype-select-all-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          font-size: 12px;
+          font-weight: 700;
+          color: #1565c0;
+          background: #e3f2fd;
+          border: 1px solid #90caf9;
+          border-radius: 10px;
+          cursor: pointer;
+          font-family: inherit;
+          transition: all 0.15s ease;
+          flex-shrink: 0;
+        }
+        .qtype-select-all-btn:hover {
+          background: #bbdefb;
+          border-color: #2196f3;
+        }
+        .qtype-select-all-btn:active {
+          transform: scale(0.96);
+        }
+        .qtype-select-all-btn i {
+          font-size: 14px;
+        }
         .qtype-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); gap: 10px; }
         .qtype-card { border: 2px solid #e8eef5; border-radius: 14px; padding: 16px 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; transition: all 0.2s ease; background: #f8fafc; -webkit-tap-highlight-color: transparent; }
         .qtype-card:active { transform: scale(0.96); }
@@ -288,11 +370,12 @@ export default function Step4TopicSelect() {
           .chapters { grid-template-columns: 1fr; }
         }
         @media (max-width: 480px) {
-          .page { padding: 16px 12px 100px; }
           .qtype-grid { grid-template-columns: repeat(2, 1fr); }
           .chapter-header { padding: 12px 12px; }
           .topics-list { padding: 6px 10px; }
           .chapters { grid-template-columns: 1fr; }
+          .title { font-size: 24px; }
+          .subtitle { font-size: 13px; }
         }
       `}</style>
     </div>
