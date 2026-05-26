@@ -87,7 +87,15 @@ export const useTestMaker = () => {
     try {
       store.setIsLoading(true);
       store.clearError('config');
-      const data = await apiService.fetchPaperConfig(subjectId);
+  
+      // Pull the same filters Step 4 saved — ensures counts match get_questions
+      const filters = {
+        chapter_ids: localStorage.getItem('chapter_ids') || null,
+        topics: localStorage.getItem('topics') || null,
+        exercise_question: localStorage.getItem('exercise_question') || null,
+      };
+  
+      const data = await apiService.fetchPaperConfig(subjectId, filters);
       store.setPaperConfig(data);
       return data;
     } catch (error) {

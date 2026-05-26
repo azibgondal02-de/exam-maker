@@ -51,8 +51,12 @@ export const fetchChapters = async (subjectId) => {
   return API.get(`get_chapters_against_subject/${subjectId}`);
 };
 
-export const fetchPaperConfig = async (subjectId) => {
-  return API.get(`paper-config/${subjectId}`);
+export const fetchPaperConfig = async (subjectId, filters = {}) => {
+  return API.post(`paper-config/${subjectId}`, {
+    chapter_ids: filters.chapter_ids || null,
+    topics: filters.topics || null,
+    exercise_question: filters.exercise_question || null,
+  });
 };
 
 export const fetchQuestions = async (payload) => {
