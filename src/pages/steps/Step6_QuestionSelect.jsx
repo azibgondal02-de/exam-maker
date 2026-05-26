@@ -247,10 +247,10 @@ function QuestionItem({ q, index, showNumber = true, medium, editMode, showAnswe
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', flexDirection: isUrOnly ? 'row-reverse' : 'row' }}>
             {(medium === 'en' || medium === 'both') && stEn && (
-              <span ref={enRef} contentEditable={editMode} suppressContentEditableWarning style={eStyle({ flex: 1, minWidth: '200px', fontFamily: enFont, color: '#000' })} />
+              <span ref={enRef} className="q-content" contentEditable={editMode} suppressContentEditableWarning style={eStyle({ flex: 1, minWidth: '200px', fontFamily: enFont, color: '#000' })} />
             )}
             {(medium === 'ur' || medium === 'both') && stUr && (
-              <span ref={urRef} contentEditable={editMode} suppressContentEditableWarning style={eStyle({ flex: 1, minWidth: '200px', direction: 'rtl', textAlign: 'right', fontFamily: urFont, color: '#000' })} />
+              <span ref={urRef} className="q-content" contentEditable={editMode} suppressContentEditableWarning style={eStyle({ flex: 1, minWidth: '200px', direction: 'rtl', textAlign: 'right', fontFamily: urFont, color: '#000' })} />
             )}
           </div>
           {q.options && q.options.length > 0 && <MCQOptions options={q.options} medium={medium} editMode={editMode} showAnswers={showAnswers} enFont={enFont} urFont={urFont} fontSize={fontSize} />}
@@ -290,6 +290,44 @@ function PaperPreview({ paper, medium, schoolName, subject, className, editMode,
   const eStyle = editMode ? { outline: '1px dashed #60a5fa', borderRadius: '2px' } : {};
   return (
     <div id="paper-preview" style={{ background: 'white', padding: '32px 36px', maxWidth: '900px', margin: '0 auto', fontSize: fs + 'px', lineHeight: '1.7', color: '#000000' }}>
+
+      {/* ── Scoped CSS for tables embedded inside question statements ── */}
+      <style>{`
+        .q-content {
+          display: block;
+        }
+        .q-content table {
+          border-collapse: collapse !important;
+          width: auto !important;
+          max-width: 100% !important;
+          margin: 8px 0 !important;
+          font-size: ${fs}px;
+          background: #ffffff !important;
+        }
+        .q-content table td, .q-content table th {
+          border: 1px solid #1a1a2e !important;
+          padding: 6px 10px !important;
+          min-width: 60px;
+          min-height: 24px;
+          height: 28px;
+          vertical-align: middle !important;
+          background: #ffffff !important;
+          color: #000000 !important;
+        }
+        .q-content table th {
+          background: #f3f4f6 !important;
+          font-weight: 700 !important;
+        }
+        .q-content img {
+          max-width: 100%;
+          height: auto;
+        }
+        /* When question contains a table, let it take full row width */
+        .q-content:has(table) {
+          flex-basis: 100% !important;
+          min-width: 100% !important;
+        }
+      `}</style>
 
       {/* ── Header ── */}
       <div style={{ textAlign: 'center', marginBottom: '14px', paddingBottom: '12px', borderBottom: '3px double #1a1a2e' }}>
