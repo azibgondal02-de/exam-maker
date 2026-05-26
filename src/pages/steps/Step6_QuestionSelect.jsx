@@ -285,8 +285,8 @@ function PaperPreview({ paper, medium, schoolName, subject, className, editMode,
   const enFont = fontFamily || "'Times New Roman', Times, serif";
   const urFont = urduFont || "'Noto Nastaliq Urdu', serif";
   const fs = fontSize || 13;
-  const td = (extra={}) => ({ padding: '6px 10px', border: '1px solid #1a1a2e', ...extra });
-  const th = (extra={}) => ({ padding: '6px 10px', border: '1px solid #1a1a2e', fontWeight: '700', background: '#1a1a2e', color: 'white', whiteSpace: 'nowrap', ...extra });
+  const td = (extra={}) => ({ padding: '6px 10px', border: '1px solid #1a1a2e', background: '#ffffff', color: '#000000', ...extra });
+  const th = (extra={}) => ({ padding: '6px 10px', border: '1px solid #1a1a2e', fontWeight: '700', background: '#1a1a2e', color: '#ffffff', whiteSpace: 'nowrap', ...extra });
   const eStyle = editMode ? { outline: '1px dashed #60a5fa', borderRadius: '2px' } : {};
   return (
     <div id="paper-preview" style={{ background: 'white', padding: '32px 36px', maxWidth: '900px', margin: '0 auto', fontSize: fs + 'px', lineHeight: '1.7', color: '#000000' }}>
@@ -499,36 +499,73 @@ export default function Step6QuestionSelect() {
     w.document.write(`<html><head><title>Paper</title>
       <link href="${googleFontsUrl}" rel="stylesheet">
       <style>
-        body {
+        /* Force browsers to print backgrounds and colors (fixes grey Q.1 heading issue) */
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+        @page {
+          size: A4;
+          margin: 15mm 18mm;
+        }
+        html, body {
           margin: 0;
-          padding: 20px;
+          padding: 0;
+          background: #ffffff;
+          color: #000000;
           font-family: ${fontFamily};
           font-size: ${fontSize}px;
-          color: #000000 !important;
-          background: white;
+          line-height: 1.7;
         }
-        * {
+        /* Wrapper mirrors the on-screen preview so layout/spacing matches */
+        .paper-wrap {
+          max-width: 900px;
+          margin: 0 auto;
+          padding: 0;
+        }
+        /* Default: black text on white */
+        body div, body span, body p, body li {
+          color: #000000;
+        }
+        /* Table value cells: always white background, black text */
+        td {
+          background-color: #ffffff !important;
           color: #000000 !important;
         }
-        [contenteditable] {
-          outline: none !important;
-          background: transparent !important;
-          padding: 0 !important;
-          color: #000000 !important;
-        }
-        div, span, p, td, li {
-          color: #000000 !important;
-        }
+        /* Table label cells: dark background, white text */
         th {
           color: #ffffff !important;
           background-color: #1a1a2e !important;
+        }
+        /* Section headers (black Q.1, Q.2 bars) — keep black background + white text in print */
+        [style*="background: #000000"],
+        [style*="background:#000000"],
+        [style*="background: rgb(0, 0, 0)"] {
+          background: #000000 !important;
+        }
+        [style*="background: #000000"] *,
+        [style*="background:#000000"] *,
+        [style*="background: rgb(0, 0, 0)"] * {
+          color: #ffffff !important;
+        }
+        [contenteditable] {
+          outline: none !important;
         }
         img {
           max-width: 200px;
           height: auto;
         }
+        /* Page break rules — don't split questions or section headers awkwardly */
+        table, tr, td, th {
+          page-break-inside: avoid;
+        }
+        [style*="pageBreakInside"], [style*="break-inside"] {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
       </style>
-    </head><body>${clone.innerHTML}</body></html>`);
+    </head><body><div class="paper-wrap">${clone.innerHTML}</div></body></html>`);
     w.document.close();
     w.focus();
     // Wait longer for fonts to load before printing
