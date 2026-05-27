@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import logo from '../assets/logo.png';
-import ProfileMenu from '../components/ProfileMenu';
+import TopBar from '../components/TopBar';
 
 import API_BASE_URL  from '../services/config';
 const API = API_BASE_URL
@@ -55,12 +55,7 @@ export default function ChangePasswordPage() {
 
   return (
     <div style={s.page}>
-      {/* Logo */}
-      <div onClick={() => window.location.href = '/test-maker/step-1'} style={s.logoWrap}>
-        <img src={logo} alt="PaperCraft" style={s.logoImg} />
-      </div>
-
-      <ProfileMenu />
+      <TopBar />
 
       <div style={s.inner}>
         {/* Header */}

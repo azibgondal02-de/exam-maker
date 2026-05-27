@@ -843,10 +843,48 @@ export default function Step6QuestionSelect() {
 
         {/* Row 1: Logo + action buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
-          <div onClick={() => window.location.href = '/test-maker/step-1'}
-            style={{ background: 'white', borderRadius: '8px', padding: '4px 10px', cursor: 'pointer', marginRight: '6px', display: 'flex', alignItems: 'center' }}>
-            <img src={logo} alt="PaperCraft" style={{ height: '32px', width: 'auto', objectFit: 'contain', display: 'block' }} />
-          </div>
+        <div 
+          onClick={() => window.location.href = '/test-maker/step-1'}
+          style={{
+            background: '#ffffff',
+            borderRadius: '8px',
+            width: '32px',
+            height: '32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+            cursor: 'pointer',
+            marginRight: '6px',
+            flexShrink: 0,
+            border: '1px solid #e2e8f0'
+          }}
+        >
+          {/* Orange corner triangle */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: 0,
+            height: 0,
+            borderStyle: 'solid',
+            borderWidth: '0 10px 10px 0',
+            borderColor: 'transparent #f5a623 transparent transparent'
+          }} />
+          
+          {/* Navy P */}
+          <span style={{
+            color: '#0f1f3d',
+            fontSize: '16px',
+            fontWeight: 700,
+            fontFamily: 'Georgia, "Times New Roman", serif',
+            position: 'relative',
+            zIndex: 1
+          }}>
+            P
+          </span>
+        </div>
           <button onClick={() => window.location.href = '/test-maker/step-5'} style={tbBtn('#374151')}>← Back</button>
           <button onClick={generatePaperFromConfig} style={tbBtn('#7c3aed')}>🔄 New Paper</button>
           <button onClick={() => window.print()} style={tbBtn('#2563eb')}>🖨️ Print</button>

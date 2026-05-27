@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import logo from '../assets/logo.png';
+import Logo from '../components/Logo.jsx';
 
 import API_BASE_URL  from '../services/config';
 const API = API_BASE_URL
@@ -76,11 +76,7 @@ export default function ProfilePage() {
 
   return (
     <div style={s.page}>
-      {/* Logo - click to go home */}
-      <div onClick={() => window.location.href = '/test-maker/step-1'}
-        style={{ position: 'fixed', top: '-40px', left: '50px', zIndex: 200, cursor: 'pointer' }}>
-        <img src={logo} alt="Logo" style={{ height: '245px', width: '200px', objectFit: 'contain' }} />
-      </div>
+      <Logo />
 
       <div style={s.inner}>
         {/* Header */}

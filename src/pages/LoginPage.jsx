@@ -113,9 +113,49 @@ export default function LoginPage() {
     <div className="login-container">
       <div className="login-wrapper">
         <div className="login-header">
-          <div className="logo-circle">
-            <i className="ti ti-school"></i>
+          {/* P Logo - Dark Mode */}
+          <div 
+            onClick={() => window.location.href = '/'}
+            style={{
+              width: '80px',
+              height: '80px',
+              background: '#0f1f3d',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              cursor: 'pointer',
+              margin: '0 auto 20px',
+              boxShadow: '0 4px 15px rgba(15, 31, 61, 0.3)',
+              overflow: 'hidden'
+            }}
+          >
+            {/* Orange corner triangle */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: '35px',
+              height: '35px',
+              background: '#f5a623',
+              clipPath: 'polygon(0 0, 100% 0, 100% 100%)'
+            }} />
+            
+            {/* White P */}
+            <span style={{
+              color: 'white',
+              fontSize: '40px',
+              fontWeight: 700,
+              fontFamily: 'Georgia, "Times New Roman", serif',
+              position: 'relative',
+              zIndex: 1,
+              marginTop: '-4px'
+            }}>
+              P
+            </span>
           </div>
+          
           <h1 className="app-title">PaperCraft</h1>
           <p className="app-subtitle">Pakistan's Best Assessment Program</p>
         </div>
@@ -211,13 +251,6 @@ export default function LoginPage() {
           to { opacity: 1; transform: translateY(0); }
         }
         .login-header { text-align: center; margin-bottom: 40px; }
-        .logo-circle {
-          width: 80px; height: 80px;
-          background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
-          border-radius: 50%; display: flex; align-items: center;
-          justify-content: center; font-size: 40px; color: white;
-          margin: 0 auto 20px; box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
-        }
         .app-title { font-size: 28px; font-weight: 600; color: #333; margin: 0 0 8px 0; }
         .app-subtitle { font-size: 13px; color: #999; margin: 0; letter-spacing: 0.5px; }
         .login-form { display: flex; flex-direction: column; gap: 24px; }
