@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorAlert from '../../components/ErrorAlert';
@@ -16,89 +16,191 @@ const BOARD_THEMES = [
 
 const themeFor = (idx) => BOARD_THEMES[idx % BOARD_THEMES.length];
 
+// Responsive hook — tracks viewport width
+function useWindowWidth() {
+  const [width, setWidth] = useState(
+    typeof window !== 'undefined' ? window.innerWidth : 1024
+  );
+  useEffect(() => {
+    const handler = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return width;
+}
+
 export default function Step1BoardSelect() {
   const { boards, selectedBoard, isLoading, errors, loadBoards, setSelectedBoard, clearError } = useTestMaker();
+  const [hoveredId, setHoveredId] = useState(null);
+  const width = useWindowWidth();
+
+  // Breakpoints
+  const isMobile  = width < 480;   // xs
+  const isTablet  = width < 768;   // sm
+  const isMedium  = width < 1024;  // md
 
   useEffect(() => { loadBoards(); }, []);
 
   const handleBoardSelect = (board) => {
     setSelectedBoard(board);
-    localStorage.setItem("board_id", board?.board_id);
-    // Navigate instantly with no delay
-    window.location.href = "/test-maker/step-2";
+    localStorage.setItem('board_id', board?.board_id);
+    window.location.href = '/test-maker/step-2';
   };
+
+  // ── Grid columns: 1 col on xs, 2 on sm, 3 on md+
+  const gridCols = isMobile ? 1 : isTablet ? 2 : isMedium ? 3 : 3;
 
   return (
     <div style={s.page}>
-
-      {/* Logo + Profile menu, single import */}
       <TopBar />
 
-      {/* Header */}
-      <div style={s.header}>
+      {/* ── Header ── */}
+      <div style={{
+        ...s.header,
+        marginTop: isMobile ? '56px' : '72px',
+        marginBottom: isMobile ? '20px' : '32px',
+        padding: isMobile ? '0 4px' : '0',
+      }}>
         <div style={s.badge}>Step 01 of 06</div>
-        <h1 style={s.title}>
-          <span style={s.num}>01</span>
+
+        <h1 style={{
+          ...s.title,
+          fontSize: isMobile ? '22px' : isTablet ? '28px' : 'clamp(28px, 5vw, 38px)',
+          gap: isMobile ? '8px' : '12px',
+          flexDirection: isMobile ? 'column' : 'row',
+        }}>
+          <span style={{
+            ...s.num,
+            width:  isMobile ? '40px' : '50px',
+            height: isMobile ? '40px' : '50px',
+            fontSize: isMobile ? '16px' : '20px',
+          }}>01</span>
           Select Your Board
         </h1>
-        <p style={s.sub}>Choose your educational board to begin creating the perfect test</p>
+
+        <p style={{
+          ...s.sub,
+          fontSize: isMobile ? '13px' : '15px',
+          padding: isMobile ? '0 8px' : 0,
+        }}>
+          Choose your educational board to begin creating the perfect test
+        </p>
       </div>
 
-      {/* Content */}
-      <div style={s.content}>
-        {errors.boards && <ErrorAlert message={errors.boards} onClose={() => clearError('boards')} />}
+      {/* ── Content ── */}
+      <div style={{ ...s.content, padding: isMobile ? '0 12px' : '0' }}>
+        {errors.boards && (
+          <ErrorAlert message={errors.boards} onClose={() => clearError('boards')} />
+        )}
 
-        {isLoading ? <LoadingSpinner message="Loading boards..." /> : (
+        {isLoading ? (
+          <LoadingSpinner message="Loading boards..." />
+        ) : (
           <>
             {boards.length > 0 ? (
-              <div style={s.grid}>
+              <div style={{
+                ...s.grid,
+                gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))`,
+                gap: isMobile ? '12px' : '18px',
+              }}>
                 {boards.map((board, idx) => {
-                  const sel = selectedBoard?.board_id === board.board_id;
-                  const t = themeFor(idx);
+                  const sel     = selectedBoard?.board_id === board.board_id;
+                  const hovered = hoveredId === board.board_id && !sel;
+                  const t       = themeFor(idx);
+
                   return (
-                    <div 
-                      key={board.board_id} 
+                    <div
+                      key={board.board_id}
                       onClick={() => handleBoardSelect(board)}
+                      onMouseEnter={() => setHoveredId(board.board_id)}
+                      onMouseLeave={() => setHoveredId(null)}
                       style={{
                         ...s.card,
-                        border: sel ? `2.5px solid ${t.primary}` : '2px solid #e2e8f0',
+                        border: sel
+                          ? `2.5px solid ${t.primary}`
+                          : hovered
+                            ? `2px solid ${t.primary}55`
+                            : '2px solid #e2e8f0',
                         background: sel
                           ? `linear-gradient(135deg, ${t.light}, ${t.lighter})`
-                          : 'white',
+                          : hovered
+                            ? `linear-gradient(135deg, ${t.light}55, white)`
+                            : 'white',
                         boxShadow: sel
                           ? `0 8px 28px ${hexAlpha(t.primary, 0.22)}`
-                          : '0 2px 10px rgba(0,0,0,0.06)',
-                        transform: sel ? 'translateY(-4px)' : 'none',
+                          : hovered
+                            ? `0 4px 16px ${hexAlpha(t.primary, 0.12)}`
+                            : '0 2px 10px rgba(0,0,0,0.06)',
+                        transform: sel
+                          ? 'translateY(-4px)'
+                          : hovered
+                            ? 'translateY(-2px)'
+                            : 'none',
+                        // On mobile, taller tap target feels easier
+                        minHeight: isMobile ? 'auto' : undefined,
                       }}
                     >
                       {/* Clipped content wrapper */}
-                      <div style={s.clippedWrapper}>
+                      <div style={{
+                        ...s.clippedWrapper,
+                        padding: isMobile ? '24px 16px 20px' : '32px 20px 24px',
+                      }}>
                         {/* Top color stripe */}
                         <div style={{
                           ...s.topStripe,
                           background: `linear-gradient(90deg, ${t.primary}, ${t.dark})`,
-                          opacity: sel ? 1 : 0.7,
+                          opacity: sel ? 1 : hovered ? 0.85 : 0.7,
                         }} />
 
-                        {/* Icon */}
+                        {/* Icon box */}
                         <div style={{
                           ...s.iconBox,
+                          width:  isMobile ? '52px' : '64px',
+                          height: isMobile ? '52px' : '64px',
+                          borderRadius: isMobile ? '14px' : '18px',
+                          marginBottom: isMobile ? '12px' : '16px',
                           background: sel
                             ? `linear-gradient(135deg, ${t.primary}, ${t.dark})`
-                            : `linear-gradient(135deg, ${t.light}, ${t.lighter})`,
+                            : hovered
+                              ? `linear-gradient(135deg, ${t.light}, ${hexAlpha(t.primary, 0.3)})`
+                              : `linear-gradient(135deg, ${t.light}, ${t.lighter})`,
                         }}>
-                          <i className={`ti ${t.icon}`} style={{ fontSize: '28px', color: sel ? 'white' : t.dark }}></i>
+                          <i
+                            className={`ti ${t.icon}`}
+                            style={{
+                              fontSize: isMobile ? '22px' : '28px',
+                              color: sel ? 'white' : t.dark,
+                            }}
+                          />
                         </div>
-                        <h3 style={{ ...s.cardTitle, color: sel ? t.dark : '#0f172a' }}>{board.board_name}</h3>
-                        <p style={{ ...s.cardHint, color: sel ? t.primary : '#94a3b8' }}>
+
+                        <h3 style={{
+                          ...s.cardTitle,
+                          fontSize: isMobile ? '14px' : '16px',
+                          color: sel ? t.dark : '#0f172a',
+                        }}>
+                          {board.board_name}
+                        </h3>
+
+                        <p style={{
+                          ...s.cardHint,
+                          fontSize: isMobile ? '11px' : '12px',
+                          color: sel ? t.primary : hovered ? t.primary : '#94a3b8',
+                        }}>
                           {sel ? '✓ Selected' : 'Tap to select'}
                         </p>
                       </div>
-                      
-                      {/* Check badge - half outside half inside */}
+
+                      {/* Check badge */}
                       {sel && (
-                        <div style={s.checkBadge}>
-                          <i className="ti ti-check" style={{ fontSize: '14px' }}></i>
+                        <div style={{
+                          ...s.checkBadge,
+                          width:  isMobile ? '24px' : '28px',
+                          height: isMobile ? '24px' : '28px',
+                          top:    isMobile ? '-8px'  : '-10px',
+                          right:  isMobile ? '-8px'  : '-10px',
+                        }}>
+                          <i className="ti ti-check" style={{ fontSize: isMobile ? '12px' : '14px' }} />
                         </div>
                       )}
                     </div>
@@ -107,8 +209,18 @@ export default function Step1BoardSelect() {
               </div>
             ) : (
               <div style={s.empty}>
-                <i className="ti ti-inbox" style={{ fontSize: '56px', opacity: 0.15, display: 'block', marginBottom: '12px' }}></i>
-                <p style={{ margin: 0, color: '#94a3b8' }}>No boards available</p>
+                <i
+                  className="ti ti-inbox"
+                  style={{
+                    fontSize: isMobile ? '44px' : '56px',
+                    opacity: 0.15,
+                    display: 'block',
+                    marginBottom: '12px',
+                  }}
+                />
+                <p style={{ margin: 0, color: '#94a3b8', fontSize: isMobile ? '14px' : '15px' }}>
+                  No boards available
+                </p>
               </div>
             )}
           </>
@@ -118,7 +230,7 @@ export default function Step1BoardSelect() {
   );
 }
 
-// Helper — convert hex color to rgba with opacity for shadows
+// Helper — hex → rgba with alpha
 function hexAlpha(hex, alpha) {
   const h = hex.replace('#', '');
   const r = parseInt(h.substring(0, 2), 16);
@@ -131,51 +243,112 @@ const s = {
   page: {
     minHeight: '100vh',
     background: 'linear-gradient(135deg,#f0f4f8 0%,#e8eef5 100%)',
+    // Horizontal padding: 24px on desktop, reduced on mobile via content
     padding: '24px 20px 48px',
-    fontFamily: "'Segoe UI',system-ui,sans-serif",
+    fontFamily: "'Segoe UI', system-ui, sans-serif",
+    boxSizing: 'border-box',
   },
-  header: { maxWidth: '900px', margin: '72px auto 32px', textAlign: 'center' },
+
+  header: {
+    maxWidth: '900px',
+    margin: '72px auto 32px',
+    textAlign: 'center',
+    // prevent text overflow on tiny screens
+    wordBreak: 'break-word',
+    overflowWrap: 'break-word',
+  },
+
   badge: {
-    display: 'inline-flex', alignItems: 'center', padding: '5px 18px',
-    background: 'linear-gradient(135deg,#2196f3,#1565c0)', color: 'white',
-    borderRadius: '20px', fontSize: '12px', fontWeight: '700', letterSpacing: '0.5px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '5px 18px',
+    background: 'linear-gradient(135deg,#2196f3,#1565c0)',
+    color: 'white',
+    borderRadius: '20px',
+    fontSize: '12px',
+    fontWeight: '700',
+    letterSpacing: '0.5px',
     marginBottom: '16px',
+    // prevents badge from stretching full-width on flex containers
+    alignSelf: 'center',
   },
+
   title: {
-    fontSize: 'clamp(22px,5vw,38px)', fontWeight: '800', color: '#0f172a',
-    margin: '0 0 10px', display: 'flex', alignItems: 'center',
-    justifyContent: 'center', gap: '12px', letterSpacing: '-0.5px', flexWrap: 'wrap',
+    fontSize: 'clamp(22px, 5vw, 38px)',
+    fontWeight: '800',
+    color: '#0f172a',
+    margin: '0 0 10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '12px',
+    letterSpacing: '-0.5px',
+    // allow wrapping on narrow screens
+    flexWrap: 'wrap',
+    lineHeight: '1.2',
   },
+
   num: {
-    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    width: '50px', height: '50px', background: 'linear-gradient(135deg,#2196f3,#1565c0)',
-    color: 'white', borderRadius: '50%', fontSize: '20px', fontWeight: '800', flexShrink: 0,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '50px',
+    height: '50px',
+    background: 'linear-gradient(135deg,#2196f3,#1565c0)',
+    color: 'white',
+    borderRadius: '50%',
+    fontSize: '20px',
+    fontWeight: '800',
+    // never shrinks below its declared size
+    flexShrink: 0,
   },
-  sub: { fontSize: '15px', color: '#64748b', margin: '0 auto', maxWidth: '480px', lineHeight: '1.7' },
-  content: { maxWidth: '900px', margin: '0 auto' },
+
+  sub: {
+    fontSize: '15px',
+    color: '#64748b',
+    margin: '0 auto',
+    maxWidth: '480px',
+    lineHeight: '1.7',
+  },
+
+  content: {
+    maxWidth: '900px',
+    margin: '0 auto',
+  },
+
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+    // columns set dynamically via inline style
     gap: '18px',
     marginBottom: '32px',
   },
+
   card: {
     position: 'relative',
     borderRadius: '18px',
     padding: 0,
     textAlign: 'center',
     cursor: 'pointer',
-    transition: 'all 0.25s cubic-bezier(0.34,1.56,0.64,1)',
+    // smooth spring-like motion
+    transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
     WebkitTapHighlightColor: 'transparent',
+    // overflow: visible so checkBadge can poke outside
     overflow: 'visible',
+    // ensure consistent box-sizing
+    boxSizing: 'border-box',
+    // ensures min tap target on touch
+    WebkitUserSelect: 'none',
+    userSelect: 'none',
   },
+
   clippedWrapper: {
     position: 'relative',
     overflow: 'hidden',
     borderRadius: '18px',
-    padding: '32px 20px 24px',
+    // padding set dynamically
     background: 'inherit',
   },
+
   topStripe: {
     position: 'absolute',
     top: 0,
@@ -183,7 +356,9 @@ const s = {
     right: 0,
     height: '4px',
     borderRadius: '18px 18px 0 0',
+    transition: 'opacity 0.2s ease',
   },
+
   iconBox: {
     width: '64px',
     height: '64px',
@@ -194,16 +369,27 @@ const s = {
     margin: '0 auto 16px',
     transition: 'all 0.25s ease',
   },
+
   cardTitle: {
     fontSize: '16px',
     fontWeight: '700',
     margin: '0 0 6px',
+    // prevent long board names from overflowing
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    // if needed, allow wrapping instead:
+    // whiteSpace: 'normal',
+    // wordBreak: 'break-word',
   },
+
   cardHint: {
     fontSize: '12px',
     margin: 0,
     fontWeight: '500',
+    transition: 'color 0.2s ease',
   },
+
   checkBadge: {
     position: 'absolute',
     top: '-10px',
@@ -218,7 +404,9 @@ const s = {
     color: 'white',
     boxShadow: '0 3px 10px rgba(34,197,94,0.4)',
     zIndex: 10,
+    transition: 'all 0.2s ease',
   },
+
   empty: {
     textAlign: 'center',
     padding: '60px 20px',

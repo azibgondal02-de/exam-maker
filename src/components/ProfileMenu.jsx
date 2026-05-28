@@ -7,13 +7,11 @@ function ProfileMenu() {
   const hoverTimerRef = useRef(null);
 
   const schoolName = localStorage.getItem('school_name') || '';
-  const username = localStorage.getItem('username') || 'User';
-  const subStatus = localStorage.getItem('subscription_status') || 'active';
-  const daysLeft = localStorage.getItem('subscription_days_left') || '';
-  const subEnd = localStorage.getItem('subscription_end') || '';
+  const username   = localStorage.getItem('username') || 'User';
+  const subStatus  = localStorage.getItem('subscription_status') || 'active';
+  const daysLeft   = localStorage.getItem('subscription_days_left') || '';
+  const subEnd     = localStorage.getItem('subscription_end') || '';
 
-  // Build initials from school name: take first letter of first two words
-  // e.g. "Biza Public High School" -> "BP"
   const buildInitials = () => {
     const src = (schoolName || username || 'U').trim();
     const words = src.split(/\s+/).filter(Boolean);
@@ -23,11 +21,9 @@ function ProfileMenu() {
   };
   const initials = buildInitials();
 
-  // Detect touch device once on mount (coarse pointer = tap-primary devices)
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.matchMedia) {
+    if (typeof window !== 'undefined' && window.matchMedia)
       setIsTouch(window.matchMedia('(pointer: coarse)').matches);
-    }
   }, []);
 
   // Click-outside to close
@@ -37,81 +33,38 @@ function ProfileMenu() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // Subscription state styling
   const subColor = subStatus === 'expired' ? '#d32f2f' : subStatus === 'expiring_soon' ? '#e65100' : '#2e7d32';
-  const subBg   = subStatus === 'expired' ? '#ffebee' : subStatus === 'expiring_soon' ? '#fff3e0' : '#e8f5e9';
-  const subIcon = subStatus === 'expired' ? 'ti-circle-x' : subStatus === 'expiring_soon' ? 'ti-clock' : 'ti-circle-check';
+  const subBg    = subStatus === 'expired' ? '#ffebee' : subStatus === 'expiring_soon' ? '#fff3e0' : '#e8f5e9';
+  const subIcon  = subStatus === 'expired' ? 'ti-circle-x' : subStatus === 'expiring_soon' ? 'ti-clock' : 'ti-circle-check';
   const subLabel = subStatus === 'expired' ? 'Subscription expired' : subStatus === 'expiring_soon' ? `${daysLeft} days remaining` : 'Subscription active';
 
-  // Hover handlers (desktop only — skipped on touch devices)
-  const handleMouseEnter = () => {
-    if (isTouch) return;
-    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-    setOpen(true);
-  };
-  const handleMouseLeave = () => {
-    if (isTouch) return;
-    // Small delay so user can move cursor from circle to dropdown without it closing
-    hoverTimerRef.current = setTimeout(() => setOpen(false), 200);
-  };
-
-  // Tap toggles open/close on mobile
-  const handleClick = () => {
-    if (isTouch) setOpen(p => !p);
-  };
+  const handleMouseEnter = () => { if (isTouch) return; clearTimeout(hoverTimerRef.current); setOpen(true); };
+  const handleMouseLeave = () => { if (isTouch) return; hoverTimerRef.current = setTimeout(() => setOpen(false), 200); };
+  const handleClick      = () => { if (isTouch) setOpen(p => !p); };
 
   return (
     <>
-      {/* Responsive styles — keeps everything scoped to the menu */}
       <style>{`
-        .pm-wrap {
-          position: fixed;
-          top: 20px;
-          right: 24px;
-          z-index: 250;
-        }
-        @media (max-width: 768px) {
-          .pm-wrap {
-            top: 14px;
-            right: 14px;
-          }
-        }
         .pm-avatar {
-          width: 44px;
-          height: 44px;
-          border-radius: 50%;
+          width: 40px; height: 40px; border-radius: 50%;
           background: linear-gradient(135deg, #2196f3, #1565c0);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 14px;
-          font-weight: 700;
-          color: white;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 13px; font-weight: 700; color: white;
           border: 2px solid white;
-          box-shadow: 0 3px 14px rgba(33, 150, 243, 0.35);
-          cursor: pointer;
-          transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+          box-shadow: 0 3px 14px rgba(33,150,243,0.35);
+          cursor: pointer; flex-shrink: 0;
+          transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease;
           position: relative;
           font-family: 'Segoe UI', system-ui, sans-serif;
-          padding: 0;
+          padding: 0; outline: none;
         }
-        .pm-avatar:hover {
-          transform: scale(1.06);
-          box-shadow: 0 5px 20px rgba(33, 150, 243, 0.5);
-        }
-        .pm-avatar:focus { outline: none; }
-        .pm-avatar:focus-visible {
-          box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.35), 0 3px 14px rgba(33, 150, 243, 0.35);
-        }
+        .pm-avatar:hover { transform: scale(1.06); box-shadow: 0 5px 20px rgba(33,150,243,0.5); }
+        .pm-avatar:focus-visible { box-shadow: 0 0 0 3px rgba(33,150,243,0.35), 0 3px 14px rgba(33,150,243,0.35); }
         .pm-status-dot {
-          position: absolute;
-          bottom: -1px;
-          right: -1px;
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-          border: 2px solid white;
+          position: absolute; bottom: -1px; right: -1px;
+          width: 11px; height: 11px; border-radius: 50%; border: 2px solid white;
         }
+        /* Dropdown anchored to the right edge of the avatar wrapper */
         .pm-dropdown {
           position: absolute;
           top: calc(100% + 10px);
@@ -120,26 +73,27 @@ function ProfileMenu() {
           background: white;
           border: 1px solid #e0e7ef;
           border-radius: 14px;
-          box-shadow: 0 12px 36px rgba(0, 0, 0, 0.14);
+          box-shadow: 0 12px 36px rgba(0,0,0,0.14);
           overflow: hidden;
           animation: pm-fade-in 0.18s ease-out;
+          z-index: 300;
         }
         @media (max-width: 380px) {
           .pm-dropdown { width: calc(100vw - 28px); }
         }
         @keyframes pm-fade-in {
           from { opacity: 0; transform: translateY(-6px); }
-          to { opacity: 1; transform: translateY(0); }
+          to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
 
+      {/* Relative wrapper — dropdown anchors to this, not to the viewport */}
       <div
         ref={ref}
-        className="pm-wrap"
+        style={{ position: 'relative' }}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        {/* Circular avatar trigger */}
         <button
           className="pm-avatar"
           onClick={handleClick}
@@ -150,7 +104,6 @@ function ProfileMenu() {
           <span className="pm-status-dot" style={{ background: subColor }} />
         </button>
 
-        {/* Dropdown — appears on hover (desktop) or tap (mobile) */}
         {open && (
           <div className="pm-dropdown">
             {/* User header */}
@@ -158,7 +111,7 @@ function ProfileMenu() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{
                   width: '40px', height: '40px', borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #2196f3, #1565c0)',
+                  background: 'linear-gradient(135deg,#2196f3,#1565c0)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '14px', fontWeight: '700', color: 'white', flexShrink: 0,
                 }}>{initials}</div>
