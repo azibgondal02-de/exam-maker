@@ -1,54 +1,90 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
+
+// ── Eagerly loaded (tiny, needed immediately) ─────────────────────────────────
 import LoginPage from './pages/LoginPage';
 import TestMaker from './pages/TestMaker';
-import Step1_BoardSelect from './pages/steps/Step1_BoardSelect';
-import Step2_ClassSelect from './pages/steps/Step2_ClassSelect';
-import Step3_SubjectSelect from './pages/steps/Step3_SubjectSelect';
-import Step4_TopicSelect from './pages/steps/Step4_TopicSelect';
-import Step5_ConfigReview from './pages/steps/Step5_ConfigReview';
-import Step6_QuestionSelect from './pages/steps/Step6_QuestionSelect';
-import ProfilePage from './pages/ProfilePage';
-import ChangePasswordPage from './pages/ChangePasswordPage'
+
+// ── Lazy loaded (each step is its own JS chunk) ───────────────────────────────
+// Vite will split these into separate files — Step 1's bundle won't include
+// Step 6's heavy paper rendering code at all.
+const Step1 = lazy(() => import('./pages/steps/Step1_BoardSelect'));
+const Step2 = lazy(() => import('./pages/steps/Step2_ClassSelect'));
+const Step3 = lazy(() => import('./pages/steps/Step3_SubjectSelect'));
+const Step4 = lazy(() => import('./pages/steps/Step4_TopicSelect'));
+const Step5 = lazy(() => import('./pages/steps/Step5_ConfigReview'));
+const Step6 = lazy(() => import('./pages/steps/Step6_QuestionSelect'));
+const ProfilePage      = lazy(() => import('./pages/ProfilePage'));
+const ChangePasswordPage = lazy(() => import('./pages/ChangePasswordPage'));
+
+// ── Minimal full-screen fallback while a chunk loads ─────────────────────────
+function PageLoader() {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      minHeight: '100vh', background: 'linear-gradient(135deg, #f0f4f8, #e8eef5)',
+    }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{
+          width: '44px', height: '44px',
+          border: '4px solid #e2e8f0', borderTop: '4px solid #2196f3',
+          borderRadius: '50%', margin: '0 auto 16px',
+          animation: 'spin 0.8s linear infinite',
+        }} />
+        <p style={{ color: '#94a3b8', fontSize: '14px', margin: 0 }}>Loading...</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    </div>
+  );
+}
+
+// ── Auth guard ────────────────────────────────────────────────────────────────
+function Private({ children }) {
+  const token = localStorage.getItem('auth_token');
+  return token ? children : <Navigate to="/login" replace />;
+}
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    setIsAuthenticated(!!token);
-    setIsLoading(false);
+    // Auth check is synchronous (localStorage) — just flag that we've checked
+    setAuthChecked(true);
   }, []);
 
-  if (isLoading) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f8f9fa' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '50px', height: '50px', border: '4px solid #f0f0f0', borderTop: '4px solid #2196f3', borderRadius: '50%', margin: '0 auto 20px', animation: 'spin 1s linear infinite' }}></div>
-          <p style={{ color: '#999', fontSize: '15px' }}>Loading...</p>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        </div>
-      </div>
-    );
-  }
+  if (!authChecked) return <PageLoader />;
+
+  const isAuthenticated = !!localStorage.getItem('auth_token');
 
   return (
     <Router>
-      <Routes>
-        <Route path="/login" element={isAuthenticated ? <Navigate to="/test-maker" replace /> : <LoginPage />} />
-        <Route path="/test-maker" element={isAuthenticated ? <TestMaker /> : <Navigate to="/login" replace />} />
-        <Route path="/test-maker/step-1" element={isAuthenticated ? <Step1_BoardSelect /> : <Navigate to="/login" replace />} />
-        <Route path="/test-maker/step-2" element={isAuthenticated ? <Step2_ClassSelect /> : <Navigate to="/login" replace />} />
-        <Route path="/test-maker/step-3" element={isAuthenticated ? <Step3_SubjectSelect /> : <Navigate to="/login" replace />} />
-        <Route path="/test-maker/step-4" element={isAuthenticated ? <Step4_TopicSelect /> : <Navigate to="/login" replace />} />
-        <Route path="/test-maker/step-5" element={isAuthenticated ? <Step5_ConfigReview /> : <Navigate to="/login" replace />} />
-        <Route path="/test-maker/step-6" element={isAuthenticated ? <Step6_QuestionSelect /> : <Navigate to="/login" replace />} />
-        <Route path="/test-maker/profile" element={isAuthenticated ? <ProfilePage /> : <Navigate to="/login" replace />} />
-        <Route path="/test-maker/change-password" element={isAuthenticated ? <ChangePasswordPage /> : <Navigate to="/login" replace />} />
-        <Route path="/" element={<Navigate to={isAuthenticated ? "/test-maker" : "/login"} replace />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          {/* Public */}
+          <Route
+            path="/login"
+            element={isAuthenticated ? <Navigate to="/test-maker" replace /> : <LoginPage />}
+          />
+
+          {/* Protected — each lazy component loads only when its route is visited */}
+          <Route path="/test-maker"                element={<Private><TestMaker /></Private>} />
+          <Route path="/test-maker/step-1"         element={<Private><Step1 /></Private>} />
+          <Route path="/test-maker/step-2"         element={<Private><Step2 /></Private>} />
+          <Route path="/test-maker/step-3"         element={<Private><Step3 /></Private>} />
+          <Route path="/test-maker/step-4"         element={<Private><Step4 /></Private>} />
+          <Route path="/test-maker/step-5"         element={<Private><Step5 /></Private>} />
+          <Route path="/test-maker/step-6"         element={<Private><Step6 /></Private>} />
+          <Route path="/test-maker/profile"        element={<Private><ProfilePage /></Private>} />
+          <Route path="/test-maker/change-password" element={<Private><ChangePasswordPage /></Private>} />
+
+          {/* Default */}
+          <Route
+            path="/"
+            element={<Navigate to={isAuthenticated ? '/test-maker' : '/login'} replace />}
+          />
+        </Routes>
+      </Suspense>
     </Router>
   );
 }

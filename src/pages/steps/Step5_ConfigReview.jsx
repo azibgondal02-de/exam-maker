@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useLayoutEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ReactDOM from 'react-dom';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -472,6 +473,7 @@ const cardStyle     = { background: 'white', borderRadius: '10px', overflow: 'vi
 const headerStyle   = { background: '#2563eb', color: 'white', padding: '12px 20px', fontWeight: '600', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '10px 10px 0 0' };
 
 export default function Step5ConfigReview() {
+  const navigate = useNavigate();
   const { selectedSubject, loadPaperConfig, loadQuestions } = useTestMaker();
   const [apiData,              setApiData]              = useState(null);
   const [configLoading,        setConfigLoading]        = useState(true);
@@ -626,7 +628,7 @@ export default function Step5ConfigReview() {
     setShowValidationBanner(false);
     localStorage.setItem('step5_config',   JSON.stringify({ sections, sectionRows, longBlocks, longSectionChoices }));
     localStorage.setItem('step5_chapters', JSON.stringify(chapters));
-    window.location.href = '/test-maker/step-6';
+    navigate('/test-maker/step-6');
   };
 
   if (configLoading) return <LoadingSpinner message="Loading paper configuration..." />;
@@ -832,7 +834,7 @@ export default function Step5ConfigReview() {
 
       {/* Bottom action buttons — inline (not fixed) so they don't overlay tables */}
       <div className="s5-actions">
-        <button onClick={() => window.location.href = '/test-maker/step-4'} className="s5-btn s5-btn-ghost">
+        <button onClick={() => navigate('/test-maker/step-4')} className="s5-btn s5-btn-ghost">
           <i className="ti ti-arrow-left" /> Back
         </button>
         <button onClick={validateAndProceed} className="s5-btn s5-btn-primary">

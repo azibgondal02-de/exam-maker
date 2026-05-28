@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import ProfileMenu from '../../components/ProfileMenu';
 
@@ -436,6 +437,7 @@ function openPDF(fontFamily, urduFont, fontSize) {
 
 // ── Main component ───────────────────────────────────────────────────────────
 export default function Step6QuestionSelect() {
+  const navigate = useNavigate();
   const { selectedSubject, selectedClass, generatePaper } = useTestMaker();
   const [loading,     setLoading]     = useState(true);
   const [error,       setError]       = useState('');
@@ -458,10 +460,7 @@ export default function Step6QuestionSelect() {
 
   useEffect(() => {
     generatePaperFromConfig();
-    const link = document.createElement('link');
-    link.href = 'https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600;700&family=Gulzar&family=Amiri:wght@400;700&family=Scheherazade+New:wght@400;700&display=swap';
-    link.rel  = 'stylesheet';
-    document.head.appendChild(link);
+    // Fonts are loaded in index.html — no dynamic injection needed
   }, []);
 
   // Close drawer on outside tap
@@ -567,11 +566,11 @@ export default function Step6QuestionSelect() {
 
         {/* Row 1: Logo + action buttons + profile */}
         <div className="s6-toolbar-row1">
-          <div onClick={() => window.location.href = '/test-maker/step-1'} className="s6-logo-btn" title="Home">
+          <div onClick={() => navigate('/test-maker/step-1')} className="s6-logo-btn" title="Home">
             <div className="s6-logo-corner" />
             <span className="s6-logo-p">P</span>
           </div>
-          <button onClick={() => window.location.href = '/test-maker/step-5'} className="s6-tb-btn" style={{ background: '#374151' }}>← Back</button>
+          <button onClick={() => navigate('/test-maker/step-5')} className="s6-tb-btn" style={{ background: '#374151' }}>← Back</button>
           <button onClick={generatePaperFromConfig} className="s6-tb-btn" style={{ background: '#7c3aed' }}>🔄 Regenerate</button>
           <button onClick={() => window.print()}    className="s6-tb-btn" style={{ background: '#2563eb' }}>🖨️ Print</button>
           <button onClick={() => openPDF(fontFamily, urduFont, fontSize)} className="s6-tb-btn" style={{ background: '#dc2626' }}>📄 PDF</button>
@@ -595,7 +594,7 @@ export default function Step6QuestionSelect() {
       {/* ══════════ MOBILE top bar ══════════ */}
       <div className="s6-mobile-topbar">
         {/* Logo */}
-        <div onClick={() => window.location.href = '/test-maker/step-1'} className="s6-logo-btn s6-logo-sm">
+        <div onClick={() => navigate('/test-maker/step-1')} className="s6-logo-btn s6-logo-sm">
           <div className="s6-logo-corner" />
           <span className="s6-logo-p" style={{ fontSize: '13px' }}>P</span>
         </div>
@@ -610,7 +609,7 @@ export default function Step6QuestionSelect() {
       {error && (
         <div className="s6-error-box">
           <div style={{ fontSize: '15px', fontWeight: '600', marginBottom: '8px' }}>⚠️ {error}</div>
-          <button onClick={() => window.location.href = '/test-maker/step-5'} className="s6-tb-btn" style={{ background: '#dc2626' }}>← Go Back to Step 5</button>
+          <button onClick={() => navigate('/test-maker/step-5')} className="s6-tb-btn" style={{ background: '#dc2626' }}>← Go Back to Step 5</button>
         </div>
       )}
 
@@ -644,7 +643,7 @@ export default function Step6QuestionSelect() {
 
       {/* ══════════ MOBILE bottom action bar ══════════ */}
       <div className="s6-mobile-actions">
-        <button onClick={() => window.location.href = '/test-maker/step-5'} className="s6-mob-btn s6-mob-back">
+        <button onClick={() => navigate('/test-maker/step-5')} className="s6-mob-btn s6-mob-back">
           <i className="ti ti-arrow-left" style={{ fontSize: '16px' }} />
         </button>
         <button onClick={generatePaperFromConfig} className="s6-mob-btn" style={{ background: '#7c3aed' }}>

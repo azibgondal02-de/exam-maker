@@ -4,11 +4,36 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>test-maker-frontend</title>
+    <title>PaperCraft — Smart Paper Generation</title>
+
+    <!-- ── Preconnect to external origins (saves DNS + TLS time) ── -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://testmaker.pk" />
+
+    <!-- ── Urdu fonts loaded once here instead of dynamically in Step 6 ── -->
+    <!-- display=swap means text shows immediately in fallback font,       -->
+    <!-- then swaps in when the custom font is ready — no invisible text   -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600;700&family=Gulzar&family=Amiri:wght@400;700&family=Scheherazade+New:wght@400;700&family=Playfair+Display:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- ── Tabler Icons (if loaded from CDN — move here if currently in JS) ── -->
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" /> -->
+
+    <!-- ── Performance hints ── -->
+    <!-- Tell the browser this is an app, not a document — skip some parsing -->
+    <meta name="description" content="PaperCraft — Pakistan's best assessment and paper generation platform" />
+
+    <!-- Prevent tap delay on mobile (300ms removed) -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="theme-color" content="#0f1f3d" />
   </head>
   <body>
     <div id="root"></div>
-    
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
