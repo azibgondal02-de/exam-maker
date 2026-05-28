@@ -27,7 +27,7 @@ function useWindowWidth() {
 
 export default function Step1BoardSelect() {
   const navigate = useNavigate();
-  const { boards, selectedBoard, isLoading, errors, loadBoards, loadClasses, setSelectedBoard, clearError } = useTestMaker();
+  const { boards, selectedBoard, isLoading, errors, loadBoards, loadClasses, setSelectedBoard, setSelectedClass, setSelectedSubject, setSelectedTopics, clearError } = useTestMaker();
   const [hoveredId, setHoveredId] = useState(null);
   const width = useWindowWidth();
 
@@ -39,8 +39,10 @@ export default function Step1BoardSelect() {
 
   const handleBoardSelect = (board) => {
     setSelectedBoard(board);
+    setSelectedClass(null);     // clear all downstream selections
+    setSelectedSubject(null);
+    setSelectedTopics([]);
     localStorage.setItem('board_id', board?.board_id);
-    // useNavigate — no full page reload, Zustand state survives
     navigate('/test-maker/step-2');
   };
 

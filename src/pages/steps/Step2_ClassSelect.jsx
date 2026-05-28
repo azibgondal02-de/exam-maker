@@ -22,7 +22,7 @@ export default function Step2ClassSelect() {
   const navigate = useNavigate();
   const {
     selectedBoard, classes, selectedClass,
-    isLoading, errors, loadClasses, loadSubjects, setSelectedClass, clearError,
+    isLoading, errors, loadClasses, loadSubjects, setSelectedClass, setSelectedSubject, setSelectedTopics, clearError,
   } = useTestMaker();
 
   useEffect(() => {
@@ -32,6 +32,8 @@ export default function Step2ClassSelect() {
 
   const handleClassSelect = (cls) => {
     setSelectedClass(cls);
+    setSelectedSubject(null);   // clear downstream selections
+    setSelectedTopics([]);
     localStorage.setItem('class_id', cls?.class_id);
     localStorage.setItem('class_name', cls?.class_name || '');
     navigate('/test-maker/step-3');

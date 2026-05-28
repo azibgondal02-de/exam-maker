@@ -23,7 +23,7 @@ export default function Step3SubjectSelect() {
   const navigate = useNavigate();
   const {
     selectedClass, subjects, selectedSubject,
-    isLoading, errors, loadSubjects, loadTopics, setSelectedSubject, clearError,
+    isLoading, errors, loadSubjects, loadTopics, setSelectedSubject, setSelectedTopics, clearError,
   } = useTestMaker();
 
   useEffect(() => {
@@ -38,6 +38,7 @@ export default function Step3SubjectSelect() {
 
   const handleSelectSubject = (subject) => {
     setSelectedSubject(subject);
+    setSelectedTopics([]);   // clear previous subject's selected topics
     localStorage.setItem('subject_id', subject.subject_id);
     localStorage.setItem('subject_name', subject.subject_name || '');
     localStorage.removeItem('step5_config');

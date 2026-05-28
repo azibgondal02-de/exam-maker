@@ -2,15 +2,11 @@ import { useTestMakerStore } from '../stores/testMakerStore';
 import * as apiService from '../services/api';
 
 // ── Cache helpers ─────────────────────────────────────────────────────────────
-// Boards and classes almost never change → 1 hour TTL
-// Subjects change occasionally → 30 minute TTL
-// Topics are content-heavy and specific → 15 minute TTL
 const TTL = {
-  boards:   60 * 60 * 1000,       // 1 hour
-  classes:  60 * 60 * 1000,       // 1 hour
-  subjects: 30 * 60 * 1000,       // 30 minutes
-  topics:   15 * 60 * 1000,       // 15 minutes
-  chapters: 15 * 60 * 1000,       // 15 minutes
+  boards:   60 * 60 * 1000,   // 1 hour
+  classes:  60 * 60 * 1000,   // 1 hour
+  subjects: 30 * 60 * 1000,   // 30 minutes
+  topics:   15 * 60 * 1000,   // 15 minutes
 };
 
 function cacheGet(key) {
@@ -40,25 +36,19 @@ export const useTestMaker = () => {
   const store = useTestMakerStore();
 
   const goToStep = (step) => {
-    if (step >= 1 && step <= 7) {
-      store.setCurrentStep(step);
-      window.scrollTo(0, 0);
-    }
+    if (step >= 1 && step <= 7) { store.setCurrentStep(step); window.scrollTo(0, 0); }
   };
-
   const goNext = () => { if (store.currentStep < 7) goToStep(store.currentStep + 1); };
   const goBack = () => { if (store.currentStep > 1) goToStep(store.currentStep - 1); };
 
   // ── loadBoards ──────────────────────────────────────────────────────────────
   const loadBoards = async () => {
-    // 1. If Zustand already has boards in memory (no full reload), use them
+    // Boards never change per session — safe to keep in Zustand memory
     if (store.boards.length > 0) return store.boards;
 
-    // 2. Check localStorage cache
     const cached = cacheGet('boards');
     if (cached) { store.setBoards(cached); return cached; }
 
-    // 3. Fetch from API
     try {
       store.setIsLoading(true);
       store.clearError('boards');
@@ -66,11 +56,8 @@ export const useTestMaker = () => {
       const boards = data.boards || [];
       store.setBoards(boards);
       cacheSet('boards', boards, TTL.boards);
-
-      // Prefetch classes for all boards in background (don't await)
-      // Silently prefetch classes for all boards in background
+      // Silently prefetch classes for all boards
       boards.forEach(b => loadClasses(b.board_id, true));
-
       return boards;
     } catch (error) {
       store.setError('boards', error.message);
@@ -81,13 +68,14 @@ export const useTestMaker = () => {
   };
 
   // ── loadClasses ─────────────────────────────────────────────────────────────
-  // silent=true: skip loading spinner (used for hover prefetch)
+  // NOTE: NO Zustand memory check here — stale data bug when switching boards
+  // localStorage cache is sufficient and correct
   const loadClasses = async (boardId, silent = false) => {
-    if (store.classes.length > 0 && store.selectedBoard?.board_id === boardId)
-      return store.classes;
-
     const cached = cacheGet(`classes_${boardId}`);
-    if (cached) { if (!silent) store.setClasses(cached); return cached; }
+    if (cached) {
+      if (!silent) store.setClasses(cached);
+      return cached;
+    }
 
     try {
       if (!silent) { store.setIsLoading(true); store.clearError('classes'); }
@@ -98,20 +86,19 @@ export const useTestMaker = () => {
       return classes;
     } catch (error) {
       if (!silent) store.setError('classes', error.message);
-      // silent prefetch errors are swallowed
     } finally {
       if (!silent) store.setIsLoading(false);
     }
   };
 
   // ── loadSubjects ────────────────────────────────────────────────────────────
-  // silent=true: skip loading spinner (used for hover prefetch)
+  // NOTE: NO Zustand memory check — stale data bug when switching classes
   const loadSubjects = async (classId, silent = false) => {
-    if (store.subjects.length > 0 && store.selectedClass?.class_id === classId)
-      return store.subjects;
-
     const cached = cacheGet(`subjects_${classId}`);
-    if (cached) { if (!silent) store.setSubjects(cached); return cached; }
+    if (cached) {
+      if (!silent) store.setSubjects(cached);
+      return cached;
+    }
 
     try {
       if (!silent) { store.setIsLoading(true); store.clearError('subjects'); }
@@ -128,13 +115,15 @@ export const useTestMaker = () => {
   };
 
   // ── loadTopics ──────────────────────────────────────────────────────────────
-  // silent=true: skip loading spinner (used for hover prefetch)
+  // NOTE: NO Zustand memory check — this was the stale Biology/Math bug
+  // When user picks Math after Biology, store.selectedSubject is still Biology
+  // due to async Zustand updates, so the old check wrongly returned Biology chapters
   const loadTopics = async (subjectId, silent = false) => {
-    if (store.chapters.length > 0 && store.selectedSubject?.subject_id === subjectId)
-      return store.chapters;
-
     const cached = cacheGet(`topics_${subjectId}`);
-    if (cached) { if (!silent) store.setChapters(cached); return cached; }
+    if (cached) {
+      if (!silent) store.setChapters(cached);
+      return cached;
+    }
 
     try {
       if (!silent) { store.setIsLoading(true); store.clearError('topics'); }
@@ -201,7 +190,6 @@ export const useTestMaker = () => {
     }
   };
 
-  // ── Cache management (expose so pages can call if needed) ───────────────────
   const clearCache = (prefix) => cacheClear(prefix || '');
 
   return {
@@ -220,15 +208,15 @@ export const useTestMaker = () => {
     isLoading:         store.isLoading,
     errors:            store.errors,
 
-    setCurrentStep:      store.setCurrentStep,
-    setSelectedBoard:    store.setSelectedBoard,
-    setSelectedClass:    store.setSelectedClass,
-    setSelectedSubject:  store.setSelectedSubject,
-    setSelectedTopics:   store.setSelectedTopics,
+    setCurrentStep:       store.setCurrentStep,
+    setSelectedBoard:     store.setSelectedBoard,
+    setSelectedClass:     store.setSelectedClass,
+    setSelectedSubject:   store.setSelectedSubject,
+    setSelectedTopics:    store.setSelectedTopics,
     setSelectedQuestions: store.setSelectedQuestions,
-    setIsLoading:        store.setIsLoading,
-    setError:            store.setError,
-    clearError:          store.clearError,
+    setIsLoading:         store.setIsLoading,
+    setError:             store.setError,
+    clearError:           store.clearError,
 
     goToStep,
     goNext,
@@ -246,5 +234,3 @@ export const useTestMaker = () => {
     resetAll: store.resetAll,
   };
 };
-
-// _prefetchClasses removed — loadClasses(id, true) handles silent prefetch
