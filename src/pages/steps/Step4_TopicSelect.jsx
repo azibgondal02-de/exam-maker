@@ -160,8 +160,8 @@ export default function Step4TopicSelect() {
                                 <label key={topic.topic_id} className={`s4-topic-item ${isSel ? 's4-topic-sel' : ''}`}>
                                   <input type="checkbox" className="s4-checkbox" checked={isSel} onChange={() => toggleTopic(topic)} style={{ accentColor: c.border }} />
                                   <div style={{ minWidth: 0 }}>
-                                    <div style={{ color: isSel ? c.border : '#334155', fontSize: '13px', fontWeight: '500', wordBreak: 'break-word' }}>{topic.topic_name_en}</div>
-                                    {topic.topic_name_urdu && <div style={{ color: isSel ? c.border : '#94a3b8', fontSize: '11px', direction: 'rtl', textAlign: 'right' }}>{topic.topic_name_urdu}</div>}
+                                    <div style={{ color: isSel ? c.border : '#334155', fontSize: '14px', fontWeight: '500', wordBreak: 'break-word' }}>{topic.topic_name_en}</div>
+                                    {topic.topic_name_urdu && <div style={{ color: isSel ? c.border : '#94a3b8', fontSize: '14px', direction: 'rtl', textAlign: 'right' }}>{topic.topic_name_urdu}</div>}
                                   </div>
                                 </label>
                               );
@@ -257,8 +257,8 @@ export default function Step4TopicSelect() {
         .s4-chapter-card { background: white; border-radius: 14px; border-left: 4px solid; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); min-width: 0; }
         .s4-chapter-header { display: flex; align-items: center; gap: 10px; padding: 14px 16px; cursor: pointer; border: none; width: 100%; text-align: left; font-family: inherit; -webkit-tap-highlight-color: transparent; min-height: 52px; }
         .s4-chapter-info { flex: 1; min-width: 0; }
-        .s4-chapter-name { font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 1px; }
-        .s4-chapter-name-ur { font-size: 11px; direction: rtl; text-align: right; opacity: 0.8; }
+        .s4-chapter-name { font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 1px; }
+        .s4-chapter-name-ur { font-size: 16px; direction: rtl; text-align: right; opacity: 0.8; }
         .s4-chapter-meta { font-size: 11px; color: #94a3b8; margin-top: 2px; }
         .s4-chapter-arrow { font-size: 16px; flex-shrink: 0; transition: transform 0.25s ease; }
         .s4-topics-list { padding: 8px 14px; border-top: 1px solid rgba(0,0,0,0.05); background: #fafbfc; display: flex; flex-direction: column; gap: 4px; }

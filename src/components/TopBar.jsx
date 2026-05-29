@@ -22,8 +22,7 @@ export default function TopBar({ logoVariant = 'default', onLogoClick, theme = '
           padding: 0 20px 0 28px;
           z-index: 200;
           background: rgba(240, 244, 248, 0.88);
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
+          background: rgba(240, 244, 248, 0.97);
           border-bottom: 1px solid rgba(226, 232, 240, 0.6);
         }
         @media (max-width: 480px) {

@@ -28,20 +28,16 @@ function ProfileMenu() {
       setIsTouch(window.matchMedia('(pointer: coarse)').matches);
   }, []);
 
-  // Click-outside to close
+  // Click-outside to close — excludes the mobile sheet so taps inside it
+  // (e.g. Change Password) don't close the menu before navigation fires
   useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target) && !e.target.closest('.pm-sheet'))
+        setOpen(false);
+    };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
-
-  // Close sheet on backdrop tap (mobile)
-  useEffect(() => {
-    if (!open || !isTouch) return;
-    const handler = (e) => { if (!e.target.closest('.pm-sheet')) setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open, isTouch]);
 
   const subColor = subStatus === 'expired' ? '#d32f2f' : subStatus === 'expiring_soon' ? '#e65100' : '#2e7d32';
   const subBg    = subStatus === 'expired' ? '#ffebee' : subStatus === 'expiring_soon' ? '#fff3e0' : '#e8f5e9';
