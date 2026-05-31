@@ -10,6 +10,14 @@ function fixHtml(html) {
   return html.replace(/src="\/([^"]+)"/g, `src="${IMAGE_BASE}/$1"`);
 }
 
+// Treat an element as having content if it has visible text OR an inline image.
+// Stripping ALL tags would wrongly count an image-only cell as empty.
+function hasContent(s) {
+  if (!s) return false;
+  if (/<img\b/i.test(s)) return true;
+  return s.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim() !== '';
+}
+
 function cleanName(name) {
   if (!name) return '';
   const map = {
@@ -154,7 +162,7 @@ function buildPayload(step5Config, chaptersFromState) {
   return { subject_id: subjectId, sections: payloadSections, total_marks: totalMarks };
 }
 
-// ── All question rendering components (unchanged logic, untouched) ──────────
+// ── All question rendering components ───────────────────────────────────────
 function MCQOption({ opt, medium, editMode, letter, showAnswers, enFont, urFont, fontSize }) {
   const enRef = useRef(null); const urRef = useRef(null);
   useEffect(() => {
@@ -165,8 +173,7 @@ function MCQOption({ opt, medium, editMode, letter, showAnswers, enFont, urFont,
   const eStyle     = editMode ? { outline: '1px dashed #2563eb', padding: '1px 3px', borderRadius: '3px', background: '#f0f7ff' } : {};
   const answerStyle = isCorrect ? { background: '#dcfce7', borderRadius: '4px', padding: '1px 6px', fontWeight: '700', color: '#15803d' } : {};
   const optFontSize = Math.max((fontSize || 13) - 1, 10);
-  const stripped   = (s) => (s || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
-  const hasEn = stripped(opt.option_en) !== ''; const hasUr = stripped(opt.option_ur) !== '';
+  const hasEn = hasContent(opt.option_en); const hasUr = hasContent(opt.option_ur);
   const showEn = (medium === 'en' || medium === 'both') && hasEn;
   const showUr = (medium === 'ur' || medium === 'both') && hasUr;
   const isRTL = (showUr && !showEn) || (medium === 'ur');
@@ -174,7 +181,7 @@ function MCQOption({ opt, medium, editMode, letter, showAnswers, enFont, urFont,
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', fontSize: optFontSize + 'px', direction: isRTL ? 'rtl' : 'ltr', ...answerStyle }}>
       <span style={{ fontWeight: '600', flexShrink: 0, fontFamily: enFont, direction: 'ltr', unicodeBidi: 'isolate' }}>{letterMark}</span>
-      <span style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+      <span style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
         {showEn && <span ref={enRef} contentEditable={editMode} suppressContentEditableWarning style={{ ...eStyle, fontFamily: enFont, fontSize: optFontSize + 'px' }} />}
         {showUr && <span ref={urRef} contentEditable={editMode} suppressContentEditableWarning style={{ ...eStyle, direction: 'rtl', textAlign: 'right', fontFamily: urFont, fontSize: optFontSize + 'px' }} />}
       </span>
@@ -186,9 +193,8 @@ function MCQOptions({ options, medium, editMode, showAnswers, enFont, urFont, fo
   if (!options || options.length === 0) return null;
   const letters = ['a', 'b', 'c', 'd', 'e'];
   const cols = options.length <= 4 ? 4 : 2;
-  const stripped = (s) => (s || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
-  const anyEn = options.some(o => stripped(o.option_en) !== '');
-  const anyUr = options.some(o => stripped(o.option_ur) !== '');
+  const anyEn = options.some(o => hasContent(o.option_en));
+  const anyUr = options.some(o => hasContent(o.option_ur));
   const reverseOrder = (medium === 'ur') || (medium === 'both' && anyUr && !anyEn);
   const renderOrder  = reverseOrder ? options.map((opt, i) => ({ opt, letter: letters[i] })).reverse() : options.map((opt, i) => ({ opt, letter: letters[i] }));
   return (
@@ -201,15 +207,15 @@ function MCQOptions({ options, medium, editMode, showAnswers, enFont, urFont, fo
 function ParagraphSubQuestion({ sub, num, medium, editMode, showAnswers, enFont, urFont, fontSize }) {
   const stEnRef = useRef(null); const stUrRef = useRef(null);
   const optEnRefs = useRef({}); const optUrRefs = useRef({});
-  const visibleOptions = (sub.options || []).filter(o => { const en = (o.name_en || '').trim(); const ur = (o.name_ur || '').replace(/&nbsp;/g, '').trim(); return en !== '' || ur !== ''; });
+  const visibleOptions = (sub.options || []).filter(o => hasContent(o.name_en) || hasContent(o.name_ur));
   useEffect(() => {
     if (stEnRef.current) stEnRef.current.innerHTML = fixHtml(sub.statement_en || '');
     if (stUrRef.current) stUrRef.current.innerHTML = fixHtml(sub.statement_ur || '');
     visibleOptions.forEach((opt, i) => { if (optEnRefs.current[i]) optEnRefs.current[i].innerHTML = fixHtml(opt.name_en || ''); if (optUrRefs.current[i]) optUrRefs.current[i].innerHTML = fixHtml(opt.name_ur || ''); });
   }, [medium, sub.statement_en, sub.statement_ur, visibleOptions]);
   const letters = ['a', 'b', 'c', 'd', 'e', 'f'];
-  const subHasEn = (sub.statement_en || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim() !== '';
-  const subHasUr = (sub.statement_ur || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim() !== '';
+  const subHasEn = hasContent(sub.statement_en);
+  const subHasUr = hasContent(sub.statement_ur);
   const showEn = (medium === 'en' || medium === 'both') && subHasEn;
   const showUr = (medium === 'ur' || medium === 'both') && subHasUr;
   const isUr  = (showUr && !showEn) || (medium === 'ur');
@@ -221,7 +227,7 @@ function ParagraphSubQuestion({ sub, num, medium, editMode, showAnswers, enFont,
         {visibleOptions.map((opt, i) => {
           const isCorrect = showAnswers && (String(opt.is_true) === '1' || opt.is_true === 1 || opt.is_true === true);
           const text = isUrLang ? opt.name_ur : opt.name_en;
-          if (!text || text.replace(/&nbsp;/g, '').trim() === '') return <div key={i} />;
+          if (!hasContent(text)) return <div key={i} />;
           return (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid #1a1a2e', borderRadius: '4px', padding: '4px 8px', background: isCorrect ? '#dcfce7' : '#ffffff', minHeight: '26px', fontFamily: isUrLang ? urFont : enFont, direction: isUrLang ? 'rtl' : 'ltr', fontSize: optFontSize + 'px' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '18px', height: '18px', minWidth: '18px', borderRadius: '50%', border: '1px solid #1a1a2e', fontSize: Math.max(optFontSize - 2, 9) + 'px', fontWeight: '700', flexShrink: 0, background: '#ffffff', color: '#000000', fontFamily: enFont }}>{letters[i]}</span>
@@ -243,8 +249,8 @@ function ParagraphSubQuestion({ sub, num, medium, editMode, showAnswers, enFont,
           </div>
         </div>
       </div>
-      {(medium === 'en' || medium === 'both') && visibleOptions.some(o => (o.name_en || '').trim() !== '') && renderOptionBoxes('en')}
-      {(medium === 'ur' || medium === 'both') && visibleOptions.some(o => (o.name_ur || '').replace(/&nbsp;/g, '').trim() !== '') && renderOptionBoxes('ur')}
+      {(medium === 'en' || medium === 'both') && visibleOptions.some(o => hasContent(o.name_en)) && renderOptionBoxes('en')}
+      {(medium === 'ur' || medium === 'both') && visibleOptions.some(o => hasContent(o.name_ur)) && renderOptionBoxes('ur')}
     </div>
   );
 }
@@ -267,8 +273,7 @@ function QuestionItem({ q, index, showNumber = true, medium, editMode, showAnswe
     if (urRef.current) urRef.current.innerHTML = fixHtml(stUr);
   }, [medium, stEn, stUr]);
   const eStyle = (extra = {}) => editMode ? { outline: '1px dashed #2563eb', padding: '2px 4px', borderRadius: '3px', background: '#f0f7ff', minHeight: '18px', ...extra } : { ...extra };
-  const stripped = (s) => (s || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
-  const hasEn = stripped(stEn) !== ''; const hasUr = stripped(stUr) !== '';
+  const hasEn = hasContent(stEn); const hasUr = hasContent(stUr);
   const showEn = (medium === 'en' || medium === 'both') && hasEn;
   const showUr = (medium === 'ur' || medium === 'both') && hasUr;
   const isRTL  = (showUr && !showEn) || (medium === 'ur');
@@ -290,7 +295,6 @@ function QuestionItem({ q, index, showNumber = true, medium, editMode, showAnswe
 }
 
 function SectionHeader({ title, totalMarks, qNo, editMode, medium, choiceInfo }) {
-  const isUr = medium === 'ur';
   return (
     <div style={{ margin: '24px 0 10px', pageBreakInside: 'avoid' }}>
       <div style={{ background: '#000000', color: 'white', padding: '10px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: '4px', direction: 'ltr', flexDirection: 'row' }}>
@@ -421,8 +425,7 @@ function PaperPreview({ paper, medium, schoolName, subject, className, editMode,
   );
 }
 
-// ── PDF helper (unchanged) ───────────────────────────────────────────────────
-// ── PDF helper (robust: iframe + real asset waiting + safe cleanup) ──────────
+// ── PDF helper (robust iframe + asset waiting + mobile-safe dark fills) ───────
 function openPDF(fontFamily, urduFont, fontSize) {
   const el = document.getElementById('paper-preview');
   if (!el) return;
@@ -431,7 +434,33 @@ function openPDF(fontFamily, urduFont, fontSize) {
   clone.style.color = '#000000';
   clone.style.backgroundColor = '#ffffff';
 
-  // Only the Urdu fonts are actually on Google Fonts — English ones are system fonts.
+  // Mobile print engines grey-out background-colors. Paint dark bars/cells as a
+  // FOREGROUND <img> layer (always printed, ignores "background graphics" setting).
+  const matchDark = (node) => {
+    const bg = (node.style.background || node.style.backgroundColor || '').replace(/\s+/g, '').toLowerCase();
+    if (!bg) return null;
+    if (bg.includes('#000000') || bg.includes('rgb(0,0,0)') || bg === 'black') return '#000000';
+    if (bg.includes('#1a1a2e') || bg.includes('rgb(26,26,46)')) return '#1a1a2e';
+    return null;
+  };
+  const svgLayer = (hex) => {
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none' viewBox='0 0 4 4'><rect width='4' height='4' fill='${hex}'/></svg>`;
+    const img = document.createElement('img');
+    img.src = 'data:image/svg+xml,' + encodeURIComponent(svg);
+    img.alt = '';
+    img.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:-1;display:block;border-radius:inherit;';
+    return img;
+  };
+  clone.querySelectorAll('*').forEach((node) => {
+    const hex = matchDark(node);
+    if (!hex) return;
+    const pos = node.style.position;
+    if (!pos || pos === 'static') node.style.position = 'relative';
+    node.style.overflow = 'hidden';
+    node.insertBefore(svgLayer(hex), node.firstChild);
+  });
+
+  // Only Urdu fonts are real Google Fonts — English options are system fonts.
   const extractFontName = (fontStr) => {
     const match = fontStr.match(/'([^']+)'/);
     return match ? match[1] : fontStr.split(',')[0].trim().replace(/['"]/g, '');
@@ -439,7 +468,7 @@ function openPDF(fontFamily, urduFont, fontSize) {
   const urFamilyParam = encodeURIComponent(extractFontName(urduFont)).replace(/%20/g, '+');
   const fontsHref = `https://fonts.googleapis.com/css2?family=${urFamilyParam}:wght@400;700&display=swap`;
 
-  // Off-screen iframe instead of window.open → popup blockers can't kill it, no stray tab.
+  // Off-screen iframe instead of window.open → popup blockers can't kill it.
   const iframe = document.createElement('iframe');
   iframe.setAttribute('aria-hidden', 'true');
   iframe.style.cssText = 'position:fixed;top:-10000px;left:-10000px;width:100%;height:100%;border:0;';
@@ -455,11 +484,10 @@ function openPDF(fontFamily, urduFont, fontSize) {
       html,body{margin:0;padding:0;background:#fff;color:#000;font-family:${fontFamily};font-size:${fontSize}px;line-height:1.7;}
       .paper-wrap{max-width:900px;margin:0 auto;}
       td{background-color:#fff!important;color:#000!important;}
-      th{color:#fff!important;background-color:#1a1a2e!important;}
-      [style*="background: #000000"],[style*="background:#000000"]{background:#000!important;}
-      [style*="background: #000000"] *,[style*="background:#000000"] *{color:#fff!important;}
+      th{color:#fff!important;}
       [contenteditable]{outline:none!important;}
       img{max-width:200px;height:auto;}
+      img[src^="data:image/svg+xml"]{max-width:none!important;}
       table,tr,td,th{page-break-inside:avoid;}
     </style></head>
     <body><div class="paper-wrap">${clone.innerHTML}</div></body></html>`);
@@ -467,13 +495,11 @@ function openPDF(fontFamily, urduFont, fontSize) {
 
   const win = iframe.contentWindow;
 
-  // Wait for the REAL ready signals (fonts + images), not a guessed timer.
-  // Capped so a dead network can never hang the button.
+  // Wait for the real ready signals (fonts + images), capped so a dead network can't hang.
   const waitForAssets = (maxWaitMs = 6000) => new Promise((resolve) => {
     let settled = false;
     const finish = () => { if (!settled) { settled = true; resolve(); } };
     const cap = setTimeout(finish, maxWaitMs);
-
     const pending = [];
     if (doc.fonts && doc.fonts.ready) pending.push(doc.fonts.ready.catch(() => {}));
     Array.from(doc.images || []).forEach((img) => {
@@ -483,10 +509,8 @@ function openPDF(fontFamily, urduFont, fontSize) {
         img.addEventListener('error', res, { once: true });
       }));
     });
-
     Promise.all(pending).then(() => {
       clearTimeout(cap);
-      // Let layout settle after the Urdu font swaps in.
       if (win.requestAnimationFrame) win.requestAnimationFrame(() => win.requestAnimationFrame(finish));
       else finish();
     });
@@ -497,12 +521,9 @@ function openPDF(fontFamily, urduFont, fontSize) {
   waitForAssets().then(() => {
     let cleaned = false;
     const safeCleanup = () => { if (!cleaned) { cleaned = true; removeFrame(); } };
-
-    // afterprint is the correct cross-browser signal — print() is async in Firefox/Safari,
-    // so we DON'T close immediately like the old code did.
+    // afterprint is the correct cross-browser signal — print() is async in Firefox/Safari.
     win.addEventListener('afterprint', () => setTimeout(safeCleanup, 300), { once: true });
-    setTimeout(safeCleanup, 60000); // fallback so the iframe never leaks
-
+    setTimeout(safeCleanup, 60000);
     win.focus();
     try { win.print(); } catch (e) { safeCleanup(); }
   });
@@ -524,7 +545,6 @@ export default function Step6QuestionSelect() {
   const [examType,    setExamType]    = useState('');
   const [fontFamily,  setFontFamily]  = useState("'Times New Roman', Times, serif");
   const [urduFont,    setUrduFont]    = useState("'Noto Nastaliq Urdu', serif");
-  // Mobile drawer state
   const [drawerOpen,  setDrawerOpen]  = useState(false);
 
   const mediumAutoSetRef = useRef(false);
@@ -533,10 +553,8 @@ export default function Step6QuestionSelect() {
 
   useEffect(() => {
     generatePaperFromConfig();
-    // Fonts are loaded in index.html — no dynamic injection needed
   }, []);
 
-  // Close drawer on outside tap
   useEffect(() => {
     if (!drawerOpen) return;
     const handler = (e) => { if (!e.target.closest('.s6-drawer') && !e.target.closest('.s6-fab-settings')) setDrawerOpen(false); };
@@ -557,9 +575,8 @@ export default function Step6QuestionSelect() {
       const result = await generatePaper(payload);
       setPaper(result);
       if (!mediumAutoSetRef.current && result?.sections) {
-        const stripped = (s) => (s || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
         let enCount = 0, urCount = 0, total = 0;
-        const walk = (qs) => { (qs || []).forEach(q => { total++; if (stripped([q.statement_en, q.description_en].filter(Boolean).join(' ')) !== '') enCount++; if (stripped([q.statement_ur, q.description_ur].filter(Boolean).join(' ')) !== '') urCount++; if (q.paragraph_questions) walk(q.paragraph_questions); }); };
+        const walk = (qs) => { (qs || []).forEach(q => { total++; if (hasContent([q.statement_en, q.description_en].filter(Boolean).join(' '))) enCount++; if (hasContent([q.statement_ur, q.description_ur].filter(Boolean).join(' '))) urCount++; if (q.paragraph_questions) walk(q.paragraph_questions); }); };
         result.sections.forEach(sec => (sec.question_groups || []).forEach(g => walk(g.questions)));
         if (total > 0) {
           const enRatio = enCount / total; const urRatio = urCount / total;
@@ -583,7 +600,6 @@ export default function Step6QuestionSelect() {
     </div>
   );
 
-  // ── Shared settings fields ───────────────────────────────────────────────
   const settingsFields = [
     { label: 'School Name', el: <input value={schoolName} onChange={e => setSchoolName(e.target.value)} placeholder="School name" className="s6-input" /> },
     { label: 'Total Time',  el: <input value={examTime}   onChange={e => setExamTime(e.target.value)}   placeholder="e.g. 3 Hours"  className="s6-input" style={{ width: '110px' }} /> },
@@ -636,8 +652,6 @@ export default function Step6QuestionSelect() {
 
       {/* ══════════ DESKTOP sticky toolbar ══════════ */}
       <div className="s6-toolbar s6-desktop-toolbar">
-
-        {/* Row 1: Logo + action buttons + profile */}
         <div className="s6-toolbar-row1">
           <div onClick={() => navigate('/test-maker/step-1')} className="s6-logo-btn" title="Home">
             <div className="s6-logo-corner" />
@@ -651,8 +665,6 @@ export default function Step6QuestionSelect() {
           <button onClick={() => setShowAnswers(v => !v)} className="s6-tb-btn" style={{ background: showAnswers ? '#d97706' : '#4b5563' }}>💡 Answers {showAnswers ? 'ON' : 'OFF'}</button>
           <div style={{ marginLeft: 'auto' }}><ProfileMenu /></div>
         </div>
-
-        {/* Row 2: Settings */}
         <div className="s6-toolbar-settings">
           {settingsFields.map(({ label, el }) => (
             <div key={label} className="s6-settings-field">
@@ -661,20 +673,15 @@ export default function Step6QuestionSelect() {
             </div>
           ))}
         </div>
-
       </div>
 
       {/* ══════════ MOBILE top bar ══════════ */}
       <div className="s6-mobile-topbar">
-        {/* Logo */}
         <div onClick={() => navigate('/test-maker/step-1')} className="s6-logo-btn s6-logo-sm">
           <div className="s6-logo-corner" />
           <span className="s6-logo-p" style={{ fontSize: '13px' }}>P</span>
         </div>
-
         <span className="s6-mobile-title">Paper Preview</span>
-
-        {/* Profile */}
         <ProfileMenu />
       </div>
 
@@ -686,7 +693,7 @@ export default function Step6QuestionSelect() {
         </div>
       )}
 
-      {/* ══════════ Stats bar (mobile) ══════════ */}
+      {/* ══════════ Stats bar ══════════ */}
       {paper && (
         <div className="s6-stats-bar">
           {[['Questions', paper.total_questions, '#2563eb'], ['Marks', paper.total_marks, '#7c3aed'], ['Sections', paper.sections?.length, '#059669']].map(([label, val, color]) => (
@@ -735,7 +742,6 @@ export default function Step6QuestionSelect() {
           <i className="ti ti-bulb" style={{ fontSize: '16px' }} />
           <span>{showAnswers ? 'Hide' : 'Ans'}</span>
         </button>
-        {/* Settings FAB */}
         <button onClick={() => setDrawerOpen(v => !v)} className="s6-mob-btn s6-fab-settings" style={{ background: '#0f172a' }}>
           <i className="ti ti-settings" style={{ fontSize: '16px' }} />
           <span>Settings</span>
@@ -751,8 +757,6 @@ export default function Step6QuestionSelect() {
               <span className="s6-drawer-title">Paper Settings</span>
               <button onClick={() => setDrawerOpen(false)} className="s6-drawer-close">✕</button>
             </div>
-
-            {/* Edit / Answers toggles */}
             <div className="s6-drawer-toggles">
               <button onClick={() => setEditMode(v => !v)} className={`s6-toggle-btn ${editMode ? 's6-toggle-on' : ''}`}>
                 <i className="ti ti-pencil" /> Edit Mode {editMode ? 'ON' : 'OFF'}
@@ -761,8 +765,6 @@ export default function Step6QuestionSelect() {
                 <i className="ti ti-bulb" /> Answers {showAnswers ? 'ON' : 'OFF'}
               </button>
             </div>
-
-            {/* Settings fields */}
             <div className="s6-drawer-fields">
               {settingsFields.map(({ label, el }) => (
                 <div key={label} className="s6-drawer-field">
@@ -777,265 +779,70 @@ export default function Step6QuestionSelect() {
 
       <style>{`
         *, *::before, *::after { box-sizing: border-box; }
-
-        .s6-root {
-          min-height: 100vh;
-          background: #f0f4f8;
-          font-family: 'Segoe UI', system-ui, sans-serif;
-          /* bottom padding for mobile action bar */
-          padding-bottom: 72px;
-        }
-
-        /* ── Shared input/select styles ── */
-        .s6-input {
-          padding: 5px 8px; border-radius: 6px;
-          border: 1px solid #374151; background: #0f172a;
-          color: white; font-size: 12px; font-family: inherit;
-          width: 150px;
-        }
-        .s6-sel {
-          padding: 5px 8px; border-radius: 6px;
-          border: 1px solid #374151; background: #0f172a;
-          color: white; font-size: 12px; cursor: pointer; font-family: inherit;
-        }
-        .s6-tb-btn {
-          padding: 7px 12px; color: white; border: none;
-          border-radius: 6px; cursor: pointer; font-size: 12px;
-          font-weight: 700; white-space: nowrap; font-family: inherit;
-          min-height: 32px; transition: opacity 0.15s;
-        }
+        .s6-root { min-height: 100vh; background: #f0f4f8; font-family: 'Segoe UI', system-ui, sans-serif; padding-bottom: 72px; }
+        .s6-input { padding: 5px 8px; border-radius: 6px; border: 1px solid #374151; background: #0f172a; color: white; font-size: 12px; font-family: inherit; width: 150px; }
+        .s6-sel { padding: 5px 8px; border-radius: 6px; border: 1px solid #374151; background: #0f172a; color: white; font-size: 12px; cursor: pointer; font-family: inherit; }
+        .s6-tb-btn { padding: 7px 12px; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 700; white-space: nowrap; font-family: inherit; min-height: 32px; transition: opacity 0.15s; }
         .s6-tb-btn:active { opacity: 0.8; }
-
-        /* ── Logo ── */
-        .s6-logo-btn {
-          background: #ffffff; border-radius: 8px;
-          width: 32px; height: 32px;
-          display: flex; align-items: center; justify-content: center;
-          position: relative; overflow: hidden; cursor: pointer;
-          border: 1px solid #e2e8f0; flex-shrink: 0;
-          transition: transform 0.2s;
-        }
+        .s6-logo-btn { background: #ffffff; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; cursor: pointer; border: 1px solid #e2e8f0; flex-shrink: 0; transition: transform 0.2s; }
         .s6-logo-btn:active { transform: scale(0.95); }
         .s6-logo-sm { width: 28px; height: 28px; border-radius: 6px; }
-        .s6-logo-corner {
-          position: absolute; top: 0; right: 0; width: 0; height: 0;
-          border-style: solid; border-width: 0 10px 10px 0;
-          border-color: transparent #f5a623 transparent transparent;
-        }
-        .s6-logo-p {
-          color: #0f1f3d; font-size: 16px; font-weight: 700;
-          font-family: Georgia, 'Times New Roman', serif;
-          position: relative; z-index: 1;
-        }
-
-        /* ══════════ DESKTOP TOOLBAR ══════════ */
-        .s6-desktop-toolbar {
-          background: #1a1a2e; color: white;
-          padding: 10px 16px;
-          position: sticky; top: 0; z-index: 100;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          display: flex; flex-direction: column; gap: 8px;
-        }
-        .s6-toolbar-row1 {
-          display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-        }
-        .s6-toolbar-settings {
-          display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap;
-        }
-        .s6-settings-field {
-          display: flex; flex-direction: column; gap: 3px;
-        }
-        .s6-settings-label {
-          font-size: 9px; color: #94a3b8;
-          text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;
-        }
-
-        /* ══════════ MOBILE TOP BAR ══════════ */
-        .s6-mobile-topbar {
-          display: none;
-          background: #1a1a2e;
-          padding: 10px 14px;
-          position: sticky; top: 0; z-index: 100;
-          align-items: center; gap: 10px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
-        .s6-mobile-title {
-          flex: 1; font-size: 15px; font-weight: 700; color: white;
-          text-align: center; letter-spacing: -0.3px;
-        }
-
-        /* ══════════ STATS BAR ══════════ */
-        .s6-stats-bar {
-          background: white;
-          padding: 10px 20px;
-          display: flex; align-items: center; gap: 0;
-          border-bottom: 1px solid #e8eef5;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-          overflow-x: auto;
-        }
-        .s6-stat {
-          display: flex; flex-direction: column; align-items: center;
-          padding: 0 16px; border-right: 1px solid #e8eef5; flex-shrink: 0;
-        }
+        .s6-logo-corner { position: absolute; top: 0; right: 0; width: 0; height: 0; border-style: solid; border-width: 0 10px 10px 0; border-color: transparent #f5a623 transparent transparent; }
+        .s6-logo-p { color: #0f1f3d; font-size: 16px; font-weight: 700; font-family: Georgia, 'Times New Roman', serif; position: relative; z-index: 1; }
+        .s6-desktop-toolbar { background: #1a1a2e; color: white; padding: 10px 16px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 8px; }
+        .s6-toolbar-row1 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .s6-toolbar-settings { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+        .s6-settings-field { display: flex; flex-direction: column; gap: 3px; }
+        .s6-settings-label { font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+        .s6-mobile-topbar { display: none; background: #1a1a2e; padding: 10px 14px; position: sticky; top: 0; z-index: 100; align-items: center; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .s6-mobile-title { flex: 1; font-size: 15px; font-weight: 700; color: white; text-align: center; letter-spacing: -0.3px; }
+        .s6-stats-bar { background: white; padding: 10px 20px; display: flex; align-items: center; gap: 0; border-bottom: 1px solid #e8eef5; box-shadow: 0 1px 4px rgba(0,0,0,0.05); overflow-x: auto; }
+        .s6-stat { display: flex; flex-direction: column; align-items: center; padding: 0 16px; border-right: 1px solid #e8eef5; flex-shrink: 0; }
         .s6-stat:first-child { padding-left: 0; }
         .s6-stat-val   { font-size: 20px; font-weight: 700; line-height: 1.2; }
         .s6-stat-label { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; }
         .s6-stat-done  { margin-left: auto; font-size: 13px; color: #16a34a; font-weight: 600; flex-shrink: 0; }
-
-        /* ══════════ PAPER WRAPPER ══════════ */
-        .s6-paper-wrapper {
-          padding: 20px;
-          max-width: 960px;
-          margin: 0 auto;
-        }
-        .s6-paper-scroll {
-          box-shadow: 0 4px 24px rgba(0,0,0,0.12);
-          border-radius: 10px;
-          overflow: hidden;
-          /* horizontal scroll so paper table never gets squished */
-          overflow-x: auto;
-          background: white;
-        }
-
-        /* ══════════ MOBILE BOTTOM ACTION BAR ══════════ */
-        .s6-mobile-actions {
-          display: none;
-          position: fixed; bottom: 0; left: 0; right: 0;
-          background: #1a1a2e;
-          padding: 8px 10px;
-          padding-bottom: calc(8px + env(safe-area-inset-bottom));
-          gap: 6px;
-          z-index: 200;
-          box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
-          border-top: 1px solid #374151;
-        }
-        .s6-mob-btn {
-          flex: 1;
-          display: flex; flex-direction: column; align-items: center; justify-content: center;
-          gap: 3px;
-          padding: 6px 4px;
-          border: none; border-radius: 8px; cursor: pointer;
-          color: white; font-size: 10px; font-weight: 700;
-          font-family: inherit;
-          min-height: 48px;
-          transition: opacity 0.15s, transform 0.1s;
-          -webkit-tap-highlight-color: transparent;
-        }
+        .s6-paper-wrapper { padding: 20px; max-width: 960px; margin: 0 auto; }
+        .s6-paper-scroll { box-shadow: 0 4px 24px rgba(0,0,0,0.12); border-radius: 10px; overflow: hidden; overflow-x: auto; background: white; }
+        .s6-mobile-actions { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #1a1a2e; padding: 8px 10px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); gap: 6px; z-index: 200; box-shadow: 0 -4px 20px rgba(0,0,0,0.3); border-top: 1px solid #374151; }
+        .s6-mob-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 4px; border: none; border-radius: 8px; cursor: pointer; color: white; font-size: 10px; font-weight: 700; font-family: inherit; min-height: 48px; transition: opacity 0.15s, transform 0.1s; -webkit-tap-highlight-color: transparent; }
         .s6-mob-btn:active { opacity: 0.75; transform: scale(0.96); }
         .s6-mob-back { background: #374151 !important; flex: 0 0 44px; }
-
-        /* ══════════ DRAWER ══════════ */
-        .s6-drawer-backdrop {
-          position: fixed; inset: 0;
-          background: rgba(0,0,0,0.5);
-          z-index: 300;
-          display: flex; align-items: flex-end;
-        }
-        .s6-drawer {
-          background: white;
-          border-radius: 20px 20px 0 0;
-          width: 100%;
-          max-height: 82vh;
-          overflow-y: auto;
-          padding: 0 0 calc(16px + env(safe-area-inset-bottom));
-          animation: s6slideup 0.28s cubic-bezier(0.34,1.1,0.64,1);
-        }
-        @keyframes s6slideup {
-          from { transform: translateY(100%); }
-          to   { transform: translateY(0); }
-        }
-        .s6-drawer-handle {
-          width: 36px; height: 4px; border-radius: 2px;
-          background: #d1d5db; margin: 10px auto 0;
-        }
-        .s6-drawer-header {
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 14px 20px 10px;
-          border-bottom: 1px solid #f0f4f8;
-        }
+        .s6-drawer-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; display: flex; align-items: flex-end; }
+        .s6-drawer { background: white; border-radius: 20px 20px 0 0; width: 100%; max-height: 82vh; overflow-y: auto; padding: 0 0 calc(16px + env(safe-area-inset-bottom)); animation: s6slideup 0.28s cubic-bezier(0.34,1.1,0.64,1); }
+        @keyframes s6slideup { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .s6-drawer-handle { width: 36px; height: 4px; border-radius: 2px; background: #d1d5db; margin: 10px auto 0; }
+        .s6-drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px 10px; border-bottom: 1px solid #f0f4f8; }
         .s6-drawer-title { font-size: 16px; font-weight: 700; color: #0f172a; }
-        .s6-drawer-close {
-          background: #f1f5f9; border: none; border-radius: 50%;
-          width: 30px; height: 30px; cursor: pointer;
-          font-size: 14px; color: #64748b;
-          display: flex; align-items: center; justify-content: center;
-        }
-        .s6-drawer-toggles {
-          display: flex; gap: 10px; padding: 14px 20px;
-          border-bottom: 1px solid #f0f4f8;
-        }
-        .s6-toggle-btn {
-          flex: 1; padding: 10px 12px;
-          border: 1.5px solid #e2e8f0; border-radius: 10px;
-          background: #f8fafc; color: #334155;
-          font-size: 13px; font-weight: 600; font-family: inherit;
-          cursor: pointer; display: flex; align-items: center;
-          justify-content: center; gap: 6px;
-          transition: all 0.2s;
-        }
+        .s6-drawer-close { background: #f1f5f9; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 14px; color: #64748b; display: flex; align-items: center; justify-content: center; }
+        .s6-drawer-toggles { display: flex; gap: 10px; padding: 14px 20px; border-bottom: 1px solid #f0f4f8; }
+        .s6-toggle-btn { flex: 1; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: #f8fafc; color: #334155; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; }
         .s6-toggle-on    { background: #dcfce7; border-color: #22c55e; color: #15803d; }
         .s6-toggle-amber { background: #fef3c7; border-color: #f59e0b; color: #b45309; }
-        .s6-drawer-fields {
-          display: flex; flex-direction: column; gap: 0;
-          padding: 8px 0;
-        }
-        .s6-drawer-field {
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 12px 20px;
-          border-bottom: 1px solid #f8fafc;
-        }
-        .s6-drawer-field-label {
-          font-size: 13px; font-weight: 600; color: #334155;
-        }
-        /* Inside drawer, inputs go full-width feel */
-        .s6-drawer .s6-input,
-        .s6-drawer .s6-sel {
-          background: #f1f5f9; border-color: #e2e8f0;
-          color: #0f172a; font-size: 13px;
-          border-radius: 8px; padding: 7px 10px;
-          width: 160px;
-        }
-
-        /* ══════════ ERROR ══════════ */
-        .s6-error-box {
-          max-width: 600px; margin: 40px auto;
-          padding: 24px; background: #fee2e2;
-          border: 1px solid #fca5a5; border-radius: 12px;
-          color: #991b1b; text-align: center;
-        }
-
-        /* ══════════ PRINT ══════════ */
+        .s6-drawer-fields { display: flex; flex-direction: column; gap: 0; padding: 8px 0; }
+        .s6-drawer-field { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #f8fafc; }
+        .s6-drawer-field-label { font-size: 13px; font-weight: 600; color: #334155; }
+        .s6-drawer .s6-input, .s6-drawer .s6-sel { background: #f1f5f9; border-color: #e2e8f0; color: #0f172a; font-size: 13px; border-radius: 8px; padding: 7px 10px; width: 160px; }
+        .s6-error-box { max-width: 600px; margin: 40px auto; padding: 24px; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 12px; color: #991b1b; text-align: center; }
         @media print {
-          .s6-desktop-toolbar, .s6-mobile-topbar,
-          .s6-mobile-actions, .s6-stats-bar,
-          .s6-drawer-backdrop { display: none !important; }
+          .s6-desktop-toolbar, .s6-mobile-topbar, .s6-mobile-actions, .s6-stats-bar, .s6-drawer-backdrop { display: none !important; }
           .s6-root { padding-bottom: 0; }
           .s6-paper-wrapper { padding: 0; max-width: 100%; }
           .s6-paper-scroll { box-shadow: none; border-radius: 0; overflow: visible; }
           #paper-preview { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
           [contenteditable] { outline: none !important; background: transparent !important; padding: 0 !important; }
         }
-
-        /* ══════════ RESPONSIVE BREAKPOINTS ══════════ */
         @media (max-width: 768px) {
-          /* Hide desktop toolbar, show mobile UI */
           .s6-desktop-toolbar { display: none; }
           .s6-mobile-topbar   { display: flex; }
           .s6-mobile-actions  { display: flex; }
-
-          /* Paper gets full-width with horizontal scroll */
           .s6-paper-wrapper { padding: 12px; }
           .s6-paper-scroll  { border-radius: 6px; }
-
-          /* Stats bar tightened */
           .s6-stats-bar { padding: 8px 14px; }
           .s6-stat { padding: 0 10px; }
           .s6-stat-val { font-size: 17px; }
-
-          /* Root needs extra bottom padding for the fixed bar */
           .s6-root { padding-bottom: 80px; }
         }
-
         @media (max-width: 480px) {
           .s6-paper-wrapper { padding: 8px; }
           .s6-stats-bar { gap: 0; }
