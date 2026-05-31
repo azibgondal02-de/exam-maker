@@ -422,17 +422,90 @@ function PaperPreview({ paper, medium, schoolName, subject, className, editMode,
 }
 
 // ── PDF helper (unchanged) ───────────────────────────────────────────────────
+// ── PDF helper (robust: iframe + real asset waiting + safe cleanup) ──────────
 function openPDF(fontFamily, urduFont, fontSize) {
   const el = document.getElementById('paper-preview');
   if (!el) return;
+
   const clone = el.cloneNode(true);
-  clone.style.color = '#000000'; clone.style.backgroundColor = '#ffffff';
-  const extractFontName = (fontStr) => { const match = fontStr.match(/'([^']+)'/); return match ? match[1] : fontStr.split(',')[0].trim().replace(/['"]/g, ''); };
-  const enFontName = extractFontName(fontFamily); const urFontName = extractFontName(urduFont);
-  const googleFontsUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(enFontName).replace(/%20/g, '+')}:wght@400;700&family=${encodeURIComponent(urFontName).replace(/%20/g, '+')}:wght@400;700&display=swap`;
-  const w = window.open('', '_blank');
-  w.document.write(`<html><head><title>Paper</title><link href="${googleFontsUrl}" rel="stylesheet"><style>*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}@page{size:A4;margin:15mm 18mm;}html,body{margin:0;padding:0;background:#fff;color:#000;font-family:${fontFamily};font-size:${fontSize}px;line-height:1.7;}.paper-wrap{max-width:900px;margin:0 auto;}td{background-color:#fff!important;color:#000!important;}th{color:#fff!important;background-color:#1a1a2e!important;}[style*="background: #000000"],[style*="background:#000000"]{background:#000!important;}[style*="background: #000000"] *,[style*="background:#000000"] *{color:#fff!important;}[contenteditable]{outline:none!important;}img{max-width:200px;height:auto;}table,tr,td,th{page-break-inside:avoid;}</style></head><body><div class="paper-wrap">${clone.innerHTML}</div></body></html>`);
-  w.document.close(); w.focus(); setTimeout(() => { w.print(); w.close(); }, 1000);
+  clone.style.color = '#000000';
+  clone.style.backgroundColor = '#ffffff';
+
+  // Only the Urdu fonts are actually on Google Fonts — English ones are system fonts.
+  const extractFontName = (fontStr) => {
+    const match = fontStr.match(/'([^']+)'/);
+    return match ? match[1] : fontStr.split(',')[0].trim().replace(/['"]/g, '');
+  };
+  const urFamilyParam = encodeURIComponent(extractFontName(urduFont)).replace(/%20/g, '+');
+  const fontsHref = `https://fonts.googleapis.com/css2?family=${urFamilyParam}:wght@400;700&display=swap`;
+
+  // Off-screen iframe instead of window.open → popup blockers can't kill it, no stray tab.
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('aria-hidden', 'true');
+  iframe.style.cssText = 'position:fixed;top:-10000px;left:-10000px;width:100%;height:100%;border:0;';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  doc.open();
+  doc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Paper</title>
+    <link href="${fontsHref}" rel="stylesheet">
+    <style>
+      *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+      @page{size:A4;margin:15mm 18mm;}
+      html,body{margin:0;padding:0;background:#fff;color:#000;font-family:${fontFamily};font-size:${fontSize}px;line-height:1.7;}
+      .paper-wrap{max-width:900px;margin:0 auto;}
+      td{background-color:#fff!important;color:#000!important;}
+      th{color:#fff!important;background-color:#1a1a2e!important;}
+      [style*="background: #000000"],[style*="background:#000000"]{background:#000!important;}
+      [style*="background: #000000"] *,[style*="background:#000000"] *{color:#fff!important;}
+      [contenteditable]{outline:none!important;}
+      img{max-width:200px;height:auto;}
+      table,tr,td,th{page-break-inside:avoid;}
+    </style></head>
+    <body><div class="paper-wrap">${clone.innerHTML}</div></body></html>`);
+  doc.close();
+
+  const win = iframe.contentWindow;
+
+  // Wait for the REAL ready signals (fonts + images), not a guessed timer.
+  // Capped so a dead network can never hang the button.
+  const waitForAssets = (maxWaitMs = 6000) => new Promise((resolve) => {
+    let settled = false;
+    const finish = () => { if (!settled) { settled = true; resolve(); } };
+    const cap = setTimeout(finish, maxWaitMs);
+
+    const pending = [];
+    if (doc.fonts && doc.fonts.ready) pending.push(doc.fonts.ready.catch(() => {}));
+    Array.from(doc.images || []).forEach((img) => {
+      if (img.complete) return;
+      pending.push(new Promise((res) => {
+        img.addEventListener('load', res, { once: true });
+        img.addEventListener('error', res, { once: true });
+      }));
+    });
+
+    Promise.all(pending).then(() => {
+      clearTimeout(cap);
+      // Let layout settle after the Urdu font swaps in.
+      if (win.requestAnimationFrame) win.requestAnimationFrame(() => win.requestAnimationFrame(finish));
+      else finish();
+    });
+  });
+
+  const removeFrame = () => { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); };
+
+  waitForAssets().then(() => {
+    let cleaned = false;
+    const safeCleanup = () => { if (!cleaned) { cleaned = true; removeFrame(); } };
+
+    // afterprint is the correct cross-browser signal — print() is async in Firefox/Safari,
+    // so we DON'T close immediately like the old code did.
+    win.addEventListener('afterprint', () => setTimeout(safeCleanup, 300), { once: true });
+    setTimeout(safeCleanup, 60000); // fallback so the iframe never leaks
+
+    win.focus();
+    try { win.print(); } catch (e) { safeCleanup(); }
+  });
 }
 
 // ── Main component ───────────────────────────────────────────────────────────
