@@ -9,7 +9,7 @@ const WA_NUMBER = '923040427647';
 const PROVINCES = ['Punjab', 'Sindh', 'KPK', 'Balochistan', 'Gilgit-Baltistan', 'AJK', 'Islamabad'];
 
 export default function ProfilePage() {
-  const [form,     setForm]     = useState({ school_name: '', owner_name: '', phone_number: '', city: '', province: '' });
+  const [form,     setForm]     = useState({ school_name: '', owner_name: '', phone_number: '', city: '', province: '', school_logo: '' });
   const [original, setOriginal] = useState({});
   const [loading,  setLoading]  = useState(true);
   const [saving,   setSaving]   = useState(false);
@@ -18,6 +18,10 @@ export default function ProfilePage() {
   const [subStatus, setSubStatus] = useState('');
   const [subEnd,    setSubEnd]    = useState('');
   const [daysLeft,  setDaysLeft]  = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [schoolName, setSchoolName] = useState('');
 
   const token = localStorage.getItem('auth_token');
 
@@ -30,22 +34,60 @@ export default function ProfilePage() {
 
   const fetchProfile = async () => {
     try {
-      const res  = await fetch(`${API}/identity/profile`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${API}/identity/profile`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Failed to load profile');
       const fields = {
-        school_name:  data.school_name  || '',
         owner_name:   data.owner_name   || '',
         phone_number: data.phone_number || '',
         city:         data.city         || '',
         province:     data.province     || '',
+        school_logo:  data.school_logo  || '',
       };
       setForm(fields);
       setOriginal(fields);
+      setSchoolName(data.school_name || '');
+      if (data.school_logo) setLogoPreview(data.school_logo);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  };
+  
+  const handleLogoUpload = async () => {
+    if (!logoFile) return;
+    setLogoUploading(true);
+    setError('');
+    try {
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(logoFile);
+      });
+  
+      const res = await fetch(`${API}/identity/upload-logo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ image_base64: base64 }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Upload failed');
+      setSuccess(true);
+      setLogoFile(null);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLogoUploading(false);
     }
   };
 
@@ -136,15 +178,73 @@ export default function ProfilePage() {
             <span className="pp-card-title">School Information</span>
           </div>
 
+          {/* Logo upload */}
+          <div className="pp-form-group pp-full" style={{ marginBottom: '20px' }}>
+            <label className="pp-label">School Logo</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+              {/* Preview */}
+              <div style={{
+                width: '80px', height: '80px', borderRadius: '12px',
+                background: '#f0f4f8', border: '2px dashed #e2e8f0',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                overflow: 'hidden', flexShrink: 0,
+              }}>
+                {logoPreview ? (
+                  <img src={logoPreview} alt="logo preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <i className="ti ti-building" style={{ fontSize: '28px', color: '#cbd5e1' }} />
+                )}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
+                  padding: '9px 16px', background: 'white', border: '1.5px solid #e2e8f0',
+                  borderRadius: '10px', cursor: 'pointer', fontSize: '13px',
+                  fontWeight: '600', color: '#64748b',
+                }}>
+                  <i className="ti ti-upload" /> Choose Image
+                  <input type="file" accept="image/*" onChange={handleLogoChange} style={{ display: 'none' }} />
+                </label>
+                {logoFile && (
+                  <button
+                    onClick={handleLogoUpload}
+                    disabled={logoUploading}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '6px',
+                      padding: '9px 16px', background: 'linear-gradient(135deg, #2196f3, #1565c0)',
+                      color: 'white', border: 'none', borderRadius: '10px',
+                      fontSize: '13px', fontWeight: '700', cursor: 'pointer',
+                      opacity: logoUploading ? 0.6 : 1,
+                    }}
+                  >
+                    <i className="ti ti-cloud-upload" />
+                    {logoUploading ? 'Uploading...' : 'Upload Logo'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>          
+
           {loading ? (
             <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>Loading...</div>
           ) : (
             <div className="pp-form-grid">
+              {/* School Name — read only */}
+              <div className="pp-form-group pp-full">
+                <label className="pp-label">School Name</label>
+                <input
+                  value={schoolName}
+                  disabled
+                  className="pp-input"
+                  style={{ opacity: 0.5, cursor: 'not-allowed', background: '#f8fafc' }}
+                />
+              </div>
+
               {[
-                { key: 'school_name',  label: 'School Name',              placeholder: 'Enter school name'   },
-                { key: 'owner_name',   label: 'Owner / Principal Name',   placeholder: 'Enter owner name'    },
-                { key: 'phone_number', label: 'Phone Number',             placeholder: 'e.g. 03001234567'    },
-                { key: 'city',         label: 'City',                     placeholder: 'Enter city'          },
+                { key: 'owner_name',   label: 'Owner / Principal Name', placeholder: 'Enter owner name'  },
+                { key: 'phone_number', label: 'Phone Number',           placeholder: 'e.g. 03001234567'  },
+                { key: 'city',         label: 'City',                   placeholder: 'Enter city'         },
               ].map(({ key, label, placeholder }) => (
                 <div key={key} className="pp-form-group">
                   <label className="pp-label">{label}</label>
@@ -197,7 +297,6 @@ export default function ProfilePage() {
             </button>
           </div>
         </div>
-
         {/* Account card */}
         <div className="pp-card">
           <div className="pp-card-head">
@@ -212,7 +311,6 @@ export default function ProfilePage() {
             <i className="ti ti-logout" /> Sign out
           </button>
         </div>
-
       </div>
 
       <style>{`

@@ -17,6 +17,8 @@ const Step5 = lazy(() => import('./pages/steps/Step5_ConfigReview'));
 const Step6 = lazy(() => import('./pages/steps/Step6_QuestionSelect'));
 const ProfilePage      = lazy(() => import('./pages/ProfilePage'));
 const ChangePasswordPage = lazy(() => import('./pages/ChangePasswordPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
+const ExpiredPage = lazy(() => import('./pages/ExpiredPage'));
 
 // ── Minimal full-screen fallback while a chunk loads ─────────────────────────
 function PageLoader() {
@@ -42,7 +44,17 @@ function PageLoader() {
 // ── Auth guard ────────────────────────────────────────────────────────────────
 function Private({ children }) {
   const token = localStorage.getItem('auth_token');
-  return token ? children : <Navigate to="/login" replace />;
+  const userType = localStorage.getItem('user_type');
+  const subStatus = localStorage.getItem('subscription_status');
+
+  if (!token) return <Navigate to="/login" replace />;
+
+  // Block expired school_admin from accessing the app
+  if (userType === 'school_admin' && subStatus === 'expired') {
+    return <Navigate to="/expired" replace />;
+  }
+
+  return children;
 }
 
 function App() {
@@ -77,6 +89,12 @@ function App() {
           <Route path="/test-maker/step-6"         element={<Private><Step6 /></Private>} />
           <Route path="/test-maker/profile"        element={<Private><ProfilePage /></Private>} />
           <Route path="/test-maker/change-password" element={<Private><ChangePasswordPage /></Private>} />
+          <Route path="/expired" element={<ExpiredPage />} />
+          <Route path="/admin" element={
+            <Private>
+              {localStorage.getItem('user_type') === 'admin' ? <AdminPage /> : <Navigate to="/test-maker" replace />}
+            </Private>
+          } />
 
           {/* Default */}
           <Route

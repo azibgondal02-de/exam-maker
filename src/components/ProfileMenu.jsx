@@ -1,18 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import API_BASE_URL from '../services/config';
 
 function ProfileMenu() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
+  const [schoolLogo, setSchoolLogo] = useState(localStorage.getItem('school_logo') || '');
   const ref = useRef(null);
   const hoverTimerRef = useRef(null);
 
-  const schoolName = localStorage.getItem('school_name') || '';
   const username   = localStorage.getItem('username') || 'User';
-  const subStatus  = localStorage.getItem('subscription_status') || 'active';
-  const daysLeft   = localStorage.getItem('subscription_days_left') || '';
-  const subEnd     = localStorage.getItem('subscription_end') || '';
+  const [subStatus, setSubStatus]   = useState('active');
+  const [daysLeft, setDaysLeft]     = useState('');
+  const [subEnd, setSubEnd]         = useState('');
+  const [schoolName, setSchoolName] = useState(localStorage.getItem('school_name') || '');
 
   const buildInitials = () => {
     const src = (schoolName || username || 'U').trim();
@@ -28,8 +30,28 @@ function ProfileMenu() {
       setIsTouch(window.matchMedia('(pointer: coarse)').matches);
   }, []);
 
-  // Click-outside to close — excludes the mobile sheet so taps inside it
-  // (e.g. Change Password) don't close the menu before navigation fires
+  // Fetch profile to get school logo
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+    fetch(`${API_BASE_URL}/identity/profile`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.school_logo) {
+          setSchoolLogo(data.school_logo);
+          if (data.school_name) setSchoolName(data.school_name);
+          if (data.subscription_status) setSubStatus(data.subscription_status);
+          if (data.subscription_end) setSubEnd(data.subscription_end);
+          setDaysLeft(String(data.subscription_days_left ?? ''));
+          localStorage.setItem('school_logo', data.school_logo);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Click-outside to close
   useEffect(() => {
     const handler = (e) => {
       if (ref.current && !ref.current.contains(e.target) && !e.target.closest('.pm-sheet'))
@@ -52,7 +74,14 @@ function ProfileMenu() {
 
   const goTo = (path) => { setOpen(false); navigate(path); };
 
-  // Shared menu content
+  const avatarContent = schoolLogo ? (
+    <img src={schoolLogo} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+  ) : initials;
+
+  const menuAvatarContent = schoolLogo ? (
+    <img src={schoolLogo} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+  ) : initials;
+
   const menuContent = (
     <>
       {/* User header */}
@@ -63,14 +92,16 @@ function ProfileMenu() {
             background: 'linear-gradient(135deg,#2196f3,#1565c0)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '14px', fontWeight: '700', color: 'white', flexShrink: 0,
-          }}>{initials}</div>
+            overflow: 'hidden',
+          }}>
+            {menuAvatarContent}
+          </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ fontSize: '13px', fontWeight: '700', color: '#0f1f35', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {schoolName || username}
             </div>
             <div style={{ fontSize: '11px', color: '#94a3b8' }}>@{username}</div>
           </div>
-          {/* Close button — only shown inside mobile sheet */}
           <button onClick={() => setOpen(false)} className="pm-close-btn">✕</button>
         </div>
       </div>
@@ -94,6 +125,11 @@ function ProfileMenu() {
         <button onClick={() => goTo('/test-maker/change-password')} style={pmItem}>
           <i className="ti ti-lock" style={{ fontSize: '15px', color: '#64748b' }} /> Change Password
         </button>
+        {localStorage.getItem('user_type') === 'admin' && (
+          <button onClick={() => goTo('/admin')} style={pmItem}>
+            <i className="ti ti-users" style={{ fontSize: '15px', color: '#2196f3' }} /> User Management
+          </button>
+        )}
         {(subStatus === 'expired' || subStatus === 'expiring_soon') && (
           <a
             href="https://wa.me/923040427647?text=Hi, I want to renew my PaperCraft subscription."
@@ -103,7 +139,6 @@ function ProfileMenu() {
           </a>
         )}
         <div style={{ borderTop: '1px solid #f0f4f8', margin: '4px 0' }} />
-        {/* Sign out intentionally uses full reload to clear all React/Zustand state */}
         <button onClick={() => { localStorage.clear(); window.location.href = '/login'; }} style={{ ...pmItem, color: '#ef4444' }}>
           <i className="ti ti-logout" style={{ fontSize: '15px', color: '#ef4444' }} /> Sign out
         </button>
@@ -125,7 +160,7 @@ function ProfileMenu() {
           transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease;
           position: relative;
           font-family: 'Segoe UI', system-ui, sans-serif;
-          padding: 0; outline: none;
+          padding: 0; outline: none; overflow: hidden;
         }
         .pm-avatar:hover  { transform: scale(1.06); box-shadow: 0 5px 20px rgba(33,150,243,0.5); }
         .pm-avatar:active { transform: scale(0.96); }
@@ -133,26 +168,19 @@ function ProfileMenu() {
         .pm-status-dot {
           position: absolute; bottom: -1px; right: -1px;
           width: 11px; height: 11px; border-radius: 50%; border: 2px solid white;
+          pointer-events: none;
         }
-        /* Desktop dropdown */
         .pm-dropdown {
-          position: absolute;
-          top: calc(100% + 10px);
-          right: 0;
-          width: 260px;
-          background: white;
-          border: 1px solid #e0e7ef;
-          border-radius: 14px;
+          position: absolute; top: calc(100% + 10px); right: 0;
+          width: 260px; background: white;
+          border: 1px solid #e0e7ef; border-radius: 14px;
           box-shadow: 0 12px 36px rgba(0,0,0,0.14);
-          overflow: hidden;
-          animation: pm-fade-in 0.18s ease-out;
-          z-index: 300;
+          overflow: hidden; animation: pm-fade-in 0.18s ease-out; z-index: 300;
         }
         @keyframes pm-fade-in {
           from { opacity: 0; transform: translateY(-6px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        /* Close button — hidden on desktop, shown in mobile sheet */
         .pm-close-btn {
           display: none;
           background: #f1f5f9; border: none; border-radius: 50%;
@@ -160,21 +188,14 @@ function ProfileMenu() {
           font-size: 13px; color: #64748b; flex-shrink: 0;
           align-items: center; justify-content: center;
         }
-        /* Mobile bottom sheet */
         .pm-backdrop {
-          display: none;
-          position: fixed; inset: 0;
-          background: rgba(0,0,0,0.45);
-          z-index: 400;
-          align-items: flex-end;
+          display: none; position: fixed; inset: 0;
+          background: rgba(0,0,0,0.45); z-index: 400; align-items: flex-end;
         }
         .pm-sheet {
-          background: white;
-          border-radius: 20px 20px 0 0;
-          width: 100%;
+          background: white; border-radius: 20px 20px 0 0; width: 100%;
           padding-bottom: calc(16px + env(safe-area-inset-bottom));
-          animation: pm-slideup 0.26s cubic-bezier(0.34,1.1,0.64,1);
-          overflow: hidden;
+          animation: pm-slideup 0.26s cubic-bezier(0.34,1.1,0.64,1); overflow: hidden;
         }
         .pm-sheet-handle {
           width: 36px; height: 4px; border-radius: 2px;
@@ -191,7 +212,6 @@ function ProfileMenu() {
         }
       `}</style>
 
-      {/* Avatar wrapper — desktop dropdown anchor */}
       <div
         ref={ref}
         style={{ position: 'relative' }}
@@ -199,15 +219,12 @@ function ProfileMenu() {
         onMouseLeave={handleMouseLeave}
       >
         <button className="pm-avatar" onClick={handleClick} aria-label="Profile menu" aria-expanded={open}>
-          {initials}
+          {avatarContent}
           <span className="pm-status-dot" style={{ background: subColor }} />
         </button>
-
-        {/* Desktop dropdown */}
         {open && <div className="pm-dropdown">{menuContent}</div>}
       </div>
 
-      {/* Mobile bottom sheet — full-width, outside avatar wrapper */}
       {open && (
         <div className="pm-backdrop" onClick={() => setOpen(false)}>
           <div className="pm-sheet" onClick={e => e.stopPropagation()}>

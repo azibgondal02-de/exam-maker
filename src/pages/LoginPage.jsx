@@ -4,6 +4,7 @@ const WA_NUMBER = '923040427647';
 import API_BASE_URL from '../services/config';
 const API = API_BASE_URL;
 
+
 // ── Expired screen ───────────────────────────────────────────────────────────
 function ExpiredScreen({ onBack }) {
   return (
@@ -39,6 +40,7 @@ export default function LoginPage() {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState('');
   const [expired,  setExpired]  = useState(false);
+  const [deactivated, setDeactivated] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -50,16 +52,19 @@ export default function LoginPage() {
         body:    JSON.stringify({ username: email, password }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Login failed');
+      if (!res.ok) {
+        if (data.detail === 'Account deactivated') {
+          setDeactivated(true);
+          setLoading(false);
+          return;
+        }
+        throw new Error(data.detail || 'Login failed');
+      }
       if (data.access_token) {
         localStorage.setItem('auth_token',            data.access_token);
         localStorage.setItem('user_code',             data.user_code             || '');
         localStorage.setItem('username',              data.username              || '');
         localStorage.setItem('user_type',             data.user_type             || '');
-        localStorage.setItem('school_name',           data.school_name           || '');
-        localStorage.setItem('subscription_status',   data.subscription_status   || 'active');
-        localStorage.setItem('subscription_days_left', data.subscription_days_left ?? '');
-        localStorage.setItem('subscription_end',      data.subscription_end      || '');
         if (data.subscription_status === 'expired') { setExpired(true); setLoading(false); return; }
         window.location.href = '/test-maker';
       } else throw new Error('No token received');
@@ -72,6 +77,29 @@ export default function LoginPage() {
 
   if (expired) return <ExpiredScreen onBack={() => setExpired(false)} />;
 
+  if (deactivated) return (
+    <div className="lp-root">
+      <div className="lp-expired-wrap">
+        <div className="lp-expired-icon" style={{ background: '#ffebee', color: '#d32f2f' }}>
+          <i className="ti ti-lock-off" />
+        </div>
+        <h2 className="lp-expired-title">Account Deactivated</h2>
+        <p className="lp-expired-body">
+          Your account has been deactivated.<br />
+          Please contact us on WhatsApp to reactivate your account.
+        </p>
+        <a
+          href={`https://wa.me/${WA_NUMBER}?text=Hi, my PaperCraft account has been deactivated. Please help me reactivate it.`}
+          target="_blank" rel="noreferrer"
+          className="lp-wa-btn"
+        >
+          <i className="ti ti-brand-whatsapp" /> Contact on WhatsApp
+        </a>
+        <button onClick={() => setDeactivated(false)} className="lp-back-link">Back to login</button>
+      </div>
+      <LPStyles />
+    </div>
+  );
   return (
     <div className="lp-root">
 

@@ -73,4 +73,20 @@ export const fetchQuestions = (payload) =>
 export const generateQuestions = (payload) =>
   API_HEAVY.post('generate-questions', payload);
 
+// ── Admin API ─────────────────────────────────────────────────────────────────
+export const fetchUsers = () =>
+  API.get('admin/users');
+
+export const createUser = (payload) =>
+  API.post('admin/users', payload);
+
+export const updateUser = (userCode, payload) =>
+  API.put(`admin/users/${userCode}`, payload);
+
+export const uploadLogo = (userCode, imageBase64) =>
+  API.post(`admin/users/${userCode}/logo`, { image_base64: imageBase64 });
+
+export const updatePermissions = (userCode, classIds) =>
+  API.put(`admin/users/${userCode}/permissions`, { class_ids: classIds });
+
 export default API;
