@@ -142,7 +142,6 @@ function QuestionPickerModal({ isOpen, onClose, onDone, questions, loading, titl
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '16px' }} onClick={onClose}>
       <div style={{ background: 'white', borderRadius: '12px', width: '100%', maxWidth: '920px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }} onClick={e => e.stopPropagation()}>
-        {/* Modal header */}
         <div style={{ padding: '14px 20px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <h3 style={{ fontSize: '15px', fontWeight: '600', margin: 0, flex: 1, minWidth: 0 }}>{title}</h3>
           <button type="button" onClick={togglePillFilter} disabled={selected.length === 0}
@@ -152,14 +151,12 @@ function QuestionPickerModal({ isOpen, onClose, onDone, questions, loading, titl
           </button>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6b7280', flexShrink: 0 }}>✕</button>
         </div>
-        {/* Search */}
         <div style={{ padding: '10px 20px', borderBottom: '1px solid #f0f0f0' }}>
           <input type="text" value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search questions..."
             style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '13px', outline: 'none', fontFamily: 'inherit' }}
             autoFocus />
         </div>
-        {/* Table */}
         <div ref={scrollRef} style={{ overflowY: 'auto', flex: 1 }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>Loading questions...</div>
@@ -187,7 +184,6 @@ function QuestionPickerModal({ isOpen, onClose, onDone, questions, loading, titl
             </div>
           )}
         </div>
-        {/* Footer */}
         <div style={{ padding: '12px 20px', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
           <button onClick={onClose} style={{ padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '600', background: 'white' }}>Cancel</button>
           <button onClick={() => onDone(selected)} style={{ padding: '8px 18px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>
@@ -212,7 +208,6 @@ function ChapterMultiSelect({ chapters, value = [], onChange }) {
     e.preventDefault(); e.stopPropagation();
     if (btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
-      // On narrow screens flip upward if too close to bottom
       const spaceBelow = window.innerHeight - rect.bottom;
       const top = spaceBelow < 300
         ? rect.top + window.scrollY - 300
@@ -454,7 +449,7 @@ function LongPart({ part, questionTypes, partData, onChange, onPickQuestions, ch
             <input type="number" min="0" value={partData.marks || ''} onChange={e => onChange('marks', parseInt(e.target.value) || 0)}
               placeholder={hasError ? 'Required' : ''}
               style={{ ...numInputStyle, borderColor: hasError ? '#ef4444' : '#d1d5db', boxShadow: hasError ? '0 0 0 3px rgba(239,68,68,0.2)' : 'none', animation: hasError ? 'shake 0.4s ease' : 'none' }} />
-            {hasError && <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: '600', whiteSpace: 'nowrap' }}>⚠ Required</span>}
+            {hasError && <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: '600', whiteSpace: 'nowrap' }}>Required</span>}
           </div>
         </div>
       </div>
@@ -472,6 +467,23 @@ const numInputStyle = { width: '70px', padding: '6px 8px', border: '1px solid #d
 const cardStyle     = { background: 'white', borderRadius: '10px', overflow: 'visible', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', position: 'relative' };
 const headerStyle   = { background: '#2563eb', color: 'white', padding: '12px 20px', fontWeight: '600', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '10px 10px 0 0' };
 
+// ── Section key classification ───────────────────────────────────────────────
+const BOARD_SECTION_KEYS = [
+  'short_questions_according_to_board_pattern',
+  'long_question_according_to_board_pattern',
+];
+const WITHOUT_BOARD_KEYS = [
+  'objective',
+  'subjective_without_board_pattern',
+];
+
+function getCleanTitle(section) {
+  if (section.key === 'subjective_without_board_pattern') return 'Subjective';
+  if (section.key === 'short_questions_according_to_board_pattern') return 'Short Questions';
+  if (section.key === 'long_question_according_to_board_pattern') return 'Long Questions';
+  return section.title;
+}
+
 export default function Step5ConfigReview() {
   const navigate = useNavigate();
   const { selectedSubject, loadPaperConfig, loadQuestions } = useTestMaker();
@@ -484,6 +496,16 @@ export default function Step5ConfigReview() {
   const [longSectionChoices,   setLongSectionChoices]   = useState({});
   const [longMarksErrors,      setLongMarksErrors]      = useState({});
   const [showValidationBanner, setShowValidationBanner] = useState(false);
+
+  // ── Board/Without Board toggle ───────────────────────────────────────────
+  const [boardMode, setBoardMode] = useState(
+    () => localStorage.getItem('step5_board_mode') || 'without'
+  );
+
+  const handleBoardModeChange = (mode) => {
+    setBoardMode(mode);
+    localStorage.setItem('step5_board_mode', mode);
+  };
 
   useEffect(() => {
     const subjectId = selectedSubject?.subject_id || localStorage.getItem('subject_id');
@@ -626,21 +648,33 @@ export default function Step5ConfigReview() {
       return;
     }
     setShowValidationBanner(false);
-    localStorage.setItem('step5_config',   JSON.stringify({ sections, sectionRows, longBlocks, longSectionChoices }));
+    localStorage.setItem('step5_config',   JSON.stringify({ sections, sectionRows, longBlocks, longSectionChoices, boardMode }));
     localStorage.setItem('step5_chapters', JSON.stringify(chapters));
     navigate('/test-maker/step-6');
   };
 
   if (configLoading) return <LoadingSpinner message="Loading paper configuration..." />;
 
-  const sections     = apiData?.sections || [];
+  const allSections  = apiData?.sections || [];
   const totalDataset = apiData?.total_dataset_questions;
+
+  // Detect if board pattern sections exist
+  const hasBoardSections = allSections.some(s => BOARD_SECTION_KEYS.includes(s.key));
+
+  // Filter sections based on toggle
+  const visibleSections = allSections.filter(s => {
+    if (boardMode === 'without') {
+      return WITHOUT_BOARD_KEYS.includes(s.key) || s.key === 'objective';
+    } else {
+      return !WITHOUT_BOARD_KEYS.includes(s.key) || s.key === 'objective';
+    }
+  });
 
   return (
     <div className="s5-page">
       <TopBar />
 
-      {/* Breadcrumb — desktop only */}
+      {/* Breadcrumb */}
       <div className="s5-breadcrumb">
         <span className="s5-bc-item">{selectedSubject?.subject_name || 'Subject'}</span>
         <i className="ti ti-chevron-right s5-bc-sep" />
@@ -662,13 +696,46 @@ export default function Step5ConfigReview() {
             </div>
           </div>
         )}
+
+        {/* Board Mode Toggle — only shown if board sections exist */}
+        {hasBoardSections && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+            <div style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: '12px', padding: '4px', gap: '4px' }}>
+              <button
+                onClick={() => handleBoardModeChange('without')}
+                style={{
+                  padding: '9px 24px', borderRadius: '9px', border: 'none', cursor: 'pointer',
+                  fontSize: '13px', fontWeight: '700', fontFamily: 'inherit',
+                  transition: 'all 0.2s',
+                  background: boardMode === 'without' ? 'white' : 'transparent',
+                  color: boardMode === 'without' ? '#1d4ed8' : '#64748b',
+                  boxShadow: boardMode === 'without' ? '0 1px 4px rgba(0,0,0,0.12)' : 'none',
+                }}
+              >
+                Without Board
+              </button>
+              <button
+                onClick={() => handleBoardModeChange('with')}
+                style={{
+                  padding: '9px 24px', borderRadius: '9px', border: 'none', cursor: 'pointer',
+                  fontSize: '13px', fontWeight: '700', fontFamily: 'inherit',
+                  transition: 'all 0.2s',
+                  background: boardMode === 'with' ? 'white' : 'transparent',
+                  color: boardMode === 'with' ? '#1d4ed8' : '#64748b',
+                  boxShadow: boardMode === 'with' ? '0 1px 4px rgba(0,0,0,0.12)' : 'none',
+                }}
+              >
+                With Board
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Content */}
       <div className="s5-content">
         {configError && <ErrorAlert message={configError} onClose={() => setConfigError('')} />}
 
-        {/* Validation banner */}
         {showValidationBanner && (
           <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '16px' }}>
             <span style={{ fontSize: '20px', flexShrink: 0 }}>⚠️</span>
@@ -680,9 +747,10 @@ export default function Step5ConfigReview() {
           </div>
         )}
 
-        {sections.map(section => {
+        {visibleSections.map(section => {
           const isLong       = section.key === 'long_question_according_to_board_pattern';
           const isShortBoard = section.key === 'short_questions_according_to_board_pattern';
+          const displayTitle = getCleanTitle(section);
 
           if (isLong) {
             const blockCount    = (longBlocks[section.key] || []).length;
@@ -692,7 +760,7 @@ export default function Step5ConfigReview() {
               <div key={section.key} style={cardStyle}>
                 <div style={headerStyle}>
                   <i className="ti ti-info-circle" />
-                  <span style={{ minWidth: 0, flex: 1 }}>{section.title}</span>
+                  <span style={{ minWidth: 0, flex: 1 }}>{displayTitle}</span>
                 </div>
                 <div style={{ padding: '16px 20px 20px' }}>
                   <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '8px', padding: '12px 14px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
@@ -711,7 +779,7 @@ export default function Step5ConfigReview() {
                         style={{ background: '#eff6ff', border: `1px solid ${blockHasAnyError ? '#fca5a5' : '#bfdbfe'}`, borderRadius: '8px', marginBottom: '16px', padding: '16px', boxShadow: blockHasAnyError ? '0 0 0 3px rgba(239,68,68,0.08)' : 'none', transition: 'border-color 0.2s, box-shadow 0.2s' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
                           <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e40af' }}>Long Question {bi + 1}</div>
-                          {blockHasAnyError && <span style={{ fontSize: '11px', color: '#dc2626', fontWeight: '600', background: '#fee2e2', padding: '2px 8px', borderRadius: '10px' }}>⚠ Fill all marks</span>}
+                          {blockHasAnyError && <span style={{ fontSize: '11px', color: '#dc2626', fontWeight: '600', background: '#fee2e2', padding: '2px 8px', borderRadius: '10px' }}>Fill all marks</span>}
                           {(longBlocks[section.key] || []).length > 1 && (
                             <button onClick={() => handleRemoveBlock(section.key, bi)}
                               style={{ marginLeft: 'auto', background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '4px', padding: '5px 12px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>
@@ -745,7 +813,7 @@ export default function Step5ConfigReview() {
               <div key={section.key} style={cardStyle}>
                 <div style={headerStyle}>
                   <i className="ti ti-info-circle" />
-                  <span style={{ flex: 1, minWidth: 0 }}>{section.title}</span>
+                  <span style={{ flex: 1, minWidth: 0 }}>{displayTitle}</span>
                   <button onClick={() => handleAddRow(section.key)}
                     style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.4)', color: 'white', padding: '4px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', flexShrink: 0 }}>
                     + Add Row
@@ -780,7 +848,7 @@ export default function Step5ConfigReview() {
             <div key={section.key} style={cardStyle}>
               <div style={headerStyle}>
                 {section.order > 1 && <i className="ti ti-info-circle" />}
-                <span style={{ flex: 1, minWidth: 0 }}>{section.title}</span>
+                <span style={{ flex: 1, minWidth: 0 }}>{displayTitle}</span>
               </div>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '480px' }}>
@@ -832,7 +900,7 @@ export default function Step5ConfigReview() {
         })}
       </div>
 
-      {/* Bottom action buttons — inline (not fixed) so they don't overlay tables */}
+      {/* Bottom action buttons */}
       <div className="s5-actions">
         <button onClick={() => navigate('/test-maker/step-4')} className="s5-btn s5-btn-ghost">
           <i className="ti ti-arrow-left" /> Back
@@ -845,7 +913,6 @@ export default function Step5ConfigReview() {
       <style>{`
         *, *::before, *::after { box-sizing: border-box; }
 
-        /* ── Page shell ── */
         .s5-page {
           min-height: 100vh;
           background: linear-gradient(135deg, #f5f7fa 0%, #f0f4f8 100%);
@@ -855,7 +922,6 @@ export default function Step5ConfigReview() {
           flex-direction: column;
         }
 
-        /* ── Breadcrumb ── */
         .s5-breadcrumb {
           display: flex;
           align-items: center;
@@ -869,7 +935,6 @@ export default function Step5ConfigReview() {
         .s5-bc-active { background: white; color: #2563eb; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
         .s5-bc-sep { color: #cbd5e1; font-size: 13px; }
 
-        /* ── Header ── */
         .s5-header {
           max-width: 1100px;
           width: 100%;
@@ -913,7 +978,6 @@ export default function Step5ConfigReview() {
           flex-shrink: 0;
         }
 
-        /* ── Content ── */
         .s5-content {
           max-width: 1100px;
           width: 100%;
@@ -923,14 +987,11 @@ export default function Step5ConfigReview() {
           gap: 20px;
         }
 
-        /* ── Select / number inputs ── */
         .s5-sel { padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 5px; font-size: 13px; cursor: pointer; background: white; }
         .s5-sel:focus { outline: none; border-color: #2563eb; }
 
-        /* ── Question modal images ── */
         .s5-q-content img { vertical-align: middle; display: inline-block; max-width: 100%; height: auto; }
 
-        /* ── Shake animation for validation ── */
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
           20% { transform: translateX(-4px); }
@@ -939,7 +1000,6 @@ export default function Step5ConfigReview() {
           80% { transform: translateX(3px); }
         }
 
-        /* ── Action buttons ── */
         .s5-actions {
           max-width: 1100px;
           width: 100%;
@@ -982,7 +1042,6 @@ export default function Step5ConfigReview() {
         }
         .s5-btn-ghost:hover { background: #f8fafc; }
 
-        /* ── Tablet (≤768px) ── */
         @media (max-width: 768px) {
           .s5-breadcrumb { display: none; }
           .s5-header { margin-top: 72px; }
@@ -990,7 +1049,6 @@ export default function Step5ConfigReview() {
           .s5-actions { padding: 16px 0 0; }
         }
 
-        /* ── Mobile (≤480px) ── */
         @media (max-width: 480px) {
           .s5-page { padding: 16px 12px 32px; }
           .s5-header { margin-top: 68px; margin-bottom: 16px; }
@@ -999,7 +1057,6 @@ export default function Step5ConfigReview() {
           .s5-btn-ghost { padding: 13px 20px; }
         }
 
-        /* ── Desktop: no extra top margin since breadcrumb provides gap ── */
         @media (min-width: 769px) {
           .s5-header { margin-top: 0; }
         }
