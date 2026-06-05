@@ -57,7 +57,6 @@ export const useTestMaker = () => {
       store.setBoards(boards);
       cacheSet('boards', boards, TTL.boards);
       // Silently prefetch classes for all boards
-      boards.forEach(b => loadClasses(b.board_id, true));
       return boards;
     } catch (error) {
       store.setError('boards', error.message);

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import ProfileMenu from '../../components/ProfileMenu';
+import logoImg from '../../assets/logo.png';
 
 const IMAGE_BASE = 'https://testmaker.pk';
 
@@ -10,8 +11,78 @@ function fixHtml(html) {
   return html.replace(/src="\/([^"]+)"/g, `src="${IMAGE_BASE}/$1"`);
 }
 
-// Treat an element as having content if it has visible text OR an inline image.
-// Stripping ALL tags would wrongly count an image-only cell as empty.
+const SCHOOL_NAME_FIELDS = ['school_name', 'schoolName', 'institute_name', 'institution_name', 'academy_name'];
+
+function deepFindField(obj, fields, depth = 0) {
+  if (!obj || typeof obj !== 'object' || depth > 4) return '';
+  for (const f of fields) {
+    if (typeof obj[f] === 'string' && obj[f].trim()) return obj[f].trim();
+  }
+  for (const k in obj) {
+    if (obj[k] && typeof obj[k] === 'object') {
+      const r = deepFindField(obj[k], fields, depth + 1);
+      if (r) return r;
+    }
+  }
+  return '';
+}
+
+function resolveSchoolName() {
+  const ok = (v) => (typeof v === 'string' && v.trim() && !/^data:/.test(v.trim())) ? v.trim() : '';
+  // 1. direct string keys
+  for (const k of SCHOOL_NAME_FIELDS) {
+    const v = ok(localStorage.getItem(k));
+    if (v) return v;
+  }
+  // 2. scan every localStorage entry — plain strings whose KEY looks like a name holder,
+  //    and JSON objects that contain one of the known fields anywhere inside.
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const first = raw.trim()[0];
+      if (first === '{' || first === '[') {
+        try {
+          const o = JSON.parse(raw);
+          const found = deepFindField(o, SCHOOL_NAME_FIELDS);
+          if (ok(found)) return found.trim();
+        } catch (e) {}
+      } else if (/school.*name|institute.*name|institution.*name|academy.*name/i.test(key)) {
+        const v = ok(raw);
+        if (v) return v;
+      }
+    }
+  } catch (e) {}
+  return '';
+}
+
+// Urdu / Arabic script ranges — used to tell a real translation from duplicated content
+const URDU_SCRIPT_RE = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+function hasUrduScript(s) {
+  if (!s) return false;
+  return URDU_SCRIPT_RE.test(s.replace(/<[^>]*>/g, ''));
+}
+function imgSrcs(s) {
+  if (!s) return [];
+  const out = []; const re = /<img[^>]+src="([^"]+)"/gi; let m;
+  while ((m = re.exec(s))) out.push(m[1].trim());
+  return out;
+}
+// In "both" mode, is the Urdu field genuinely distinct content (real translation /
+// different image) rather than the same thing duplicated (identical image, math eq, numbers)?
+function urIsDistinctContent(enStr, urStr) {
+  const enImgs = imgSrcs(enStr); const urImgs = imgSrcs(urStr);
+  if (enImgs.length && urImgs.length) {
+    // Only use image-URL comparison when content is PURELY images (no surrounding text).
+    // If there is text around the image, fall through to the Urdu-script check instead.
+    const enText = (enStr || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
+    const urText = (urStr || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
+    if (enText === '' && urText === '') return enImgs.join('|') !== urImgs.join('|');
+  }
+  return hasUrduScript(urStr);
+}
+
 function hasContent(s) {
   if (!s) return false;
   if (/<img\b/i.test(s)) return true;
@@ -32,8 +103,8 @@ function cleanName(name) {
     'correct option according to the grammar': 'Grammar (Correct Option)',
     'voice of the following': 'Active / Passive Voice', 'make the sentences': 'Sentence Making',
     'make sentences (primary)': 'Sentence Making',
-    'translate the sentence into english': 'Translation (Urdu → English)',
-    'translate into urdu': 'Translation (English → Urdu)',
+    'translate the sentence into english': 'Translation (Urdu to English)',
+    'translate into urdu': 'Translation (English to Urdu)',
     'comprehension passage': 'Comprehension', 'reference to the context': 'Reference to Context',
     'summaries': 'Summary Writing', 'dialogue': 'Dialogue Writing',
     'letter': 'Letter Writing', 'stories': 'Story Writing',
@@ -162,7 +233,6 @@ function buildPayload(step5Config, chaptersFromState) {
   return { subject_id: subjectId, sections: payloadSections, total_marks: totalMarks };
 }
 
-// ── All question rendering components ───────────────────────────────────────
 function MCQOption({ opt, medium, editMode, letter, showAnswers, enFont, urFont, fontSize }) {
   const enRef = useRef(null); const urRef = useRef(null);
   useEffect(() => {
@@ -174,8 +244,14 @@ function MCQOption({ opt, medium, editMode, letter, showAnswers, enFont, urFont,
   const answerStyle = isCorrect ? { background: '#dcfce7', borderRadius: '4px', padding: '1px 6px', fontWeight: '700', color: '#15803d' } : {};
   const optFontSize = Math.max((fontSize || 13) - 1, 10);
   const hasEn = hasContent(opt.option_en); const hasUr = hasContent(opt.option_ur);
-  const showEn = (medium === 'en' || medium === 'both') && hasEn;
-  const showUr = (medium === 'ur' || medium === 'both') && hasUr;
+  const urDistinct = urIsDistinctContent(opt.option_en, opt.option_ur);
+  let showEn, showUr;
+  if (medium === 'en') { showEn = hasEn; showUr = false; }
+  else if (medium === 'ur') { showEn = false; showUr = hasUr; }
+  else { // both: show both only when Urdu is a genuine translation / different image
+    if (urDistinct) { showEn = hasEn; showUr = hasUr; }
+    else { showEn = hasEn; showUr = hasUr && !hasEn; } // same content → one (prefer EN)
+  }
   const isRTL = (showUr && !showEn) || (medium === 'ur');
   const letterMark = isRTL ? `(${letter}` : `${letter})`;
   return (
@@ -195,8 +271,8 @@ function MCQOptions({ options, medium, editMode, showAnswers, enFont, urFont, fo
   const cols = options.length <= 4 ? 4 : 2;
   const anyEn = options.some(o => hasContent(o.option_en));
   const anyUr = options.some(o => hasContent(o.option_ur));
-  const reverseOrder = (medium === 'ur') || (medium === 'both' && anyUr && !anyEn);
-  const renderOrder  = reverseOrder ? options.map((opt, i) => ({ opt, letter: letters[i] })).reverse() : options.map((opt, i) => ({ opt, letter: letters[i] }));
+  const reverseOrder  = (medium === 'ur') || (medium === 'both' && anyUr && !anyEn);
+  const renderOrder   = reverseOrder ? options.map((opt, i) => ({ opt, letter: letters[i] })).reverse() : options.map((opt, i) => ({ opt, letter: letters[i] }));
   return (
     <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '4px 16px', marginTop: '6px' }}>
       {renderOrder.map(({ opt, letter }) => <MCQOption key={opt.option_id} opt={opt} medium={medium} editMode={editMode} letter={letter} showAnswers={showAnswers} enFont={enFont} urFont={urFont} fontSize={fontSize} />)}
@@ -214,8 +290,7 @@ function ParagraphSubQuestion({ sub, num, medium, editMode, showAnswers, enFont,
     visibleOptions.forEach((opt, i) => { if (optEnRefs.current[i]) optEnRefs.current[i].innerHTML = fixHtml(opt.name_en || ''); if (optUrRefs.current[i]) optUrRefs.current[i].innerHTML = fixHtml(opt.name_ur || ''); });
   }, [medium, sub.statement_en, sub.statement_ur, visibleOptions]);
   const letters = ['a', 'b', 'c', 'd', 'e', 'f'];
-  const subHasEn = hasContent(sub.statement_en);
-  const subHasUr = hasContent(sub.statement_ur);
+  const subHasEn = hasContent(sub.statement_en); const subHasUr = hasContent(sub.statement_ur);
   const showEn = (medium === 'en' || medium === 'both') && subHasEn;
   const showUr = (medium === 'ur' || medium === 'both') && subHasUr;
   const isUr  = (showUr && !showEn) || (medium === 'ur');
@@ -268,23 +343,36 @@ function QuestionItem({ q, index, showNumber = true, medium, editMode, showAnswe
   const stEn = [q.statement_en, q.description_en].filter(Boolean).join(' ');
   const stUr = [q.statement_ur, q.description_ur].filter(Boolean).join(' ');
   const enRef = useRef(null); const urRef = useRef(null);
+  // In view mode: dangerouslySetInnerHTML (same as Step 5) — browser renders CMS
+  // inline-styles for fractions/radicals unmolested. In edit mode: ref+contentEditable.
   useEffect(() => {
+    if (!editMode) return;
     if (enRef.current) enRef.current.innerHTML = fixHtml(stEn);
     if (urRef.current) urRef.current.innerHTML = fixHtml(stUr);
-  }, [medium, stEn, stUr]);
-  const eStyle = (extra = {}) => editMode ? { outline: '1px dashed #2563eb', padding: '2px 4px', borderRadius: '3px', background: '#f0f7ff', minHeight: '18px', ...extra } : { ...extra };
+  }, [editMode, stEn, stUr]);
+  const eStyle = (extra = {}) => ({ outline: '1px dashed #2563eb', padding: '2px 4px', borderRadius: '3px', background: '#f0f7ff', minHeight: '18px', ...extra });
   const hasEn = hasContent(stEn); const hasUr = hasContent(stUr);
+  // Statements always show both EN and UR based on medium — no dedup.
+  // Dedup (urIsDistinctContent) is for MCQ options only.
   const showEn = (medium === 'en' || medium === 'both') && hasEn;
   const showUr = (medium === 'ur' || medium === 'both') && hasUr;
-  const isRTL  = (showUr && !showEn) || (medium === 'ur');
+  const isRTL = (showUr && !showEn) || (medium === 'ur');
+  const baseEn = { flex: 1, minWidth: '200px', fontFamily: enFont, color: '#000' };
+  const baseUr = { flex: 1, minWidth: '200px', direction: 'rtl', textAlign: 'right', fontFamily: urFont, color: '#000' };
   return (
     <div style={{ marginBottom: '10px', breakInside: 'avoid' }}>
       <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', flexDirection: isRTL ? 'row-reverse' : 'row' }}>
         {showNumber && index && <span style={{ fontWeight: '700', flexShrink: 0, minWidth: '24px', color: '#000', textAlign: isRTL ? 'right' : 'left' }}>{index}.</span>}
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', flexDirection: isRTL ? 'row-reverse' : 'row' }}>
-            {showEn && <span ref={enRef} className="q-content" contentEditable={editMode} suppressContentEditableWarning style={eStyle({ flex: 1, minWidth: '200px', fontFamily: enFont, color: '#000' })} />}
-            {showUr && <span ref={urRef} className="q-content" contentEditable={editMode} suppressContentEditableWarning style={eStyle({ flex: 1, minWidth: '200px', direction: 'rtl', textAlign: 'right', fontFamily: urFont, color: '#000' })} />}
+            {showEn && (editMode
+              ? <span ref={enRef} className="q-content" contentEditable suppressContentEditableWarning style={eStyle(baseEn)} />
+              : <span className="q-content" dangerouslySetInnerHTML={{ __html: fixHtml(stEn) }} style={baseEn} />
+            )}
+            {showUr && (editMode
+              ? <span ref={urRef} className="q-content" contentEditable suppressContentEditableWarning style={eStyle(baseUr)} />
+              : <span className="q-content" dangerouslySetInnerHTML={{ __html: fixHtml(stUr) }} style={baseUr} />
+            )}
           </div>
           {q.options && q.options.length > 0 && <MCQOptions options={q.options} medium={medium} editMode={editMode} showAnswers={showAnswers} enFont={enFont} urFont={urFont} fontSize={fontSize} />}
           {q.paragraph_questions?.length > 0 && <ParagraphQuestions subs={q.paragraph_questions} medium={medium} editMode={editMode} showAnswers={showAnswers} enFont={enFont} urFont={urFont} fontSize={fontSize} />}
@@ -311,62 +399,79 @@ function SectionHeader({ title, totalMarks, qNo, editMode, medium, choiceInfo })
   );
 }
 
-function PaperPreview({ paper, medium, schoolName, subject, className, editMode, fontSize, showAnswers, examTime, examType, fontFamily, urduFont }) {
+function PaperPreview({ paper, medium, schoolName, schoolLogo, subject, className, editMode, fontSize, showAnswers, examTime, examType, fontFamily, urduFont }) {
   const totalMarks = paper.total_marks || 0;
   const enFont = fontFamily || "'Times New Roman', Times, serif";
   const urFont = urduFont  || "'Noto Nastaliq Urdu', serif";
   const fs = fontSize || 13;
   const td = (extra={}) => ({ padding: '6px 10px', border: '1px solid #1a1a2e', background: '#ffffff', color: '#000000', ...extra });
   const th = (extra={}) => ({ padding: '6px 10px', border: '1px solid #1a1a2e', fontWeight: '700', background: '#1a1a2e', color: '#ffffff', whiteSpace: 'nowrap', ...extra });
-  const eStyle = editMode ? { outline: '1px dashed #60a5fa', borderRadius: '2px' } : {};
 
   return (
     <div id="paper-preview" style={{ background: 'white', padding: '32px 36px', maxWidth: '900px', margin: '0 auto', fontSize: fs + 'px', lineHeight: '1.7', color: '#000000' }}>
       <style>{`
         .q-content { display: block; }
-        .q-content table { border-collapse: collapse !important; width: auto !important; max-width: 100% !important; margin: 8px 0 !important; font-size: ${fs}px; background: #ffffff !important; }
-        .q-content table td, .q-content table th { border: 1px solid #1a1a2e !important; padding: 6px 10px !important; min-width: 60px; min-height: 24px; height: 28px; vertical-align: middle !important; background: #ffffff !important; color: #000000 !important; }
-        .q-content table th { background: #f3f4f6 !important; font-weight: 700 !important; }
-        .q-content img { max-width: 100%; height: auto; }
-        .q-content:has(table) { flex-basis: 100% !important; min-width: 100% !important; }
+        /* Step 5 approach: minimal overrides so CMS inline-styles render unmolested.
+           Images sit inline (fractions/radicals use inline styles from the CMS).
+           Only real data tables (2+ columns) get bordered-grid treatment. */
+        .q-content img { vertical-align: middle; display: inline-block; max-width: 100%; height: auto; }
+        .q-content table { border-collapse: collapse; width: auto; max-width: 100%; font-size: ${fs}px; }
+        .q-content table td, .q-content table th { padding: 4px 8px; vertical-align: middle; }
+        .q-content table:has(td + td) td, .q-content table:has(td + td) th,
+        .q-content table:has(th + th) td, .q-content table:has(th + th) th
+          { border: 1px solid #1a1a2e; padding: 6px 10px; min-width: 60px; height: 28px; background: #fff; color: #000; }
+        .q-content table:has(th + th) th { background: #f3f4f6; font-weight: 700; }
+        .q-content:has(table:has(td + td)), .q-content:has(table:has(th + th))
+          { flex-basis: 100% !important; min-width: 100% !important; }
       `}</style>
 
-      {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: '14px', paddingBottom: '12px', borderBottom: '3px double #1a1a2e' }}>
-        <div contentEditable={editMode} suppressContentEditableWarning style={{ fontSize: fs + 8 + 'px', fontWeight: '800', color: '#1a1a2e', fontFamily: enFont, letterSpacing: '0.5px', ...eStyle }}>
-          {schoolName || 'School Name'}
+      {/* ── Header ── */}
+      <div style={{ marginBottom: '14px', paddingBottom: '12px', borderBottom: '3px double #1a1a2e', display: 'flex', alignItems: 'center', gap: '16px' }}>
+        {/* Left logo */}
+        {schoolLogo && (
+          <img src={schoolLogo} alt="School Logo" style={{ height: '70px', width: 'auto', flexShrink: 0, objectFit: 'contain' }} />
+        )}
+        {/* Center text */}
+        <div style={{ flex: 1, textAlign: 'center' }}>
+          <div style={{ fontSize: fs + 8 + 'px', fontWeight: '800', color: '#1a1a2e', fontFamily: enFont, letterSpacing: '0.5px' }}>
+            {schoolName || 'School Name'}
+          </div>
+          <div style={{ fontSize: fs - 1 + 'px', color: '#444', marginTop: '3px', fontFamily: enFont }}>
+            Smart Board Paper Generation — PaperCraft
+          </div>
         </div>
-        <div contentEditable={editMode} suppressContentEditableWarning style={{ fontSize: fs - 1 + 'px', color: '#444', marginTop: '3px', fontFamily: enFont, ...eStyle }}>
-          Smart Board Paper Generation — PaperCraft
-        </div>
+        {/* Right spacer to keep title centered (logo only on the left) */}
+        {schoolLogo && (
+          <div style={{ width: '70px', flexShrink: 0 }} aria-hidden="true" />
+        )}
       </div>
 
-      {/* Info table */}
+      {/* ── Info table ── */}
       <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', fontSize: fs - 1 + 'px', fontFamily: enFont }}>
         <tbody>
           <tr>
             <td style={th({ width: '13%' })}>Name:</td>
-            <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td({ width: '30%' }), ...eStyle }}></td>
+            <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td({ width: '30%' }) }}></td>
             <td style={th({ width: '12%' })}>Roll No:</td>
-            <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td({ width: '15%' }), ...eStyle }}></td>
+            <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td({ width: '15%' }) }}></td>
             <td style={th({ width: '10%' })}>Class:</td>
-            <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td(), ...eStyle }}>{className || ''}</td>
+            <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td() }}>{className || ''}</td>
           </tr>
           <tr>
             <td style={th()}>Subject:</td>
-            <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td(), ...eStyle }}>{subject || ''}</td>
+            <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td() }}>{subject || ''}</td>
             <td style={th()}>Date:</td>
-            <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td(), ...eStyle }}></td>
+            <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td() }}></td>
             <td style={th()}>Total Marks:</td>
-            <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td(), ...eStyle }}>{totalMarks}</td>
+            <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td() }}>{totalMarks}</td>
           </tr>
           <tr>
             <td style={th()}>Time:</td>
-            <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td(), ...eStyle }}>{examTime || ''}</td>
+            <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td() }}>{examTime || ''}</td>
             <td style={th()}>Exam Type:</td>
-            <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td(), ...eStyle }}>{examType || ''}</td>
+            <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td() }}>{examType || ''}</td>
             <td style={th()}>Teacher Name:</td>
-            <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td(), ...eStyle }}></td>
+            <td contentEditable={editMode} suppressContentEditableWarning style={{ ...td() }}></td>
           </tr>
         </tbody>
       </table>
@@ -425,17 +530,12 @@ function PaperPreview({ paper, medium, schoolName, subject, className, editMode,
   );
 }
 
-// ── PDF helper (robust iframe + asset waiting + mobile-safe dark fills) ───────
 function openPDF(fontFamily, urduFont, fontSize) {
   const el = document.getElementById('paper-preview');
   if (!el) return;
-
   const clone = el.cloneNode(true);
   clone.style.color = '#000000';
   clone.style.backgroundColor = '#ffffff';
-
-  // Mobile print engines grey-out background-colors. Paint dark bars/cells as a
-  // FOREGROUND <img> layer (always printed, ignores "background graphics" setting).
   const matchDark = (node) => {
     const bg = (node.style.background || node.style.backgroundColor || '').replace(/\s+/g, '').toLowerCase();
     if (!bg) return null;
@@ -459,21 +559,16 @@ function openPDF(fontFamily, urduFont, fontSize) {
     node.style.overflow = 'hidden';
     node.insertBefore(svgLayer(hex), node.firstChild);
   });
-
-  // Only Urdu fonts are real Google Fonts — English options are system fonts.
   const extractFontName = (fontStr) => {
     const match = fontStr.match(/'([^']+)'/);
     return match ? match[1] : fontStr.split(',')[0].trim().replace(/['"]/g, '');
   };
   const urFamilyParam = encodeURIComponent(extractFontName(urduFont)).replace(/%20/g, '+');
   const fontsHref = `https://fonts.googleapis.com/css2?family=${urFamilyParam}:wght@400;700&display=swap`;
-
-  // Off-screen iframe instead of window.open → popup blockers can't kill it.
   const iframe = document.createElement('iframe');
   iframe.setAttribute('aria-hidden', 'true');
   iframe.style.cssText = 'position:fixed;top:-10000px;left:-10000px;width:100%;height:100%;border:0;';
   document.body.appendChild(iframe);
-
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   doc.open();
   doc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Paper</title>
@@ -492,10 +587,7 @@ function openPDF(fontFamily, urduFont, fontSize) {
     </style></head>
     <body><div class="paper-wrap">${clone.innerHTML}</div></body></html>`);
   doc.close();
-
   const win = iframe.contentWindow;
-
-  // Wait for the real ready signals (fonts + images), capped so a dead network can't hang.
   const waitForAssets = (maxWaitMs = 6000) => new Promise((resolve) => {
     let settled = false;
     const finish = () => { if (!settled) { settled = true; resolve(); } };
@@ -515,13 +607,10 @@ function openPDF(fontFamily, urduFont, fontSize) {
       else finish();
     });
   });
-
   const removeFrame = () => { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); };
-
   waitForAssets().then(() => {
     let cleaned = false;
     const safeCleanup = () => { if (!cleaned) { cleaned = true; removeFrame(); } };
-    // afterprint is the correct cross-browser signal — print() is async in Firefox/Safari.
     win.addEventListener('afterprint', () => setTimeout(safeCleanup, 300), { once: true });
     setTimeout(safeCleanup, 60000);
     win.focus();
@@ -529,7 +618,6 @@ function openPDF(fontFamily, urduFont, fontSize) {
   });
 }
 
-// ── Main component ───────────────────────────────────────────────────────────
 export default function Step6QuestionSelect() {
   const navigate = useNavigate();
   const { selectedSubject, selectedClass, generatePaper } = useTestMaker();
@@ -537,7 +625,8 @@ export default function Step6QuestionSelect() {
   const [error,       setError]       = useState('');
   const [paper,       setPaper]       = useState(null);
   const [medium,      setMedium]      = useState('both');
-  const [schoolName,  setSchoolName]  = useState(() => localStorage.getItem('school_name') || '');
+  const [schoolName]                  = useState(() => resolveSchoolName());
+  const [schoolLogo]                  = useState(() => localStorage.getItem('school_logo') || '');
   const [editMode,    setEditMode]    = useState(false);
   const [fontSize,    setFontSize]    = useState(13);
   const [showAnswers, setShowAnswers] = useState(false);
@@ -551,9 +640,7 @@ export default function Step6QuestionSelect() {
   const subjectName = selectedSubject?.subject_name || localStorage.getItem('subject_name') || 'Subject';
   const className   = selectedClass?.class_name     || localStorage.getItem('class_name')   || '';
 
-  useEffect(() => {
-    generatePaperFromConfig();
-  }, []);
+  useEffect(() => { generatePaperFromConfig(); }, []);
 
   useEffect(() => {
     if (!drawerOpen) return;
@@ -601,8 +688,7 @@ export default function Step6QuestionSelect() {
   );
 
   const settingsFields = [
-    { label: 'School Name', el: <input value={schoolName} onChange={e => setSchoolName(e.target.value)} placeholder="School name" className="s6-input" /> },
-    { label: 'Total Time',  el: <input value={examTime}   onChange={e => setExamTime(e.target.value)}   placeholder="e.g. 3 Hours"  className="s6-input" style={{ width: '110px' }} /> },
+    { label: 'Total Time',  el: <input value={examTime} onChange={e => setExamTime(e.target.value)} placeholder="e.g. 3 Hours" className="s6-input" style={{ width: '110px' }} /> },
     { label: 'Exam Type', el: (
       <select value={examType} onChange={e => setExamType(e.target.value)} className="s6-sel">
         <option value="">-- Select --</option>
@@ -650,19 +736,18 @@ export default function Step6QuestionSelect() {
   return (
     <div className="s6-root">
 
-      {/* ══════════ DESKTOP sticky toolbar ══════════ */}
+      {/* Desktop toolbar */}
       <div className="s6-toolbar s6-desktop-toolbar">
         <div className="s6-toolbar-row1">
           <div onClick={() => navigate('/test-maker/step-1')} className="s6-logo-btn" title="Home">
-            <div className="s6-logo-corner" />
-            <span className="s6-logo-p">P</span>
+            <img src={logoImg} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
-          <button onClick={() => navigate('/test-maker/step-5')} className="s6-tb-btn" style={{ background: '#374151' }}>← Back</button>
-          <button onClick={generatePaperFromConfig} className="s6-tb-btn" style={{ background: '#7c3aed' }}>🔄 Regenerate</button>
-          <button onClick={() => window.print()}    className="s6-tb-btn" style={{ background: '#2563eb' }}>🖨️ Print</button>
-          <button onClick={() => openPDF(fontFamily, urduFont, fontSize)} className="s6-tb-btn" style={{ background: '#dc2626' }}>📄 PDF</button>
-          <button onClick={() => setEditMode(v => !v)} className="s6-tb-btn" style={{ background: editMode ? '#16a34a' : '#4b5563' }}>✏️ Edit {editMode ? 'ON' : 'OFF'}</button>
-          <button onClick={() => setShowAnswers(v => !v)} className="s6-tb-btn" style={{ background: showAnswers ? '#d97706' : '#4b5563' }}>💡 Answers {showAnswers ? 'ON' : 'OFF'}</button>
+          <button onClick={() => navigate('/test-maker/step-5')} className="s6-tb-btn" style={{ background: '#374151' }}>Back</button>
+          <button onClick={generatePaperFromConfig} className="s6-tb-btn" style={{ background: '#7c3aed' }}>Regenerate</button>
+          <button onClick={() => window.print()} className="s6-tb-btn" style={{ background: '#2563eb' }}>Print</button>
+          <button onClick={() => openPDF(fontFamily, urduFont, fontSize)} className="s6-tb-btn" style={{ background: '#dc2626' }}>PDF</button>
+          <button onClick={() => setEditMode(v => !v)} className="s6-tb-btn" style={{ background: editMode ? '#16a34a' : '#4b5563' }}>Edit {editMode ? 'ON' : 'OFF'}</button>
+          <button onClick={() => setShowAnswers(v => !v)} className="s6-tb-btn" style={{ background: showAnswers ? '#d97706' : '#4b5563' }}>Answers {showAnswers ? 'ON' : 'OFF'}</button>
           <div style={{ marginLeft: 'auto' }}><ProfileMenu /></div>
         </div>
         <div className="s6-toolbar-settings">
@@ -675,7 +760,7 @@ export default function Step6QuestionSelect() {
         </div>
       </div>
 
-      {/* ══════════ MOBILE top bar ══════════ */}
+      {/* Mobile top bar */}
       <div className="s6-mobile-topbar">
         <div onClick={() => navigate('/test-maker/step-1')} className="s6-logo-btn s6-logo-sm">
           <div className="s6-logo-corner" />
@@ -685,15 +770,13 @@ export default function Step6QuestionSelect() {
         <ProfileMenu />
       </div>
 
-      {/* ══════════ Error ══════════ */}
       {error && (
         <div className="s6-error-box">
-          <div style={{ fontSize: '15px', fontWeight: '600', marginBottom: '8px' }}>⚠️ {error}</div>
-          <button onClick={() => navigate('/test-maker/step-5')} className="s6-tb-btn" style={{ background: '#dc2626' }}>← Go Back to Step 5</button>
+          <div style={{ fontSize: '15px', fontWeight: '600', marginBottom: '8px' }}>Warning: {error}</div>
+          <button onClick={() => navigate('/test-maker/step-5')} className="s6-tb-btn" style={{ background: '#dc2626' }}>Go Back to Step 5</button>
         </div>
       )}
 
-      {/* ══════════ Stats bar ══════════ */}
       {paper && (
         <div className="s6-stats-bar">
           {[['Questions', paper.total_questions, '#2563eb'], ['Marks', paper.total_marks, '#7c3aed'], ['Sections', paper.sections?.length, '#059669']].map(([label, val, color]) => (
@@ -702,16 +785,16 @@ export default function Step6QuestionSelect() {
               <span className="s6-stat-label">{label}</span>
             </div>
           ))}
-          <div className="s6-stat-done">✅ Generated</div>
+          <div className="s6-stat-done">Generated</div>
         </div>
       )}
 
-      {/* ══════════ Paper ══════════ */}
       {paper && (
         <div className="s6-paper-wrapper">
           <div className="s6-paper-scroll">
             <PaperPreview
-              paper={paper} medium={medium} schoolName={schoolName}
+              paper={paper} medium={medium}
+              schoolName={schoolName} schoolLogo={schoolLogo}
               subject={subjectName} className={className}
               editMode={editMode} fontSize={fontSize}
               showAnswers={showAnswers} examTime={examTime}
@@ -721,7 +804,7 @@ export default function Step6QuestionSelect() {
         </div>
       )}
 
-      {/* ══════════ MOBILE bottom action bar ══════════ */}
+      {/* Mobile bottom actions */}
       <div className="s6-mobile-actions">
         <button onClick={() => navigate('/test-maker/step-5')} className="s6-mob-btn s6-mob-back">
           <i className="ti ti-arrow-left" style={{ fontSize: '16px' }} />
@@ -748,14 +831,14 @@ export default function Step6QuestionSelect() {
         </button>
       </div>
 
-      {/* ══════════ MOBILE settings drawer ══════════ */}
+      {/* Mobile settings drawer */}
       {drawerOpen && (
         <div className="s6-drawer-backdrop" onClick={() => setDrawerOpen(false)}>
           <div className="s6-drawer" onClick={e => e.stopPropagation()}>
             <div className="s6-drawer-handle" />
             <div className="s6-drawer-header">
               <span className="s6-drawer-title">Paper Settings</span>
-              <button onClick={() => setDrawerOpen(false)} className="s6-drawer-close">✕</button>
+              <button onClick={() => setDrawerOpen(false)} className="s6-drawer-close">X</button>
             </div>
             <div className="s6-drawer-toggles">
               <button onClick={() => setEditMode(v => !v)} className={`s6-toggle-btn ${editMode ? 's6-toggle-on' : ''}`}>

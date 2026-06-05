@@ -68,8 +68,16 @@ function ProfileMenu() {
                  : subStatus === 'expiring_soon' ? `${daysLeft} days remaining`
                  : 'Subscription active';
 
-  const handleMouseEnter = () => { if (isTouch) return; clearTimeout(hoverTimerRef.current); setOpen(true); };
-  const handleMouseLeave = () => { if (isTouch) return; hoverTimerRef.current = setTimeout(() => setOpen(false), 200); };
+  const handleMouseEnter = () => { 
+    if (isTouch || window.innerWidth <= 768) return; 
+    clearTimeout(hoverTimerRef.current); 
+    setOpen(true); 
+  };
+  
+  const handleMouseLeave = () => { 
+    if (isTouch || window.innerWidth <= 768) return; 
+    hoverTimerRef.current = setTimeout(() => setOpen(false), 200); 
+  };
   const handleClick      = () => setOpen(p => !p);
 
   const goTo = (path) => { setOpen(false); navigate(path); };

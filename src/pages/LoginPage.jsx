@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
+import logoImg from '../assets/logo.png';
 
 const WA_NUMBER = '923040427647';
 import API_BASE_URL from '../services/config';
 const API = API_BASE_URL;
 
-
-// ── Expired screen ───────────────────────────────────────────────────────────
 function ExpiredScreen({ onBack }) {
   return (
     <div className="lp-root">
@@ -25,21 +24,20 @@ function ExpiredScreen({ onBack }) {
         >
           <i className="ti ti-brand-whatsapp" /> Renew on WhatsApp
         </a>
-        <button onClick={onBack} className="lp-back-link">← Back to login</button>
+        <button onClick={onBack} className="lp-back-link">Back to login</button>
       </div>
       <LPStyles />
     </div>
   );
 }
 
-// ── Main login ───────────────────────────────────────────────────────────────
 export default function LoginPage() {
-  const [email,    setEmail]    = useState('');
-  const [password, setPassword] = useState('');
-  const [showPwd,  setShowPwd]  = useState(false);
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState('');
-  const [expired,  setExpired]  = useState(false);
+  const [email,       setEmail]       = useState('');
+  const [password,    setPassword]    = useState('');
+  const [showPwd,     setShowPwd]     = useState(false);
+  const [loading,     setLoading]     = useState(false);
+  const [error,       setError]       = useState('');
+  const [expired,     setExpired]     = useState(false);
   const [deactivated, setDeactivated] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -61,12 +59,13 @@ export default function LoginPage() {
         throw new Error(data.detail || 'Login failed');
       }
       if (data.access_token) {
-        localStorage.setItem('auth_token',            data.access_token);
-        localStorage.setItem('user_code',             data.user_code             || '');
-        localStorage.setItem('username',              data.username              || '');
-        localStorage.setItem('user_type',             data.user_type             || '');
+        localStorage.setItem('auth_token', data.access_token);
+        localStorage.setItem('user_code',  data.user_code  || '');
+        localStorage.setItem('username',   data.username   || '');
+        localStorage.setItem('user_type',  data.user_type  || '');
+        localStorage.setItem('school_name', data.school_name  || '');
         if (data.subscription_status === 'expired') { setExpired(true); setLoading(false); return; }
-        window.location.href = '/test-maker';
+        window.location.href = data.user_type === 'admin' ? '/admin' : '/test-maker';
       } else throw new Error('No token received');
     } catch (err) {
       setError(err.message);
@@ -100,12 +99,12 @@ export default function LoginPage() {
       <LPStyles />
     </div>
   );
+
   return (
     <div className="lp-root">
 
-      {/* ── Left panel — brand ── */}
+      {/* ── Left panel — light (logo + branding) ── */}
       <div className="lp-left">
-        {/* Animated grid lines */}
         <div className="lp-grid" aria-hidden="true">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="lp-grid-line lp-grid-h" style={{ top: `${12.5 * i}%`, animationDelay: `${i * 0.15}s` }} />
@@ -114,24 +113,18 @@ export default function LoginPage() {
             <div key={i} className="lp-grid-line lp-grid-v" style={{ left: `${16.6 * i}%`, animationDelay: `${i * 0.2}s` }} />
           ))}
         </div>
-
-        {/* Glow blob */}
         <div className="lp-blob" aria-hidden="true" />
-
-        {/* Content */}
         <div className="lp-left-content">
-          {/* Logo mark */}
-          <div className="lp-mark" onClick={() => window.location.href = '/'}>
-            <div className="lp-mark-corner" />
-            <span className="lp-mark-p">P</span>
+
+          <div onClick={() => window.location.href = '/'} style={{ cursor: 'pointer' }}>
+            <img src={logoImg} alt="PaperCraft" style={{ height: '80px', width: 'auto' }} />
           </div>
 
           <div className="lp-brand-text">
-            <h1 className="lp-brand-name">PaperCraft</h1>
+            <h1 className="lp-brand-name">Paper Craft</h1>
             <p className="lp-brand-tagline">Pakistan's Best<br />Assessment Program</p>
           </div>
 
-          {/* Feature pills */}
           <div className="lp-pills">
             {['Smart Paper Generation', 'Board-Pattern Tests', 'Bilingual Support'].map((f, i) => (
               <div key={f} className="lp-pill" style={{ animationDelay: `${0.6 + i * 0.15}s` }}>
@@ -149,18 +142,17 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* ── Right panel — form ── */}
+      {/* ── Right panel — dark (form) ── */}
       <div className="lp-right">
         <div className="lp-form-wrap">
 
           {/* Mobile logo */}
           <div className="lp-mobile-brand">
-            <div className="lp-mark lp-mark-sm" onClick={() => window.location.href = '/'}>
-              <div className="lp-mark-corner" />
-              <span className="lp-mark-p" style={{ fontSize: '20px' }}>P</span>
+            <div onClick={() => window.location.href = '/'} style={{ cursor: 'pointer' }}>
+              <img src={logoImg} alt="PaperCraft" style={{ height: '44px', width: 'auto' }} />
             </div>
             <div>
-              <div className="lp-mobile-name">PaperCraft</div>
+              <div className="lp-mobile-name">Paper Craft</div>
               <div className="lp-mobile-sub">Pakistan's Best Assessment Program</div>
             </div>
           </div>
@@ -178,7 +170,6 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="lp-form">
-            {/* Email */}
             <div className="lp-field">
               <label className="lp-label">Email or Username</label>
               <div className="lp-input-wrap">
@@ -196,7 +187,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Password */}
             <div className="lp-field">
               <label className="lp-label">Password</label>
               <div className="lp-input-wrap">
@@ -222,7 +212,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -250,7 +239,6 @@ export default function LoginPage() {
   );
 }
 
-// ── Styles component ─────────────────────────────────────────────────────────
 function LPStyles() {
   return (
     <style>{`
@@ -258,18 +246,17 @@ function LPStyles() {
 
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-      /* ── Root ── */
       .lp-root {
         min-height: 100vh;
         display: flex;
         font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
-        background: #0a1628;
+        background: #0f1f3d;
       }
 
-      /* ══════════ LEFT PANEL ══════════ */
+      /* ══════════ LEFT PANEL — light ══════════ */
       .lp-left {
         flex: 0 0 46%;
-        background: #0f1f3d;
+        background: #f0f4f8;
         position: relative;
         overflow: hidden;
         display: flex;
@@ -277,36 +264,30 @@ function LPStyles() {
         padding: 60px 52px;
       }
 
-      /* Animated grid */
       .lp-grid { position: absolute; inset: 0; }
       .lp-grid-line {
         position: absolute;
-        background: rgba(255,255,255,0.04);
+        background: rgba(15,31,61,0.05);
         animation: lp-grid-fade 1.2s ease forwards;
         opacity: 0;
       }
       .lp-grid-h { left: 0; right: 0; height: 1px; }
       .lp-grid-v { top: 0; bottom: 0; width: 1px; }
-      @keyframes lp-grid-fade {
-        from { opacity: 0; }
-        to   { opacity: 1; }
-      }
+      @keyframes lp-grid-fade { from { opacity: 0; } to { opacity: 1; } }
 
-      /* Glow blob */
       .lp-blob {
         position: absolute;
         width: 420px; height: 420px;
-        background: radial-gradient(circle, rgba(245,166,35,0.12) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(245,166,35,0.15) 0%, transparent 70%);
         top: -80px; right: -80px;
         border-radius: 50%;
         animation: lp-pulse 4s ease-in-out infinite;
       }
       @keyframes lp-pulse {
-        0%, 100% { transform: scale(1);   opacity: 1; }
-        50%       { transform: scale(1.1); opacity: 0.7; }
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.1); opacity: 0.7; }
       }
 
-      /* Left content */
       .lp-left-content {
         position: relative;
         z-index: 1;
@@ -315,39 +296,6 @@ function LPStyles() {
         gap: 32px;
       }
 
-      /* Logo mark */
-      .lp-mark {
-        width: 64px; height: 64px;
-        background: white;
-        border-radius: 16px;
-        display: flex; align-items: center; justify-content: center;
-        position: relative; overflow: hidden;
-        cursor: pointer;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-        animation: lp-drop 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
-        flex-shrink: 0;
-      }
-      .lp-mark-sm { width: 44px; height: 44px; border-radius: 11px; animation: none; }
-      @keyframes lp-drop {
-        from { transform: translateY(-20px); opacity: 0; }
-        to   { transform: translateY(0);     opacity: 1; }
-      }
-      .lp-mark-corner {
-        position: absolute; top: 0; right: 0;
-        width: 0; height: 0; border-style: solid;
-        border-width: 0 20px 20px 0;
-        border-color: transparent #f5a623 transparent transparent;
-      }
-      .lp-mark-sm .lp-mark-corner {
-        border-width: 0 14px 14px 0;
-      }
-      .lp-mark-p {
-        color: #0f1f3d; font-size: 32px; font-weight: 700;
-        font-family: 'Playfair Display', Georgia, serif;
-        position: relative; z-index: 1;
-      }
-
-      /* Brand text */
       .lp-brand-text { animation: lp-rise 0.7s 0.2s ease both; }
       @keyframes lp-rise {
         from { transform: translateY(16px); opacity: 0; }
@@ -357,36 +305,35 @@ function LPStyles() {
         font-family: 'Playfair Display', Georgia, serif;
         font-size: clamp(32px, 4vw, 44px);
         font-weight: 800;
-        color: white;
+        color: #0f1f3d;
         line-height: 1.1;
         letter-spacing: -0.5px;
       }
       .lp-brand-tagline {
         font-size: 15px;
-        color: rgba(255,255,255,0.5);
+        color: #64748b;
         margin-top: 10px;
         line-height: 1.7;
         font-weight: 400;
       }
 
-      /* Feature pills */
       .lp-pills { display: flex; flex-direction: column; gap: 10px; }
       .lp-pill {
         display: inline-flex; align-items: center; gap: 8px;
         padding: 8px 14px;
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(255,255,255,0.1);
+        background: white;
+        border: 1px solid #e2e8f0;
         border-radius: 20px;
-        color: rgba(255,255,255,0.75);
+        color: #334155;
         font-size: 13px; font-weight: 500;
         width: fit-content;
         animation: lp-rise 0.6s ease both;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
       }
       .lp-pill i { color: #f5a623; font-size: 14px; }
 
-      /* Footer */
       .lp-left-footer {
-        font-size: 13px; color: rgba(255,255,255,0.4);
+        font-size: 13px; color: #94a3b8;
         display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
       }
       .lp-wa-inline {
@@ -395,23 +342,22 @@ function LPStyles() {
       }
       .lp-wa-inline:hover { text-decoration: underline; }
 
-      /* ══════════ RIGHT PANEL ══════════ */
+      /* ══════════ RIGHT PANEL — dark ══════════ */
       .lp-right {
         flex: 1;
-        background: white;
+        background: #0f1f3d;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 48px 40px;
         position: relative;
       }
-      /* Subtle top-right decoration */
       .lp-right::before {
         content: '';
         position: absolute;
         top: 0; right: 0;
         width: 200px; height: 200px;
-        background: radial-gradient(circle at top right, rgba(245,166,35,0.06), transparent 70%);
+        background: radial-gradient(circle at top right, rgba(245,166,35,0.08), transparent 70%);
         pointer-events: none;
       }
 
@@ -421,7 +367,6 @@ function LPStyles() {
         animation: lp-rise 0.5s 0.1s ease both;
       }
 
-      /* Mobile brand (hidden on desktop) */
       .lp-mobile-brand {
         display: none;
         align-items: center; gap: 12px;
@@ -433,69 +378,66 @@ function LPStyles() {
       }
       .lp-mobile-sub { font-size: 12px; color: #94a3b8; margin-top: 2px; }
 
-      /* Form header */
       .lp-form-header { margin-bottom: 28px; }
       .lp-form-title {
         font-family: 'Playfair Display', Georgia, serif;
-        font-size: 28px; font-weight: 800; color: #0f1f3d;
+        font-size: 28px; font-weight: 800; color: white;
         letter-spacing: -0.3px; margin-bottom: 6px;
       }
-      .lp-form-subtitle { font-size: 14px; color: #94a3b8; }
+      .lp-form-subtitle { font-size: 14px; color: rgba(255,255,255,0.5); }
 
-      /* Alert */
       .lp-alert {
         display: flex; align-items: center; gap: 10px;
         padding: 12px 16px; margin-bottom: 20px;
-        background: #ffebee; border: 1px solid #ffcdd2;
+        background: rgba(255,77,77,0.15); border: 1px solid rgba(255,77,77,0.3);
         border-left: 4px solid #f44336;
-        border-radius: 10px; color: #c62828; font-size: 13px;
+        border-radius: 10px; color: #ff8a80; font-size: 13px;
       }
       .lp-alert i { font-size: 16px; flex-shrink: 0; }
 
-      /* Form */
       .lp-form { display: flex; flex-direction: column; gap: 20px; }
       .lp-field { display: flex; flex-direction: column; gap: 7px; }
       .lp-label {
-        font-size: 12px; font-weight: 600; color: #64748b;
+        font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.6);
         text-transform: uppercase; letter-spacing: 0.5px;
       }
       .lp-input-wrap { position: relative; display: flex; align-items: center; }
       .lp-input-icon {
         position: absolute; left: 14px;
-        font-size: 16px; color: #94a3b8;
+        font-size: 16px; color: rgba(255,255,255,0.3);
         pointer-events: none;
       }
       .lp-input {
         width: 100%;
         padding: 13px 44px 13px 42px;
-        border: 1.5px solid #e2e8f0;
+        border: 1.5px solid rgba(255,255,255,0.15);
         border-radius: 12px;
         font-size: 14px; font-family: inherit;
-        color: #0f1f3d; background: #f8fafc;
+        color: white; background: rgba(255,255,255,0.08);
         outline: none;
         transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
       }
+      .lp-input::placeholder { color: rgba(255,255,255,0.3); }
       .lp-input:focus {
-        border-color: #0f1f3d;
-        background: white;
-        box-shadow: 0 0 0 4px rgba(15,31,61,0.06);
+        border-color: #f5a623;
+        background: rgba(255,255,255,0.12);
+        box-shadow: 0 0 0 4px rgba(245,166,35,0.12);
       }
       .lp-input:disabled { opacity: 0.5; cursor: not-allowed; }
       .lp-eye-btn {
         position: absolute; right: 14px;
         background: none; border: none; cursor: pointer;
-        color: #94a3b8; font-size: 16px; padding: 0;
+        color: rgba(255,255,255,0.4); font-size: 16px; padding: 0;
         display: flex; align-items: center;
         -webkit-tap-highlight-color: transparent;
       }
-      .lp-eye-btn:hover { color: #64748b; }
+      .lp-eye-btn:hover { color: rgba(255,255,255,0.7); }
 
-      /* Submit */
       .lp-submit {
         width: 100%; padding: 14px;
-        background: #0f1f3d;
-        color: white; border: none; border-radius: 12px;
-        font-size: 15px; font-weight: 600; font-family: inherit;
+        background: #f5a623;
+        color: #0f1f3d; border: none; border-radius: 12px;
+        font-size: 15px; font-weight: 700; font-family: inherit;
         cursor: pointer;
         display: flex; align-items: center; justify-content: center; gap: 8px;
         transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
@@ -503,35 +445,26 @@ function LPStyles() {
         margin-top: 4px;
         -webkit-tap-highlight-color: transparent;
       }
-      .lp-submit::after {
-        content: '';
-        position: absolute; inset: 0;
-        background: linear-gradient(135deg, rgba(245,166,35,0.15), transparent);
-        opacity: 0; transition: opacity 0.2s;
-      }
       .lp-submit:hover:not(:disabled) {
-        background: #1a2f52;
-        box-shadow: 0 8px 24px rgba(15,31,61,0.35);
+        background: #e8920a;
+        box-shadow: 0 8px 24px rgba(245,166,35,0.4);
         transform: translateY(-1px);
       }
-      .lp-submit:hover::after { opacity: 1; }
       .lp-submit:active:not(:disabled) { transform: scale(0.98); }
       .lp-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-      .lp-submit-loading { background: #1a2f52; }
+      .lp-submit-loading { background: #e8920a; }
 
-      /* Spinner */
       .lp-spinner {
         width: 16px; height: 16px;
-        border: 2px solid rgba(255,255,255,0.3);
-        border-top-color: white; border-radius: 50%;
+        border: 2px solid rgba(15,31,61,0.3);
+        border-top-color: #0f1f3d; border-radius: 50%;
         animation: lp-spin 0.7s linear infinite;
         flex-shrink: 0;
       }
       @keyframes lp-spin { to { transform: rotate(360deg); } }
 
-      /* Contact */
       .lp-contact-text {
-        font-size: 13px; color: #94a3b8;
+        font-size: 13px; color: rgba(255,255,255,0.4);
         margin-top: 24px;
         display: flex; align-items: center; justify-content: center;
         gap: 6px; flex-wrap: wrap;
@@ -542,7 +475,7 @@ function LPStyles() {
       }
       .lp-contact-link:hover { text-decoration: underline; }
 
-      /* ══════════ EXPIRED SCREEN ══════════ */
+      /* ══════════ EXPIRED / DEACTIVATED SCREEN ══════════ */
       .lp-expired-wrap {
         margin: auto;
         background: white; border-radius: 20px;
@@ -582,26 +515,35 @@ function LPStyles() {
 
       /* ══════════ RESPONSIVE ══════════ */
       @media (max-width: 768px) {
-        /* Stack panels */
         .lp-root { flex-direction: column; background: white; }
-
-        /* Hide left panel */
         .lp-left { display: none; }
-
-        /* Right takes full screen */
         .lp-right {
           flex: 1;
+          background: white;
           padding: 40px 24px 48px;
           align-items: flex-start;
           padding-top: 52px;
         }
         .lp-right::before { display: none; }
-
-        /* Show mobile brand */
         .lp-mobile-brand { display: flex; }
-
         .lp-form-wrap { max-width: 100%; }
-        .lp-form-title { font-size: 24px; }
+        .lp-form-title { font-size: 24px; color: #0f1f3d; }
+        .lp-form-subtitle { color: #94a3b8; }
+        .lp-label { color: #64748b; }
+        .lp-input {
+          border-color: #e2e8f0;
+          background: #f8fafc;
+          color: #0f1f3d;
+        }
+        .lp-input::placeholder { color: #94a3b8; }
+        .lp-input:focus { border-color: #0f1f3d; box-shadow: 0 0 0 4px rgba(15,31,61,0.06); background: white; }
+        .lp-input-icon { color: #94a3b8; }
+        .lp-eye-btn { color: #94a3b8; }
+        .lp-submit { background: #0f1f3d; color: white; }
+        .lp-submit:hover:not(:disabled) { background: #1a2f52; box-shadow: 0 8px 24px rgba(15,31,61,0.35); }
+        .lp-spinner { border-color: rgba(255,255,255,0.3); border-top-color: white; }
+        .lp-contact-text { color: #94a3b8; }
+        .lp-alert { background: #ffebee; border-color: #ffcdd2; color: #c62828; }
       }
 
       @media (max-width: 480px) {
