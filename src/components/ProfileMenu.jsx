@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API_BASE_URL from '../services/config';
-
+const WA_NUMBER = import.meta.env.VITE_WA_NUMBER || '923287600959';
 // Profile data is cached here for the lifetime of the browser session.
 // This prevents a /identity/profile API call on every step-page mount.
 const PROFILE_CACHE_KEY = '_cache_profile';
@@ -191,7 +191,7 @@ function ProfileMenu() {
         )}
         {(subStatus === 'expired' || subStatus === 'expiring_soon') && (
           <a
-            href="https://wa.me/923040427647?text=Hi, I want to renew my PaperCraft subscription."
+            href={`https://wa.me/${WA_NUMBER}?text=Hi, I want to renew my PaperCraft subscription.`}
             target="_blank" rel="noreferrer"
             style={{ ...pmItem, color: '#25d366', textDecoration: 'none', display: 'flex' }}>
             <i className="ti ti-brand-whatsapp" style={{ fontSize: '15px', color: '#25d366' }} /> Renew subscription

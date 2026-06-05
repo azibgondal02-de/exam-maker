@@ -8,7 +8,12 @@ const IMAGE_BASE = 'https://testmaker.pk';
 
 function fixHtml(html) {
   if (!html) return '';
-  return html.replace(/src="\/([^"]+)"/g, `src="${IMAGE_BASE}/$1"`);
+  let fixed = html.replace(/src="\/([^"]+)"/g, `src="${IMAGE_BASE}/$1"`);
+  
+  // Add class to Quranic spans for targeting
+  fixed = fixed.replace(/<span class="amiri-quran">/g, '<span class="amiri-quran quran-text">');
+  
+  return fixed;
 }
 
 const SCHOOL_NAME_FIELDS = ['school_name', 'schoolName', 'institute_name', 'institution_name', 'academy_name'];
@@ -939,6 +944,32 @@ export default function Step6QuestionSelect() {
           .s6-paper-wrapper { padding: 8px; }
           .s6-stats-bar { gap: 0; }
           .s6-stat { padding: 0 8px; }
+        }
+        /* Fix for Quranic text boxes in Step 6 */
+        .s6-paper-scroll .q-content span[class*="quran"],
+        .s6-paper-scroll .q-content .amiri-quran,
+        .s6-paper-scroll .q-content [class*="arabic"] {
+          font-family: 'Amiri Quran', 'Noto Sans Arabic', 'Arial', sans-serif !important;
+          font-size: 18px !important;
+          line-height: 2 !important;
+          display: inline-block !important;
+          direction: rtl !important;
+        }
+
+        /* General fix for Arabic diacritics */
+        .s6-paper-scroll .q-content {
+          font-family: 'Noto Sans Arabic', 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .s6-paper-scroll .q-content * {
+          font-family: inherit;
+        }
+
+        /* Ensure proper rendering of special Arabic characters */
+        .s6-paper-scroll .q-content {
+          font-feature-settings: "kern" 1, "liga" 1 !important;
+          font-variant-ligatures: normal !important;
+          text-rendering: optimizeLegibility !important;
         }
       `}</style>
     </div>

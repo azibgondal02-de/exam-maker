@@ -4,7 +4,7 @@ import TopBar from '../components/TopBar.jsx';
 
 import API_BASE_URL from '../services/config';
 const API = API_BASE_URL;
-const WA_NUMBER = '923040427647';
+const WA_NUMBER = import.meta.env.VITE_WA_NUMBER || '923287600959';
 
 const PROVINCES = ['Punjab', 'Sindh', 'KPK', 'Balochistan', 'Gilgit-Baltistan', 'AJK', 'Islamabad'];
 

@@ -1,6 +1,6 @@
 import React from 'react';
 
-const WA_NUMBER = '923040427647';
+const WA_NUMBER = import.meta.env.VITE_WA_NUMBER || '923287600959';
 
 export default function ExpiredPage() {
   return (

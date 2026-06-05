@@ -11,6 +11,7 @@ const IMAGE_BASE = 'https://testmaker.pk';
 
 function fixHtml(html) {
   if (!html) return '';
+  
   // Fix image paths
   let fixed = html.replace(/src="\/([^"]+)"/g, `src="${IMAGE_BASE}/$1"`);
   
@@ -29,21 +30,32 @@ function fixHtml(html) {
   // Fix any malformed % signs in table cells
   fixed = fixed.replace(/٪/g, '%');
   
+  // FIX FOR QURANIC TEXT - Add proper styling to Arabic/Quranic spans
+  fixed = fixed.replace(/<span class="amiri-quran">/gi, 
+    '<span class="amiri-quran" style="font-family: \'Amiri Quran\', \'Noto Sans Arabic\', sans-serif; font-size: 18px; line-height: 2; direction: rtl; display: inline-block;">');
+  
+  // Also target any span that might contain Arabic text
+  fixed = fixed.replace(/<span([^>]*)>/gi, function(match, attrs) {
+    if (match.includes('quran') || match.includes('arabic')) {
+      return match;
+    }
+    return `<span${attrs}>`;
+  });
+  
   return fixed;
 }
 
 function QuestionText({ statement, description }) {
   const combined = [statement, description].filter(Boolean).join(' ');
   if (!combined) return <span style={{ color: '#999' }}>—</span>;
+  
   return (
     <span
       className="s5-q-content"
       dangerouslySetInnerHTML={{ __html: fixHtml(combined) }}
-      style={{ lineHeight: '1.6', fontSize: '13px' }}
     />
   );
 }
-
 function OptionsDisplay({ options, language = 'en' }) {
   if (!options || options.length === 0) return null;
   const letters = ['A', 'B', 'C', 'D', 'E'];
@@ -929,6 +941,26 @@ export default function Step5ConfigReview() {
       </div>
 
       <style>{`
+        /* Only target content with Quranic text - SAFE */
+        .s5-q-content .amiri-quran,
+        .s5-q-content span[class*="quran"],
+        .s5-q-content [class*="arabic"] {
+          font-family: 'Amiri Quran', 'Noto Sans Arabic', 'Arial', sans-serif !important;
+          font-size: 18px !important;
+          line-height: 2 !important;
+          display: inline-block !important;
+          direction: rtl !important;
+        }
+
+        /* Fix for boxes - just better rendering for all Arabic */
+        .s5-q-content {
+          font-family: 'Noto Sans Arabic', 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .s5-q-content * {
+          font-family: inherit;
+        }
+        
         *, *::before, *::after { box-sizing: border-box; }
         .s5-q-content table {
           border-collapse: collapse !important;
