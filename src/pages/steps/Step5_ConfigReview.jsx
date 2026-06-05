@@ -11,7 +11,25 @@ const IMAGE_BASE = 'https://testmaker.pk';
 
 function fixHtml(html) {
   if (!html) return '';
-  return html.replace(/src="\/([^"]+)"/g, `src="${IMAGE_BASE}/$1"`);
+  // Fix image paths
+  let fixed = html.replace(/src="\/([^"]+)"/g, `src="${IMAGE_BASE}/$1"`);
+  
+  // Fix malformed table tags (replace % with > and fix closing tags)
+  fixed = fixed.replace(/&gt;/g, '>');
+  fixed = fixed.replace(/&lt;/g, '<');
+  fixed = fixed.replace(/&quot;/g, '"');
+  fixed = fixed.replace(/&amp;/g, '&');
+  
+  // Fix unclosed or malformed table tags
+  fixed = fixed.replace(/<table([^>]*)>/gi, '<table$1 style="border-collapse: collapse; width: 100%; margin: 10px 0;">');
+  fixed = fixed.replace(/<th/gi, '<th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2; text-align: center; font-weight: bold;"');
+  fixed = fixed.replace(/<td/gi, '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;"');
+  fixed = fixed.replace(/<tr/gi, '<tr style="border: 1px solid #ddd;"');
+  
+  // Fix any malformed % signs in table cells
+  fixed = fixed.replace(/٪/g, '%');
+  
+  return fixed;
 }
 
 function QuestionText({ statement, description }) {
@@ -912,7 +930,27 @@ export default function Step5ConfigReview() {
 
       <style>{`
         *, *::before, *::after { box-sizing: border-box; }
+        .s5-q-content table {
+          border-collapse: collapse !important;
+          width: 100% !important;
+          margin: 10px 0 !important;
+        }
 
+        .s5-q-content table td,
+        .s5-q-content table th {
+          border: 1px solid #ddd !important;
+          padding: 8px !important;
+          text-align: center !important;
+        }
+
+        .s5-q-content table th {
+          background-color: #f2f2f2 !important;
+          font-weight: bold !important;
+        }
+
+        .s5-q-content table tr {
+          border: 1px solid #ddd !important;
+        }
         .s5-page {
           min-height: 100vh;
           background: linear-gradient(135deg, #f5f7fa 0%, #f0f4f8 100%);

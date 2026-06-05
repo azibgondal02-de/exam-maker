@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -22,27 +22,32 @@ export default function Step2ClassSelect() {
   const navigate = useNavigate();
   const {
     selectedBoard, classes, selectedClass,
-    isLoading, errors, loadClasses, loadSubjects, setSelectedClass, setSelectedSubject, setSelectedTopics, clearError,
+    isLoading, errors, loadClasses,
+    setSelectedClass, setSelectedSubject, setSelectedTopics, clearError,
   } = useTestMaker();
+
+  // Use a ref to track the boardId we already loaded classes for.
+  // This prevents re-firing when selectedBoard reference changes but the id hasn't.
+  const loadedBoardRef = useRef(null);
 
   useEffect(() => {
     const boardId = selectedBoard?.board_id || localStorage.getItem('board_id');
-    if (boardId) loadClasses(boardId);
+    if (!boardId) return;
+    if (loadedBoardRef.current === String(boardId)) return; // already loaded for this board
+    loadedBoardRef.current = String(boardId);
+    loadClasses(boardId);
   }, [selectedBoard]);
 
   const handleClassSelect = (cls) => {
     setSelectedClass(cls);
-    setSelectedSubject(null);   // clear downstream selections
+    setSelectedSubject(null);
     setSelectedTopics([]);
     localStorage.setItem('class_id', cls?.class_id);
     localStorage.setItem('class_name', cls?.class_name || '');
     navigate('/test-maker/step-3');
   };
 
-  // Prefetch subjects when user hovers a class tile
-  const handleClassHover = (cls) => {
-    loadSubjects(cls.class_id, true); // silent prefetch — no spinner
-  };
+
 
   return (
     <div className="s2-page">
@@ -91,7 +96,6 @@ export default function Step2ClassSelect() {
                       <div
                         key={cls.class_id}
                         onClick={() => handleClassSelect(cls)}
-                        onMouseEnter={() => handleClassHover(cls)}
                         className={`s2-tile ${sel ? 's2-tile-sel' : ''}`}
                         style={sel
                           ? { background: `linear-gradient(135deg, ${c.border}, ${c.icon})`, borderColor: c.border, boxShadow: `0 6px 20px ${c.border}44` }

@@ -3,10 +3,11 @@ import * as apiService from '../services/api';
 
 // ── Cache helpers ─────────────────────────────────────────────────────────────
 const TTL = {
-  boards:   60 * 60 * 1000,   // 1 hour
-  classes:  60 * 60 * 1000,   // 1 hour
-  subjects: 30 * 60 * 1000,   // 30 minutes
-  topics:   15 * 60 * 1000,   // 15 minutes
+  boards:      60 * 60 * 1000,   // 1 hour
+  classes:     60 * 60 * 1000,   // 1 hour
+  subjects:    30 * 60 * 1000,   // 30 minutes
+  topics:      15 * 60 * 1000,   // 15 minutes
+  paperConfig:  5 * 60 * 1000,   // 5 minutes — config depends on selected chapters/topics
 };
 
 function cacheGet(key) {
@@ -43,7 +44,6 @@ export const useTestMaker = () => {
 
   // ── loadBoards ──────────────────────────────────────────────────────────────
   const loadBoards = async () => {
-    // Boards never change per session — safe to keep in Zustand memory
     if (store.boards.length > 0) return store.boards;
 
     const cached = cacheGet('boards');
@@ -56,7 +56,6 @@ export const useTestMaker = () => {
       const boards = data.boards || [];
       store.setBoards(boards);
       cacheSet('boards', boards, TTL.boards);
-      // Silently prefetch classes for all boards
       return boards;
     } catch (error) {
       store.setError('boards', error.message);
@@ -67,8 +66,6 @@ export const useTestMaker = () => {
   };
 
   // ── loadClasses ─────────────────────────────────────────────────────────────
-  // NOTE: NO Zustand memory check here — stale data bug when switching boards
-  // localStorage cache is sufficient and correct
   const loadClasses = async (boardId, silent = false) => {
     const cached = cacheGet(`classes_${boardId}`);
     if (cached) {
@@ -91,7 +88,6 @@ export const useTestMaker = () => {
   };
 
   // ── loadSubjects ────────────────────────────────────────────────────────────
-  // NOTE: NO Zustand memory check — stale data bug when switching classes
   const loadSubjects = async (classId, silent = false) => {
     const cached = cacheGet(`subjects_${classId}`);
     if (cached) {
@@ -114,9 +110,6 @@ export const useTestMaker = () => {
   };
 
   // ── loadTopics ──────────────────────────────────────────────────────────────
-  // NOTE: NO Zustand memory check — this was the stale Biology/Math bug
-  // When user picks Math after Biology, store.selectedSubject is still Biology
-  // due to async Zustand updates, so the old check wrongly returned Biology chapters
   const loadTopics = async (subjectId, silent = false) => {
     const cached = cacheGet(`topics_${subjectId}`);
     if (cached) {
@@ -139,17 +132,30 @@ export const useTestMaker = () => {
   };
 
   // ── loadPaperConfig ─────────────────────────────────────────────────────────
+  // Cache key includes chapter_ids + topics so switching chapters invalidates it.
+  // TTL is short (5 min) so fresh config is fetched if user changes selections.
   const loadPaperConfig = async (subjectId) => {
+    const chapterIds = localStorage.getItem('chapter_ids') || '';
+    const topics     = localStorage.getItem('topics')      || '';
+    const exQ        = localStorage.getItem('exercise_question') || '';
+    const cacheKey   = `paperConfig_${subjectId}_${chapterIds}_${topics}_${exQ}`;
+
+    const cached = cacheGet(cacheKey);
+    if (cached) {
+      store.setPaperConfig(cached);
+      return cached;
+    }
+
     try {
       store.setIsLoading(true);
       store.clearError('config');
-      const filters = {
-        chapter_ids:       localStorage.getItem('chapter_ids')       || null,
-        topics:            localStorage.getItem('topics')            || null,
-        exercise_question: localStorage.getItem('exercise_question') || null,
-      };
-      const data = await apiService.fetchPaperConfig(subjectId, filters);
+      const data = await apiService.fetchPaperConfig(subjectId, {
+        chapter_ids:       chapterIds || null,
+        topics:            topics     || null,
+        exercise_question: exQ        || null,
+      });
       store.setPaperConfig(data);
+      cacheSet(cacheKey, data, TTL.paperConfig);
       return data;
     } catch (error) {
       store.setError('config', error.message);

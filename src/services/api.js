@@ -59,19 +59,28 @@ export const fetchTopics = (subjectId) =>
 export const fetchChapters = (subjectId) =>
   dedupe(`chapters_${subjectId}`, () => API.get(`get_chapters_against_subject/${subjectId}`));
 
-export const fetchPaperConfig = (subjectId, filters = {}) =>
-  API.post(`paper-config/${subjectId}`, {
-    chapter_ids:       filters.chapter_ids       || null,
-    topics:            filters.topics            || null,
-    exercise_question: filters.exercise_question || null,
-  });
+// POST — dedupe by subjectId + filters fingerprint so rapid re-mounts
+// (React StrictMode, back-navigation) don't fire a second request
+export const fetchPaperConfig = (subjectId, filters = {}) => {
+  const key = `paper-config_${subjectId}_${filters.chapter_ids || ''}_${filters.topics || ''}_${filters.exercise_question || ''}`;
+  return dedupe(key, () =>
+    API.post(`paper-config/${subjectId}`, {
+      chapter_ids:       filters.chapter_ids       || null,
+      topics:            filters.topics            || null,
+      exercise_question: filters.exercise_question || null,
+    })
+  );
+};
 
 export const fetchQuestions = (payload) =>
   API.post('get_questions', payload);
 
-// Paper generation uses the heavy instance (60s timeout)
-export const generateQuestions = (payload) =>
-  API_HEAVY.post('generate-questions', payload);
+// Paper generation — dedupe by payload fingerprint so StrictMode double-fire
+// and accidental re-mounts don't trigger a second heavy request
+export const generateQuestions = (payload) => {
+  const key = `generate_${JSON.stringify(payload)}`;
+  return dedupe(key, () => API_HEAVY.post('generate-questions', payload));
+};
 
 // ── Admin API ─────────────────────────────────────────────────────────────────
 export const fetchUsers = () =>

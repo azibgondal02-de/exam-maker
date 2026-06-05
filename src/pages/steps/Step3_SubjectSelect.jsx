@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -23,12 +23,18 @@ export default function Step3SubjectSelect() {
   const navigate = useNavigate();
   const {
     selectedClass, subjects, selectedSubject,
-    isLoading, errors, loadSubjects, loadTopics, setSelectedSubject, setSelectedTopics, clearError,
+    isLoading, errors, loadSubjects, setSelectedSubject, setSelectedTopics, clearError,
   } = useTestMaker();
+  // Removed: loadTopics — no more hover prefetch
 
+  // Guard so loadSubjects only fires when classId actually changes
+  const loadedClassRef = useRef(null);
   useEffect(() => {
     const classId = selectedClass?.class_id || localStorage.getItem('class_id');
-    if (classId) loadSubjects(classId);
+    if (!classId) return;
+    if (loadedClassRef.current === String(classId)) return;
+    loadedClassRef.current = String(classId);
+    loadSubjects(classId);
   }, [selectedClass]);
 
   const { newSubjects, oldSubjects } = useMemo(() => ({
@@ -38,7 +44,7 @@ export default function Step3SubjectSelect() {
 
   const handleSelectSubject = (subject) => {
     setSelectedSubject(subject);
-    setSelectedTopics([]);   // clear previous subject's selected topics
+    setSelectedTopics([]);
     localStorage.setItem('subject_id', subject.subject_id);
     localStorage.setItem('subject_name', subject.subject_name || '');
     localStorage.removeItem('step5_config');
@@ -49,17 +55,11 @@ export default function Step3SubjectSelect() {
     navigate('/test-maker/step-4');
   };
 
-  // Prefetch topics when user hovers a subject button
-  const handleSubjectHover = (subject) => {
-    loadTopics(subject.subject_id, true); // silent prefetch — no spinner
-  };
-
   const SubjectBtn = ({ subject, isSelected, colorIndex }) => {
     const c = getColor(colorIndex);
     return (
       <button
         onClick={() => handleSelectSubject(subject)}
-        onMouseEnter={() => handleSubjectHover(subject)}
         className={`s3-subj-btn ${isSelected ? 's3-subj-sel' : ''}`}
         style={isSelected
           ? { background: `linear-gradient(135deg, ${c.border}, ${c.text})`, borderColor: c.border }

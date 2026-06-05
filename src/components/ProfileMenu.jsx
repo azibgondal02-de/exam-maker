@@ -2,6 +2,44 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API_BASE_URL from '../services/config';
 
+// Profile data is cached here for the lifetime of the browser session.
+// This prevents a /identity/profile API call on every step-page mount.
+const PROFILE_CACHE_KEY = '_cache_profile';
+const PROFILE_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+function getCachedProfile() {
+  try {
+    const raw = localStorage.getItem(PROFILE_CACHE_KEY);
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    if (Date.now() - ts > PROFILE_CACHE_TTL) {
+      localStorage.removeItem(PROFILE_CACHE_KEY);
+      return null;
+    }
+    return data;
+  } catch { return null; }
+}
+
+function setCachedProfile(data) {
+  try {
+    localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify({ data, ts: Date.now() }));
+  } catch { /* storage full */ }
+}
+
+// In-flight dedup: if multiple ProfileMenu instances mount at the same time
+// (e.g. React StrictMode double-render) only one HTTP request is made.
+let _profileInflight = null;
+
+function fetchProfileOnce(token) {
+  if (_profileInflight) return _profileInflight;
+  _profileInflight = fetch(`${API_BASE_URL}/identity/profile`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+    .then(r => r.json())
+    .finally(() => { _profileInflight = null; });
+  return _profileInflight;
+}
+
 function ProfileMenu() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -10,10 +48,10 @@ function ProfileMenu() {
   const ref = useRef(null);
   const hoverTimerRef = useRef(null);
 
-  const username   = localStorage.getItem('username') || 'User';
-  const [subStatus, setSubStatus]   = useState('active');
-  const [daysLeft, setDaysLeft]     = useState('');
-  const [subEnd, setSubEnd]         = useState('');
+  const username = localStorage.getItem('username') || 'User';
+  const [subStatus, setSubStatus] = useState('active');
+  const [daysLeft, setDaysLeft]   = useState('');
+  const [subEnd, setSubEnd]       = useState('');
   const [schoolName, setSchoolName] = useState(localStorage.getItem('school_name') || '');
 
   const buildInitials = () => {
@@ -30,26 +68,44 @@ function ProfileMenu() {
       setIsTouch(window.matchMedia('(pointer: coarse)').matches);
   }, []);
 
-  // Fetch profile to get school logo
+  // Fetch profile — uses cache so only ONE real HTTP request per 10 minutes,
+  // regardless of how many step pages (and therefore TopBar/ProfileMenu mounts) the user visits.
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     if (!token) return;
-    fetch(`${API_BASE_URL}/identity/profile`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(r => r.json())
+
+    const cached = getCachedProfile();
+    if (cached) {
+      // Populate state from cache instantly — no network call
+      applyProfileData(cached);
+      return;
+    }
+
+    fetchProfileOnce(token)
       .then(data => {
-        if (data.school_logo) {
-          setSchoolLogo(data.school_logo);
-          if (data.school_name) setSchoolName(data.school_name);
-          if (data.subscription_status) setSubStatus(data.subscription_status);
-          if (data.subscription_end) setSubEnd(data.subscription_end);
-          setDaysLeft(String(data.subscription_days_left ?? ''));
-          localStorage.setItem('school_logo', data.school_logo);
+        if (data && !data.detail) {
+          setCachedProfile(data);
+          applyProfileData(data);
         }
       })
       .catch(() => {});
   }, []);
+
+  const applyProfileData = (data) => {
+    if (data.school_logo) {
+      setSchoolLogo(data.school_logo);
+      localStorage.setItem('school_logo', data.school_logo);
+    }
+    if (data.school_name) setSchoolName(data.school_name);
+    if (data.subscription_status) setSubStatus(data.subscription_status);
+    if (data.subscription_end)    setSubEnd(data.subscription_end);
+    setDaysLeft(String(data.subscription_days_left ?? ''));
+    // Also store subscription info in localStorage so other components can read it
+    localStorage.setItem('subscription_status',   data.subscription_status   || '');
+    localStorage.setItem('subscription_end',       data.subscription_end       || '');
+    localStorage.setItem('subscription_days_left', String(data.subscription_days_left ?? ''));
+    if (data.school_name) localStorage.setItem('school_name', data.school_name);
+  };
 
   // Click-outside to close
   useEffect(() => {
@@ -68,18 +124,16 @@ function ProfileMenu() {
                  : subStatus === 'expiring_soon' ? `${daysLeft} days remaining`
                  : 'Subscription active';
 
-  const handleMouseEnter = () => { 
-    if (isTouch || window.innerWidth <= 768) return; 
-    clearTimeout(hoverTimerRef.current); 
-    setOpen(true); 
+  const handleMouseEnter = () => {
+    if (isTouch || window.innerWidth <= 768) return;
+    clearTimeout(hoverTimerRef.current);
+    setOpen(true);
   };
-  
-  const handleMouseLeave = () => { 
-    if (isTouch || window.innerWidth <= 768) return; 
-    hoverTimerRef.current = setTimeout(() => setOpen(false), 200); 
+  const handleMouseLeave = () => {
+    if (isTouch || window.innerWidth <= 768) return;
+    hoverTimerRef.current = setTimeout(() => setOpen(false), 200);
   };
-  const handleClick      = () => setOpen(p => !p);
-
+  const handleClick = () => setOpen(p => !p);
   const goTo = (path) => { setOpen(false); navigate(path); };
 
   const avatarContent = schoolLogo ? (
@@ -92,7 +146,6 @@ function ProfileMenu() {
 
   const menuContent = (
     <>
-      {/* User header */}
       <div style={{ padding: '14px 16px', borderBottom: '1px solid #f0f4f8' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{
@@ -114,7 +167,6 @@ function ProfileMenu() {
         </div>
       </div>
 
-      {/* Subscription row */}
       <div style={{ padding: '10px 16px', borderBottom: '1px solid #f0f4f8', background: subBg }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -125,7 +177,6 @@ function ProfileMenu() {
         </div>
       </div>
 
-      {/* Menu items */}
       <div style={{ padding: '6px' }}>
         <button onClick={() => goTo('/test-maker/profile')} style={pmItem}>
           <i className="ti ti-user" style={{ fontSize: '15px', color: '#64748b' }} /> My Profile
@@ -166,13 +217,11 @@ function ProfileMenu() {
           box-shadow: 0 3px 14px rgba(33,150,243,0.35);
           cursor: pointer; flex-shrink: 0;
           transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease;
-          position: relative;
-          font-family: 'Segoe UI', system-ui, sans-serif;
+          position: relative; font-family: 'Segoe UI', system-ui, sans-serif;
           padding: 0; outline: none; overflow: hidden;
         }
         .pm-avatar:hover  { transform: scale(1.06); box-shadow: 0 5px 20px rgba(33,150,243,0.5); }
         .pm-avatar:active { transform: scale(0.96); }
-        .pm-avatar:focus-visible { box-shadow: 0 0 0 3px rgba(33,150,243,0.35), 0 3px 14px rgba(33,150,243,0.35); }
         .pm-status-dot {
           position: absolute; bottom: -1px; right: -1px;
           width: 11px; height: 11px; border-radius: 50%; border: 2px solid white;
@@ -190,8 +239,7 @@ function ProfileMenu() {
           to   { opacity: 1; transform: translateY(0); }
         }
         .pm-close-btn {
-          display: none;
-          background: #f1f5f9; border: none; border-radius: 50%;
+          display: none; background: #f1f5f9; border: none; border-radius: 50%;
           width: 28px; height: 28px; cursor: pointer;
           font-size: 13px; color: #64748b; flex-shrink: 0;
           align-items: center; justify-content: center;

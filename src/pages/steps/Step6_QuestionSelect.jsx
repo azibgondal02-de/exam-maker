@@ -637,6 +637,9 @@ export default function Step6QuestionSelect() {
   const [drawerOpen,  setDrawerOpen]  = useState(false);
 
   const mediumAutoSetRef = useRef(false);
+  // Tracks the config hash last used to generate a paper.
+  // If Step 6 re-mounts but config hasn't changed, we skip the API call.
+  const lastConfigHashRef = useRef(null);
   const subjectName = selectedSubject?.subject_name || localStorage.getItem('subject_name') || 'Subject';
   const className   = selectedClass?.class_name     || localStorage.getItem('class_name')   || '';
 
@@ -649,10 +652,16 @@ export default function Step6QuestionSelect() {
     return () => document.removeEventListener('mousedown', handler);
   }, [drawerOpen]);
 
-  const generatePaperFromConfig = async () => {
+  const generatePaperFromConfig = async (force = false) => {
     try {
       setLoading(true); setError('');
       const step5Raw    = localStorage.getItem('step5_config');
+      // Skip re-generation if config hasn't changed since last run (unless forced).
+      // This prevents the API call firing again when the user navigates back to Step 6.
+      const configHash = step5Raw ? step5Raw.length + '_' + (step5Raw.slice(0, 64)) : null;
+      if (!force && configHash && lastConfigHashRef.current === configHash && paper) {
+        setLoading(false); return;
+      }
       const chaptersRaw = localStorage.getItem('step5_chapters');
       if (!step5Raw) { setError('No paper configuration found. Please go back to Step 5.'); setLoading(false); return; }
       const step5Config = JSON.parse(step5Raw);
@@ -661,6 +670,7 @@ export default function Step6QuestionSelect() {
       if (payload.sections.length === 0) { setError('No questions configured. Please go back and add question counts.'); setLoading(false); return; }
       const result = await generatePaper(payload);
       setPaper(result);
+      lastConfigHashRef.current = configHash;
       if (!mediumAutoSetRef.current && result?.sections) {
         let enCount = 0, urCount = 0, total = 0;
         const walk = (qs) => { (qs || []).forEach(q => { total++; if (hasContent([q.statement_en, q.description_en].filter(Boolean).join(' '))) enCount++; if (hasContent([q.statement_ur, q.description_ur].filter(Boolean).join(' '))) urCount++; if (q.paragraph_questions) walk(q.paragraph_questions); }); };
@@ -743,7 +753,7 @@ export default function Step6QuestionSelect() {
             <img src={logoImg} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
           <button onClick={() => navigate('/test-maker/step-5')} className="s6-tb-btn" style={{ background: '#374151' }}>Back</button>
-          <button onClick={generatePaperFromConfig} className="s6-tb-btn" style={{ background: '#7c3aed' }}>Regenerate</button>
+          <button onClick={() => generatePaperFromConfig(true)} className="s6-tb-btn" style={{ background: '#7c3aed' }}>Regenerate</button>
           <button onClick={() => window.print()} className="s6-tb-btn" style={{ background: '#2563eb' }}>Print</button>
           <button onClick={() => openPDF(fontFamily, urduFont, fontSize)} className="s6-tb-btn" style={{ background: '#dc2626' }}>PDF</button>
           <button onClick={() => setEditMode(v => !v)} className="s6-tb-btn" style={{ background: editMode ? '#16a34a' : '#4b5563' }}>Edit {editMode ? 'ON' : 'OFF'}</button>
@@ -763,8 +773,7 @@ export default function Step6QuestionSelect() {
       {/* Mobile top bar */}
       <div className="s6-mobile-topbar">
         <div onClick={() => navigate('/test-maker/step-1')} className="s6-logo-btn s6-logo-sm">
-          <div className="s6-logo-corner" />
-          <span className="s6-logo-p" style={{ fontSize: '13px' }}>P</span>
+          <img src={logoImg} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
         <span className="s6-mobile-title">Paper Preview</span>
         <ProfileMenu />
@@ -809,7 +818,7 @@ export default function Step6QuestionSelect() {
         <button onClick={() => navigate('/test-maker/step-5')} className="s6-mob-btn s6-mob-back">
           <i className="ti ti-arrow-left" style={{ fontSize: '16px' }} />
         </button>
-        <button onClick={generatePaperFromConfig} className="s6-mob-btn" style={{ background: '#7c3aed' }}>
+        <button onClick={() => generatePaperFromConfig(true)} className="s6-mob-btn" style={{ background: '#7c3aed' }}>
           <i className="ti ti-refresh" style={{ fontSize: '16px' }} />
           <span>New</span>
         </button>

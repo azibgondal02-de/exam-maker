@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTestMaker } from '../../hooks/useTestMaker';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -27,7 +27,11 @@ function useWindowWidth() {
 
 export default function Step1BoardSelect() {
   const navigate = useNavigate();
-  const { boards, selectedBoard, isLoading, errors, loadBoards, loadClasses, setSelectedBoard, setSelectedClass, setSelectedSubject, setSelectedTopics, clearError } = useTestMaker();
+  const {
+    boards, selectedBoard, isLoading, errors,
+    loadBoards, setSelectedBoard, setSelectedClass, setSelectedSubject, setSelectedTopics, clearError,
+  } = useTestMaker();
+  // Removed: loadClasses — no more hover prefetch
   const [hoveredId, setHoveredId] = useState(null);
   const width = useWindowWidth();
 
@@ -39,18 +43,16 @@ export default function Step1BoardSelect() {
 
   const handleBoardSelect = (board) => {
     setSelectedBoard(board);
-    setSelectedClass(null);     // clear all downstream selections
+    setSelectedClass(null);
     setSelectedSubject(null);
     setSelectedTopics([]);
     localStorage.setItem('board_id', board?.board_id);
     navigate('/test-maker/step-2');
   };
 
-  // Prefetch classes when user hovers a board card (before they click)
-  const handleBoardHover = (board) => {
-    setHoveredId(board.board_id);
-    loadClasses(board.board_id, true); // silent prefetch — no spinner
-  };
+  // Hover only updates visual state — no API calls on hover
+  const handleBoardHover = (board) => setHoveredId(board.board_id);
+  const handleBoardLeave = ()       => setHoveredId(null);
 
   const gridCols = isMobile ? 1 : isTablet ? 2 : isMedium ? 3 : 3;
 
@@ -104,7 +106,7 @@ export default function Step1BoardSelect() {
                       key={board.board_id}
                       onClick={() => handleBoardSelect(board)}
                       onMouseEnter={() => handleBoardHover(board)}
-                      onMouseLeave={() => setHoveredId(null)}
+                      onMouseLeave={handleBoardLeave}
                       style={{
                         ...s.card,
                         border: sel ? `2.5px solid ${t.primary}` : hovered ? `2px solid ${t.primary}55` : '2px solid #e2e8f0',
