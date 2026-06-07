@@ -498,20 +498,21 @@ const cardStyle     = { background: 'white', borderRadius: '10px', overflow: 'vi
 const headerStyle   = { background: '#2563eb', color: 'white', padding: '12px 20px', fontWeight: '600', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '10px 10px 0 0' };
 
 // ── Section key classification ───────────────────────────────────────────────
-const BOARD_SECTION_KEYS = [
-  'short_questions_according_to_board_pattern',
-  'long_question_according_to_board_pattern',
-];
-const WITHOUT_BOARD_KEYS = [
-  'objective',
-  'subjective_without_board_pattern',
-];
+const isObjective  = (key) => key === 'objective';
+const isWithout    = (key) => key.includes('without');
+const isBoardOnly  = (key) => key.includes('board') && !key.includes('without');
+const isNeutral    = (key) => !isObjective(key) && !isWithout(key) && !isBoardOnly(key);
 
 function getCleanTitle(section) {
-  if (section.key === 'subjective_without_board_pattern') return 'Subjective';
-  if (section.key === 'short_questions_according_to_board_pattern') return 'Short Questions';
-  if (section.key === 'long_question_according_to_board_pattern') return 'Long Questions';
-  return section.title;
+  return section.key
+    .replace(/_according_to_board_pattern/g, '')
+    .replace(/_with_board_pattern/g, '')
+    .replace(/_without_board_pattern/g, '')
+    .replace(/_according_to_board/g, '')
+    .replace(/_board_pattern/g, '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase())
+    .trim();
 }
 
 export default function Step5ConfigReview() {
@@ -688,17 +689,18 @@ export default function Step5ConfigReview() {
   const allSections  = apiData?.sections || [];
   const totalDataset = apiData?.total_dataset_questions;
 
-  // Detect if board pattern sections exist
-  const hasBoardSections = allSections.some(s => BOARD_SECTION_KEYS.includes(s.key));
+  const hasWithoutSections = allSections.some(s => isWithout(s.key));
+  const hasBoardOnlySections = allSections.some(s => isBoardOnly(s.key));
+  const hasBoardSections = hasWithoutSections && hasBoardOnlySections;
 
-  // Filter sections based on toggle
-  const visibleSections = allSections.filter(s => {
-    if (boardMode === 'without') {
-      return WITHOUT_BOARD_KEYS.includes(s.key) || s.key === 'objective';
-    } else {
-      return !WITHOUT_BOARD_KEYS.includes(s.key) || s.key === 'objective';
-    }
-  });
+  const visibleSections = !hasBoardSections
+    ? allSections  // no toggle — show everything as-is
+    : allSections.filter(s => {
+        if (isObjective(s.key) || isNeutral(s.key)) return true;  // always show
+        if (boardMode === 'without') return isWithout(s.key);
+        if (boardMode === 'with')    return isBoardOnly(s.key);
+        return true;
+      });
 
   return (
     <div className="s5-page">
