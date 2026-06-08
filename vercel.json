@@ -1,9 +1,5 @@
 {
   "rewrites": [
-    { "source": "/login", "destination": "/index.html" },
-    { "source": "/test-maker(.*)", "destination": "/index.html" },
-    { "source": "/admin", "destination": "/index.html" },
-    { "source": "/expired", "destination": "/index.html" },
-    { "source": "/", "destination": "/landing.html" }
+    { "source": "/((?!assets|favicon\\.svg|icons\\.svg|app\\.html).*)", "destination": "/app.html" }
   ]
 }
