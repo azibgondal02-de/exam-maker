@@ -14,6 +14,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     allowedHosts: true,
-    open: '/app.html',
+    fs: { strict: false }
   },
+  appType: 'mpa',
 })

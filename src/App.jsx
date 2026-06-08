@@ -1,12 +1,13 @@
 import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
+import AppFooter from './components/AppFooter';
 
-// ── Eagerly loaded (tiny, needed immediately) ─────────────────────────────────
+// ── Eagerly loaded ────────────────────────────────────────────────────────────
 import LoginPage from './pages/LoginPage';
 import TestMaker from './pages/TestMaker';
 
-// ── Lazy loaded (each step is its own JS chunk) ───────────────────────────────
+// ── Lazy loaded ───────────────────────────────────────────────────────────────
 const Step1 = lazy(() => import('./pages/steps/Step1_BoardSelect'));
 const Step2 = lazy(() => import('./pages/steps/Step2_ClassSelect'));
 const Step3 = lazy(() => import('./pages/steps/Step3_SubjectSelect'));
@@ -18,7 +19,7 @@ const ChangePasswordPage = lazy(() => import('./pages/ChangePasswordPage'));
 const AdminPage          = lazy(() => import('./pages/AdminPage'));
 const ExpiredPage        = lazy(() => import('./pages/ExpiredPage'));
 
-// ── Minimal full-screen fallback while a chunk loads ─────────────────────────
+// ── Page loader ───────────────────────────────────────────────────────────────
 function PageLoader() {
   return (
     <div style={{
@@ -39,7 +40,7 @@ function PageLoader() {
   );
 }
 
-// ── Auth guard ────────────────────────────────────────────────────────────────
+// ── Auth guard — wraps content + footer ──────────────────────────────────────
 function Private({ children }) {
   const token = localStorage.getItem('auth_token');
   const userType = localStorage.getItem('user_type');
@@ -51,7 +52,12 @@ function Private({ children }) {
     return <Navigate to="/expired" replace />;
   }
 
-  return children;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <div style={{ flex: 1 }}>{children}</div>
+      <AppFooter />
+    </div>
+  );
 }
 
 function App() {
@@ -69,13 +75,14 @@ function App() {
     <Router>
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Public */}
+          {/* Public — no footer */}
           <Route
             path="/login"
             element={isAuthenticated ? <Navigate to="/test-maker" replace /> : <LoginPage />}
           />
+          <Route path="/expired" element={<ExpiredPage />} />
 
-          {/* Protected */}
+          {/* Protected — footer included via Private wrapper */}
           <Route path="/test-maker"                 element={<Private><TestMaker /></Private>} />
           <Route path="/test-maker/step-1"          element={<Private><Step1 /></Private>} />
           <Route path="/test-maker/step-2"          element={<Private><Step2 /></Private>} />
@@ -85,22 +92,15 @@ function App() {
           <Route path="/test-maker/step-6"          element={<Private><Step6 /></Private>} />
           <Route path="/test-maker/profile"         element={<Private><ProfilePage /></Private>} />
           <Route path="/test-maker/change-password" element={<Private><ChangePasswordPage /></Private>} />
-          <Route path="/expired" element={<ExpiredPage />} />
           <Route path="/admin" element={
             <Private>
               {localStorage.getItem('user_type') === 'admin' ? <AdminPage /> : <Navigate to="/test-maker" replace />}
             </Private>
           } />
 
-          {/* Default — also handles /app.html entry point for local dev */}
-          <Route
-            path="/"
-            element={<Navigate to={isAuthenticated ? '/test-maker' : '/login'} replace />}
-          />
-          <Route
-            path="/app.html"
-            element={<Navigate to={isAuthenticated ? '/test-maker' : '/login'} replace />}
-          />
+          {/* Default */}
+          <Route path="/"         element={<Navigate to={isAuthenticated ? '/test-maker' : '/login'} replace />} />
+          <Route path="/app.html" element={<Navigate to={isAuthenticated ? '/test-maker' : '/login'} replace />} />
         </Routes>
       </Suspense>
     </Router>

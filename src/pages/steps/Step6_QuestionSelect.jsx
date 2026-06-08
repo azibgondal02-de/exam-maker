@@ -576,7 +576,7 @@ function openPDF(fontFamily, urduFont, fontSize) {
   document.body.appendChild(iframe);
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   doc.open();
-  doc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Paper</title>
+  doc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title></title>
     <link href="${fontsHref}" rel="stylesheet">
     <style>
       *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
