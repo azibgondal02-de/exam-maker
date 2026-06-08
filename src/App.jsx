@@ -7,18 +7,16 @@ import LoginPage from './pages/LoginPage';
 import TestMaker from './pages/TestMaker';
 
 // ── Lazy loaded (each step is its own JS chunk) ───────────────────────────────
-// Vite will split these into separate files — Step 1's bundle won't include
-// Step 6's heavy paper rendering code at all.
 const Step1 = lazy(() => import('./pages/steps/Step1_BoardSelect'));
 const Step2 = lazy(() => import('./pages/steps/Step2_ClassSelect'));
 const Step3 = lazy(() => import('./pages/steps/Step3_SubjectSelect'));
 const Step4 = lazy(() => import('./pages/steps/Step4_TopicSelect'));
 const Step5 = lazy(() => import('./pages/steps/Step5_ConfigReview'));
 const Step6 = lazy(() => import('./pages/steps/Step6_QuestionSelect'));
-const ProfilePage      = lazy(() => import('./pages/ProfilePage'));
+const ProfilePage        = lazy(() => import('./pages/ProfilePage'));
 const ChangePasswordPage = lazy(() => import('./pages/ChangePasswordPage'));
-const AdminPage = lazy(() => import('./pages/AdminPage'));
-const ExpiredPage = lazy(() => import('./pages/ExpiredPage'));
+const AdminPage          = lazy(() => import('./pages/AdminPage'));
+const ExpiredPage        = lazy(() => import('./pages/ExpiredPage'));
 
 // ── Minimal full-screen fallback while a chunk loads ─────────────────────────
 function PageLoader() {
@@ -49,7 +47,6 @@ function Private({ children }) {
 
   if (!token) return <Navigate to="/login" replace />;
 
-  // Block expired school_admin from accessing the app
   if (userType === 'school_admin' && subStatus === 'expired') {
     return <Navigate to="/expired" replace />;
   }
@@ -61,7 +58,6 @@ function App() {
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    // Auth check is synchronous (localStorage) — just flag that we've checked
     setAuthChecked(true);
   }, []);
 
@@ -79,15 +75,15 @@ function App() {
             element={isAuthenticated ? <Navigate to="/test-maker" replace /> : <LoginPage />}
           />
 
-          {/* Protected — each lazy component loads only when its route is visited */}
-          <Route path="/test-maker"                element={<Private><TestMaker /></Private>} />
-          <Route path="/test-maker/step-1"         element={<Private><Step1 /></Private>} />
-          <Route path="/test-maker/step-2"         element={<Private><Step2 /></Private>} />
-          <Route path="/test-maker/step-3"         element={<Private><Step3 /></Private>} />
-          <Route path="/test-maker/step-4"         element={<Private><Step4 /></Private>} />
-          <Route path="/test-maker/step-5"         element={<Private><Step5 /></Private>} />
-          <Route path="/test-maker/step-6"         element={<Private><Step6 /></Private>} />
-          <Route path="/test-maker/profile"        element={<Private><ProfilePage /></Private>} />
+          {/* Protected */}
+          <Route path="/test-maker"                 element={<Private><TestMaker /></Private>} />
+          <Route path="/test-maker/step-1"          element={<Private><Step1 /></Private>} />
+          <Route path="/test-maker/step-2"          element={<Private><Step2 /></Private>} />
+          <Route path="/test-maker/step-3"          element={<Private><Step3 /></Private>} />
+          <Route path="/test-maker/step-4"          element={<Private><Step4 /></Private>} />
+          <Route path="/test-maker/step-5"          element={<Private><Step5 /></Private>} />
+          <Route path="/test-maker/step-6"          element={<Private><Step6 /></Private>} />
+          <Route path="/test-maker/profile"         element={<Private><ProfilePage /></Private>} />
           <Route path="/test-maker/change-password" element={<Private><ChangePasswordPage /></Private>} />
           <Route path="/expired" element={<ExpiredPage />} />
           <Route path="/admin" element={
@@ -96,9 +92,13 @@ function App() {
             </Private>
           } />
 
-          {/* Default */}
+          {/* Default — also handles /app.html entry point for local dev */}
           <Route
             path="/"
+            element={<Navigate to={isAuthenticated ? '/test-maker' : '/login'} replace />}
+          />
+          <Route
+            path="/app.html"
             element={<Navigate to={isAuthenticated ? '/test-maker' : '/login'} replace />}
           />
         </Routes>
