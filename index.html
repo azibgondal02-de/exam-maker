@@ -1,39 +1,452 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PaperCraft — Smart Paper Generation</title>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PaperCraft — Smart Board Paper Generation Pakistan</title>
+  <meta name="description" content="PaperCraft — Pakistan's smartest exam paper generator. Create board-ready bilingual question papers for Punjab, KPK and Federal boards in minutes.">
+  <meta name="keywords" content="exam paper generator Pakistan, Punjab board papers, question paper maker, bilingual exam papers, KPK board, Federal board">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://papercraft.pk">
+  <meta property="og:title" content="PaperCraft — Smart Board Paper Generation">
+  <meta property="og:description" content="Create board-ready bilingual exam papers for Punjab, KPK and Federal boards in minutes.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://papercraft.pk">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif}
+:root{
+--n:#0f1f3d;--n2:#1a2f5e;--n3:#243d7a;
+--g:#f5a623;--g2:#e8920a;
+--w:#ffffff;--w2:#f8f9fc;--w3:#f0f2f8;
+--t1:#0f1f3d;--t2:#4a5568;--t3:#718096;
+--bdr:1px solid #e8edf5;
+}
+:root.dark{
+--n:#2a4494;--n2:#3352b8;--n3:#4466cc;
+--w:#111827;--w2:#1f2937;--w3:#374151;
+--t1:#f9fafb;--t2:#d1d5db;--t3:#9ca3af;--bdr:1px solid #374151;
+}
+@media(prefers-color-scheme:dark){:root:not(.light){
+--n:#2a4494;--n2:#3352b8;--n3:#4466cc;
+--w:#111827;--w2:#1f2937;--w3:#374151;
+--t1:#f9fafb;--t2:#d1d5db;--t3:#9ca3af;--bdr:1px solid #374151;
+}}
+body{background:var(--w);color:var(--t1)}
+nav{display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:64px;border-bottom:var(--bdr);background:var(--w);position:sticky;top:0;z-index:100;gap:12px}
+.logo-wrap{display:flex;align-items:center;gap:10px;text-decoration:none}
+.lm{width:32px;height:32px;background:var(--n);border-radius:7px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.lm::after{content:'';position:absolute;top:0;right:0;border-style:solid;border-width:0 10px 10px 0;border-color:transparent var(--g) transparent transparent}
+.lm-p{color:white;font-size:16px;font-weight:700;font-family:Georgia,serif;z-index:1;position:relative}
+.logo-name{font-size:16px;font-weight:600;color:var(--t1)}.logo-name b{color:var(--g2)}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links a{font-size:13px;color:var(--t2);text-decoration:none}
+.nav-links a:hover{color:var(--t1)}
+.nav-ctas{display:flex;align-items:center;gap:8px}
+.btn-ghost{padding:7px 16px;border:var(--bdr);border-radius:8px;background:transparent;color:var(--t1);font-size:13px;cursor:pointer;font-family:inherit}
+.btn-ghost:hover{background:var(--w2)}
+.btn-navy{padding:8px 18px;border:none;border-radius:8px;background:var(--n);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-navy:hover{background:var(--n2)}
+.btn-wa{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;background:#128c7e;color:white;font-size:13px;font-weight:500;cursor:pointer;border:none;text-decoration:none}
+.theme-toggle{width:34px;height:34px;border:var(--bdr);border-radius:8px;background:transparent;color:var(--t1);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.theme-toggle:hover{background:var(--w2)}
+.hero{padding:100px 40px 80px;text-align:center;background:var(--w)}
+.hero-pill{display:inline-flex;align-items:center;gap:7px;padding:5px 14px 5px 6px;background:var(--w3);border-radius:20px;border:var(--bdr);margin-bottom:28px}
+.hero-pill-dot{width:20px;height:20px;background:var(--n);border-radius:12px;display:flex;align-items:center;justify-content:center}
+.hero-pill-dot i{color:var(--g);font-size:11px}
+.hero-pill span{font-size:12px;color:var(--t2);font-weight:500}
+h1{font-size:58px;font-weight:700;line-height:1.1;color:var(--t1);letter-spacing:-1.5px;margin-bottom:20px;max-width:800px;margin-left:auto;margin-right:auto}
+h1 .accent{color:var(--g2)}
+.hero-sub{font-size:18px;color:var(--t2);line-height:1.7;max-width:520px;margin:0 auto 40px}
+.hero-actions{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:40px}
+.btn-contact{display:inline-flex;align-items:center;gap:8px;padding:15px 32px;background:#128c7e;color:white;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;text-decoration:none;font-family:inherit}
+.btn-contact:hover{background:#0e7a6d}
+.btn-demo{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:transparent;color:var(--t1);border:var(--bdr);border-radius:10px;font-size:15px;cursor:pointer;text-decoration:none;font-family:inherit}
+.btn-demo:hover{background:var(--w2)}
+.hero-trust{display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap}
+.trust-item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--t3)}
+.trust-item i{font-size:15px;color:var(--g2)}
+.screen-mock{max-width:900px;margin:56px auto 0;border-radius:16px;border:var(--bdr);overflow:hidden;background:var(--w2)}
+.mock-bar{background:var(--w);border-bottom:var(--bdr);padding:12px 16px;display:flex;align-items:center;gap:8px}
+.mock-dots{display:flex;gap:5px}
+.mock-dot{width:10px;height:10px;border-radius:50%}
+.mock-url{flex:1;background:var(--w3);border-radius:5px;padding:4px 12px;font-size:11px;color:var(--t3);text-align:center}
+.mock-body{display:grid;grid-template-columns:200px 1fr;min-height:260px}
+.mock-sidebar{background:var(--n);padding:16px}
+.mock-step{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;margin-bottom:4px}
+.mock-step.active{background:rgba(255,255,255,0.12)}
+.mock-step-num{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:10px;color:rgba(255,255,255,0.5);font-weight:600;flex-shrink:0}
+.mock-step.active .mock-step-num{background:var(--g);color:var(--n);font-weight:700}
+.mock-step-label{font-size:11px;color:rgba(255,255,255,0.5)}
+.mock-step.active .mock-step-label{color:white;font-weight:500}
+.mock-content{padding:24px}
+.mock-heading{font-size:16px;font-weight:600;color:var(--t1);margin-bottom:4px}
+.mock-sub{font-size:12px;color:var(--t3);margin-bottom:18px}
+.mock-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mock-card{background:var(--w);border:var(--bdr);border-radius:8px;padding:14px;text-align:center}
+.mock-card.sel{border-color:var(--n);background:rgba(26,47,94,0.05)}
+.mock-card i{font-size:22px;color:var(--t3);margin-bottom:6px;display:block}
+.mock-card.sel i{color:var(--n)}
+.mock-card span{font-size:11px;color:var(--t2);font-weight:500}
+.strip{background:var(--n);padding:32px 40px}
+.strip-inner{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:0;text-align:center}
+.strip-item{padding:8px 16px}
+.strip-item:not(:last-child){border-right:1px solid rgba(255,255,255,0.1)}
+.strip-num{font-size:32px;font-weight:700;color:var(--g);margin-bottom:4px}
+.strip-label{font-size:12px;color:rgba(255,255,255,0.6)}
+.features-sec{padding:80px 40px;max-width:1060px;margin:0 auto}
+.section-eyebrow{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:12px}
+.section-title{font-size:38px;font-weight:700;color:var(--t1);letter-spacing:-0.5px;margin-bottom:14px;line-height:1.15}
+.section-body{font-size:16px;color:var(--t2);line-height:1.7;max-width:480px;margin-bottom:48px}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;border:var(--bdr);border-radius:14px;overflow:hidden;background:#e8edf5}
+.feat-item{background:var(--w);padding:28px 24px}
+.feat-item:hover{background:var(--w2)}
+.feat-icon-wrap{width:40px;height:40px;border-radius:10px;background:var(--n);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.feat-icon-wrap i{color:var(--g);font-size:20px}
+.feat-name{font-size:15px;font-weight:600;color:var(--t1);margin-bottom:8px}
+.feat-desc{font-size:13px;color:var(--t2);line-height:1.65}
+.pricing-sec{padding:80px 40px;background:var(--w2);border-top:var(--bdr);border-bottom:var(--bdr)}
+.pricing-inner{max-width:920px;margin:0 auto}
+.pricing-header{text-align:center;margin-bottom:48px}
+.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.plan{background:var(--w);border:var(--bdr);border-radius:14px;padding:28px;position:relative}
+.plan.pop{border-color:var(--n);border-width:2px}
+.plan-tag{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--n);color:white;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 14px;border-radius:20px;white-space:nowrap}
+.plan-dur{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);margin-bottom:12px}
+.plan-amount{font-size:40px;font-weight:700;color:var(--t1);letter-spacing:-1px;margin-bottom:2px}
+.plan-amount small{font-size:18px;font-weight:400;color:var(--t3)}
+.plan-save{font-size:12px;color:var(--g2);font-weight:600;margin-bottom:24px}
+.plan-hr{border:none;border-top:var(--bdr);margin-bottom:20px}
+.plan-feats{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+.plan-feats li{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--t2)}
+.plan-feats i{color:#0f9e6b;font-size:15px;flex-shrink:0}
+.btn-plan-fill{width:100%;padding:12px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;background:var(--n);color:white;border:none;font-family:inherit}
+.btn-plan-fill:hover{background:var(--n2)}
+.btn-plan-str{width:100%;padding:12px;border-radius:9px;font-size:14px;font-weight:500;cursor:pointer;background:transparent;color:var(--t1);border:var(--bdr);font-family:inherit}
+.btn-plan-str:hover{background:var(--w2)}
+.steps-sec{padding:80px 40px;max-width:1060px;margin:0 auto}
+.steps-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin-top:48px}
+.step-item{padding:0 12px;text-align:center;position:relative}
+.step-item:not(:last-child)::after{content:'';position:absolute;top:22px;right:-8px;width:16px;height:1px;background:var(--t3);opacity:0.3}
+.step-circle{width:44px;height:44px;border-radius:50%;background:var(--n);color:white;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.step-name{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:5px}
+.step-hint{font-size:11px;color:var(--t3);line-height:1.5}
+.testimonials-sec{background:var(--w2);border-top:var(--bdr);padding:80px 40px}
+.testi-inner{max-width:1060px;margin:0 auto}
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px}
+.tcard{background:var(--w);border:var(--bdr);border-radius:14px;padding:24px}
+.tcard-stars{color:var(--g2);font-size:14px;margin-bottom:14px;letter-spacing:2px}
+.tcard-q{font-size:13px;color:var(--t2);line-height:1.75;margin-bottom:18px;font-style:italic}
+.tcard-author{display:flex;align-items:center;gap:10px}
+.tcard-av{width:34px;height:34px;border-radius:50%;background:var(--n);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--g)}
+.tcard-name{font-size:13px;font-weight:600;color:var(--t1)}
+.tcard-role{font-size:11px;color:var(--t3)}
+.cta-sec{padding:100px 40px;text-align:center;background:var(--n);position:relative;overflow:hidden}
+.cta-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0.04}
+.cta-bg i{font-size:400px;color:white}
+.cta-inner{position:relative;z-index:1}
+.cta-sec h2{font-size:48px;font-weight:700;color:white;letter-spacing:-1px;margin-bottom:16px;line-height:1.1}
+.cta-sec h2 span{color:var(--g)}
+.cta-sec p{font-size:17px;color:rgba(255,255,255,0.65);margin-bottom:40px}
+.cta-btns{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+.btn-cta-w{display:inline-flex;align-items:center;gap:8px;padding:15px 32px;background:white;color:var(--n);border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;font-family:inherit}
+.btn-cta-w:hover{background:var(--w2)}
+.btn-cta-demo{display:inline-flex;align-items:center;gap:8px;padding:14px 24px;background:transparent;color:white;border:1px solid rgba(255,255,255,0.3);border-radius:10px;font-size:15px;cursor:pointer;text-decoration:none;font-family:inherit}
+.btn-cta-demo:hover{background:rgba(255,255,255,0.08)}
+footer{background:var(--n2);padding:48px 40px 24px}
+.footer-top{display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+.footer-brand p{font-size:13px;color:rgba(255,255,255,0.45);margin-top:10px;line-height:1.7;max-width:220px}
+.footer-col h4{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:16px}
+.footer-col a{display:block;font-size:13px;color:rgba(255,255,255,0.55);text-decoration:none;margin-bottom:10px}
+.footer-col a:hover{color:white}
+.footer-bottom{border-top:1px solid rgba(255,255,255,0.08);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.footer-bottom p{font-size:12px;color:rgba(255,255,255,0.3)}
+@media(max-width:768px){
+  nav{padding:0 16px}
+  .nav-links{display:none}
+  .mock-sidebar{display:none}
+  .mock-body{grid-template-columns:1fr}
+  .strip-inner{grid-template-columns:repeat(2,1fr)}
+  .strip-item:nth-child(2){border-right:none}
+  .strip-item:nth-child(3){border-top:1px solid rgba(255,255,255,.1);border-right:1px solid rgba(255,255,255,.1)}
+  .strip-item:nth-child(4){border-top:1px solid rgba(255,255,255,.1)}
+  .feat-grid{grid-template-columns:1fr;background:transparent;border:none;gap:12px}
+  .feat-item{border:var(--bdr);border-radius:12px}
+  .plan-grid{grid-template-columns:1fr;max-width:400px;margin:0 auto}
+  .steps-grid{grid-template-columns:repeat(3,1fr);gap:16px}
+  .step-item:not(:last-child)::after{display:none}
+  .testi-grid{grid-template-columns:1fr}
+  .footer-top{grid-template-columns:1fr 1fr}
+  h1{font-size:36px;letter-spacing:-0.5px}
+}
+@media(max-width:480px){
+  nav{padding:0 16px;height:56px}
+  .hero{padding:56px 16px 40px}
+  .features-sec,.steps-sec,.testimonials-sec,.pricing-sec{padding:52px 16px}
+  .strip{padding:20px 16px}
+  .steps-grid{grid-template-columns:repeat(2,1fr)}
+  .footer-top{grid-template-columns:1fr}
+  footer{padding:36px 16px 18px}
+  .btn-contact,.btn-demo{width:100%;justify-content:center}
+  .cta-sec{padding:60px 16px}
+  .cta-sec h2{font-size:30px}
+}
+  </style>
+</head>
+<body>
 
-    <!-- ── Preconnect to external origins (saves DNS + TLS time) ── -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://testmaker.pk" />
+<nav>
+  <a class="logo-wrap" href="#">
+    <div class="lm"><span class="lm-p">P</span></div>
+    <span class="logo-name">Paper<b>Craft</b></span>
+  </a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+    <a href="#pricing">Pricing</a>
+  </div>
+  <div class="nav-ctas">
+    <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle dark mode">
+      <i class="ti ti-moon" id="themeIcon"></i>
+    </button>
+    <a href="https://wa.me/923040427647" target="_blank" class="btn-wa">
+      <i class="ti ti-brand-whatsapp" style="font-size:15px"></i> WhatsApp
+    </a>
+    <button class="btn-ghost" onclick="window.location.href='/login'">Sign in</button>
+  </div>
+</nav>
 
-    <!-- ── Urdu + Arabic + Quranic fonts loaded once here ── -->
-    <!-- display=swap means text shows immediately in fallback font,       -->
-    <!-- then swaps in when the custom font is ready — no invisible text   -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600;700&family=Gulzar&family=Amiri:wght@400;700&family=Amiri+Quran&family=Scheherazade+New:wght@400;700&family=Playfair+Display:wght@700;800&family=DM+Sans:wght@400;500;600&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+<section class="hero">
+  <div class="hero-pill">
+    <div class="hero-pill-dot"><i class="ti ti-sparkles"></i></div>
+    <span>Pakistan's most advanced paper generation platform</span>
+  </div>
+  <h1>Stop wasting hours.<br>Build <span class="accent">board-ready</span> exam<br>papers in minutes.</h1>
+  <p class="hero-sub">PaperCraft generates bilingual, curriculum-aligned question papers for every Punjab, KPK, and Federal board subject — exactly the way the board wants them.</p>
+  <div class="hero-actions">
+    <a href="https://wa.me/923040427647?text=Hi, I want to learn more about PaperCraft." target="_blank" class="btn-contact">
+      <i class="ti ti-brand-whatsapp"></i> Contact us
+    </a>
+    <a href="PASTE_LOOM_LINK_HERE" target="_blank" class="btn-demo">
+      <i class="ti ti-player-play"></i> Watch demo
+    </a>
+  </div>
+  <div class="hero-trust">
+    <span class="trust-item"><i class="ti ti-check"></i> No credit card needed</span>
+    <span class="trust-item"><i class="ti ti-check"></i> Urdu + English output</span>
+    <span class="trust-item"><i class="ti ti-check"></i> All boards covered</span>
+    <span class="trust-item"><i class="ti ti-check"></i> PDF & print ready</span>
+  </div>
+  <div class="screen-mock">
+    <div class="mock-bar">
+      <div class="mock-dots">
+        <div class="mock-dot" style="background:#ff5f57"></div>
+        <div class="mock-dot" style="background:#febc2e"></div>
+        <div class="mock-dot" style="background:#28c840"></div>
+      </div>
+      <div class="mock-url">papercraft.pk/test-maker/step-1</div>
+    </div>
+    <div class="mock-body">
+      <div class="mock-sidebar">
+        <div style="color:rgba(255,255,255,0.3);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;padding:0 10px">Progress</div>
+        <div class="mock-step active"><div class="mock-step-num">1</div><span class="mock-step-label">Board</span></div>
+        <div class="mock-step"><div class="mock-step-num">2</div><span class="mock-step-label">Class</span></div>
+        <div class="mock-step"><div class="mock-step-num">3</div><span class="mock-step-label">Subject</span></div>
+        <div class="mock-step"><div class="mock-step-num">4</div><span class="mock-step-label">Topics</span></div>
+        <div class="mock-step"><div class="mock-step-num">5</div><span class="mock-step-label">Configure</span></div>
+        <div class="mock-step"><div class="mock-step-num">6</div><span class="mock-step-label">Preview</span></div>
+      </div>
+      <div class="mock-content">
+        <div class="mock-heading">Select your board</div>
+        <div class="mock-sub">Choose the educational board to get started</div>
+        <div class="mock-grid">
+          <div class="mock-card sel"><i class="ti ti-school"></i><span>Punjab Syllabus</span></div>
+          <div class="mock-card"><i class="ti ti-building"></i><span>KPK Board</span></div>
+          <div class="mock-card"><i class="ti ti-landmark"></i><span>Federal Board</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-    <!-- ── Tabler Icons (if loaded from CDN — move here if currently in JS) ── -->
-    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" /> -->
+<div class="strip">
+  <div class="strip-inner">
+    <div class="strip-item"><div class="strip-num">50K+</div><div class="strip-label">Questions in database</div></div>
+    <div class="strip-item"><div class="strip-num">6 steps</div><div class="strip-label">Board to printed paper</div></div>
+    <div class="strip-item"><div class="strip-num">2 langs</div><div class="strip-label">Urdu + English bilingual</div></div>
+    <div class="strip-item"><div class="strip-num">All boards</div><div class="strip-label">Punjab · KPK · Federal</div></div>
+  </div>
+</div>
 
-    <!-- ── Performance hints ── -->
-    <!-- Tell the browser this is an app, not a document — skip some parsing -->
-    <meta name="description" content="PaperCraft — Pakistan's best assessment and paper generation platform" />
+<section class="features-sec" id="features">
+  <div class="section-eyebrow">Features</div>
+  <h2 class="section-title">Built for Pakistani<br>educators, not generic use</h2>
+  <p class="section-body">Every feature is designed around how Pakistani teachers actually work — board patterns, bilingual needs, and curriculum structure.</p>
+  <div class="feat-grid">
+    <div class="feat-item"><div class="feat-icon-wrap"><i class="ti ti-layout-board"></i></div><div class="feat-name">Exact board pattern</div><div class="feat-desc">Auto-generates Objective, Short Q, and Long Q sections in the correct structure for each board — Punjab, KPK, Federal.</div></div>
+    <div class="feat-item"><div class="feat-icon-wrap"><i class="ti ti-language"></i></div><div class="feat-name">Bilingual in one click</div><div class="feat-desc">Every question prints in both Urdu and English simultaneously. Switch to either language alone with one toggle.</div></div>
+    <div class="feat-item"><div class="feat-icon-wrap"><i class="ti ti-sliders"></i></div><div class="feat-name">Full control</div><div class="feat-desc">Choose chapters, topics, question types, marks per section, choice options, and question count — all configurable.</div></div>
+    <div class="feat-item"><div class="feat-icon-wrap"><i class="ti ti-hand-click"></i></div><div class="feat-name">Hand-pick questions</div><div class="feat-desc">Browse the full question bank and select exactly which questions go into the paper. Search by keyword or topic.</div></div>
+    <div class="feat-item"><div class="feat-icon-wrap"><i class="ti ti-edit"></i></div><div class="feat-name">Inline editing</div><div class="feat-desc">Edit any section heading, student info fields, question text, or marks directly in the paper preview.</div></div>
+    <div class="feat-item"><div class="feat-icon-wrap"><i class="ti ti-file-type-pdf"></i></div><div class="feat-name">PDF & print ready</div><div class="feat-desc">Export to PDF or print directly. Choose fonts including Urdu Nastaliq, font sizes, and layout before output.</div></div>
+  </div>
+</section>
 
-    <!-- Prevent tap delay on mobile (300ms removed) -->
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="theme-color" content="#0f1f3d" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<section class="pricing-sec" id="pricing">
+  <div class="pricing-inner">
+    <div class="pricing-header">
+      <div class="section-eyebrow" style="text-align:center">Pricing</div>
+      <h2 class="section-title" style="text-align:center;font-size:36px">Simple. Honest. Affordable.</h2>
+      <p style="font-size:15px;color:var(--t2);text-align:center">All plans include every feature. No hidden limits, no per-paper charges.</p>
+    </div>
+    <div class="plan-grid">
+      <div class="plan">
+        <div class="plan-dur">3 months</div>
+        <div class="plan-amount"><small>₨</small>4,000</div>
+        <div class="plan-save">₨1,333 / month</div>
+        <hr class="plan-hr">
+        <ul class="plan-feats">
+          <li><i class="ti ti-check"></i> All boards & curricula</li>
+          <li><i class="ti ti-check"></i> Unlimited papers</li>
+          <li><i class="ti ti-check"></i> Bilingual output</li>
+          <li><i class="ti ti-check"></i> PDF export</li>
+        </ul>
+        <button class="btn-plan-str" onclick="window.location.href='https://wa.me/923040427647?text=I want the 3 month plan'">Get started</button>
+      </div>
+      <div class="plan pop">
+        <div class="plan-tag">Most popular</div>
+        <div class="plan-dur">6 months</div>
+        <div class="plan-amount"><small>₨</small>5,500</div>
+        <div class="plan-save">Save ₨2,500 vs quarterly</div>
+        <hr class="plan-hr">
+        <ul class="plan-feats">
+          <li><i class="ti ti-check"></i> Everything in 3 months</li>
+          <li><i class="ti ti-check"></i> Answer key toggle</li>
+          <li><i class="ti ti-check"></i> Custom Urdu & EN fonts</li>
+          <li><i class="ti ti-check"></i> Priority WhatsApp support</li>
+        </ul>
+        <button class="btn-plan-fill" onclick="window.location.href='https://wa.me/923040427647?text=I want the 6 month plan'">Get started</button>
+      </div>
+      <div class="plan">
+        <div class="plan-dur">Annual</div>
+        <div class="plan-amount"><small>₨</small>10,000</div>
+        <div class="plan-save">Save ₨6,000 vs quarterly</div>
+        <hr class="plan-hr">
+        <ul class="plan-feats">
+          <li><i class="ti ti-check"></i> Everything in 6 months</li>
+          <li><i class="ti ti-check"></i> Early access to features</li>
+          <li><i class="ti ti-check"></i> Dedicated support</li>
+          <li><i class="ti ti-check"></i> Best value overall</li>
+        </ul>
+        <button class="btn-plan-str" onclick="window.location.href='https://wa.me/923040427647?text=I want the annual plan'">Get started</button>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:12px;color:var(--t3);margin-top:20px">All prices in Pakistani Rupees · Subscribe via WhatsApp · Instant activation</p>
+  </div>
+</section>
+
+<section class="steps-sec" id="how">
+  <div class="section-eyebrow">How it works</div>
+  <h2 class="section-title">From zero to printed paper<br>in under 10 minutes</h2>
+  <div class="steps-grid">
+    <div class="step-item"><div class="step-circle">1</div><div class="step-name">Select board</div><div class="step-hint">Punjab, KPK or Federal</div></div>
+    <div class="step-item"><div class="step-circle">2</div><div class="step-name">Pick class</div><div class="step-hint">9th to 12th grade</div></div>
+    <div class="step-item"><div class="step-circle">3</div><div class="step-name">Choose subject</div><div class="step-hint">New or old curriculum</div></div>
+    <div class="step-item"><div class="step-circle">4</div><div class="step-name">Select topics</div><div class="step-hint">By chapter and type</div></div>
+    <div class="step-item"><div class="step-circle">5</div><div class="step-name">Configure paper</div><div class="step-hint">Marks, sections, choices</div></div>
+    <div class="step-item"><div class="step-circle">6</div><div class="step-name">PDF or print</div><div class="step-hint">Bilingual, any font</div></div>
+  </div>
+</section>
+
+<section class="testimonials-sec">
+  <div class="testi-inner">
+    <div class="section-eyebrow">Testimonials</div>
+    <h2 class="section-title">Trusted by teachers<br>across Pakistan</h2>
+    <div class="testi-grid">
+      <div class="tcard">
+        <div class="tcard-stars">★★★★★</div>
+        <p class="tcard-q">"I used to spend three hours on a single paper. PaperCraft does it in under ten minutes. The bilingual output is exactly what my 9th grade students need."</p>
+        <div class="tcard-author"><div class="tcard-av">MT</div><div><div class="tcard-name">Muhammad Tariq</div><div class="tcard-role">Biology teacher · Lahore</div></div></div>
+      </div>
+      <div class="tcard">
+        <div class="tcard-stars">★★★★★</div>
+        <p class="tcard-q">"Finally something that actually understands Punjab board pattern. The chapter selection and marks configuration is exactly what we needed at our academy."</p>
+        <div class="tcard-author"><div class="tcard-av">SR</div><div><div class="tcard-name">Sana Riaz</div><div class="tcard-role">Mathematics teacher · Faisalabad</div></div></div>
+      </div>
+      <div class="tcard">
+        <div class="tcard-stars">★★★★★</div>
+        <p class="tcard-q">"I created a complete physics paper with long questions and MCQs during my lunch break on my phone. I still can't believe how smooth it is on mobile."</p>
+        <div class="tcard-author"><div class="tcard-av">AM</div><div><div class="tcard-name">Asif Mehmood</div><div class="tcard-role">Physics teacher · Rawalpindi</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-sec">
+  <div class="cta-bg"><i class="ti ti-file-text"></i></div>
+  <div class="cta-inner">
+    <h2>Ready to reclaim<br>your <span>time</span>?</h2>
+    <p>Join thousands of Pakistani teachers who've already switched to PaperCraft.</p>
+    <div class="cta-btns">
+      <a href="https://wa.me/923040427647?text=Hi, I want to learn more about PaperCraft." target="_blank" class="btn-cta-w">
+        <i class="ti ti-brand-whatsapp" style="font-size:17px"></i> Contact us on WhatsApp
+      </a>
+      <a href="PASTE_LOOM_LINK_HERE" target="_blank" class="btn-cta-demo">
+        <i class="ti ti-player-play" style="font-size:16px"></i> Watch demo
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <div class="lm"><span class="lm-p">P</span></div>
+        <span style="color:white;font-size:15px;font-weight:600">Paper<b style="color:var(--g)">Craft</b></span>
+      </div>
+      <p>Smart board paper generation for Pakistani educators.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Product</h4>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#how">How it works</a>
+      <a href="/login">Sign in</a>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <a href="https://wa.me/923040427647" target="_blank">WhatsApp support</a>
+      <a href="#">Privacy policy</a>
+      <a href="#">Terms of service</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 PaperCraft · Smart Board Paper Generation</p>
+    <p>Made with care for Pakistani educators</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  const root = document.documentElement;
+  const icon = document.getElementById('themeIcon');
+  const saved = localStorage.getItem('theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme:dark)').matches;
+  let isDark = saved ? saved === 'dark' : prefersDark;
+  function apply(){
+    if(isDark){root.classList.add('dark');root.classList.remove('light');}
+    else{root.classList.add('light');root.classList.remove('dark');}
+    if(icon) icon.className = isDark ? 'ti ti-sun' : 'ti ti-moon';
+  }
+  apply();
+  window.toggleTheme = function(){
+    isDark = !isDark;
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    apply();
+  };
+})();
+</script>
+
+</body>
 </html>
