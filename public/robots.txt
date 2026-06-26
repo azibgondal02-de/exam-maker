@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Disallow: /login
+Disallow: /test-maker
+Disallow: /admin
+Disallow: /expired
+Disallow: /api/
+
+Sitemap: https://papercraft.pk/sitemap.xml
