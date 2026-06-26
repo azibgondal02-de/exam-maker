@@ -9,12 +9,10 @@ export default defineConfig({
       configureServer(server) {
         server.middlewares.use((req, res, next) => {
           const url = req.url;
-          // Landing page at root
           if (url === '/' || url === '/index.html') {
             req.url = '/index.html';
             return next();
           }
-          // Static assets — pass through
           if (
             url.startsWith('/src/') ||
             url.startsWith('/assets/') ||
@@ -24,7 +22,6 @@ export default defineConfig({
           ) {
             return next();
           }
-          // Everything else (/login, /test-maker, etc.) → app.html
           req.url = '/app.html';
           return next();
         });
@@ -36,8 +33,12 @@ export default defineConfig({
       input: {
         main: 'index.html',
         app: 'app.html'
-      }
-    }
+      },
+    },
+    chunkSizeWarningLimit: 1000,
+    minify: 'oxc',   // ← changed from 'esbuild' to 'oxc' (built into Vite 8)
+    target: 'es2015',
+    cssCodeSplit: true,
   },
   appType: 'mpa',
   server: {
