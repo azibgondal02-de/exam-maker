@@ -1,7 +1,11 @@
 {
+  "routes": [
+    { "src": "/", "dest": "/index.html" },
+    { "src": "/index.html", "dest": "/index.html" }
+  ],
   "rewrites": [
     {
-      "source": "/((?!assets|favicon\\.svg|icons\\.svg|app\\.html).*)",
+      "source": "/((?!assets|favicon\\.svg|icons\\.svg|sitemap\\.xml|robots\\.txt|og-image\\.jpg|app\\.html).*)",
       "destination": "/app.html"
     }
   ],
