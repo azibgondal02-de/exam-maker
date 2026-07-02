@@ -14,7 +14,6 @@
   <meta property="og:description" content="Create board-ready bilingual exam papers for Punjab, KPK and Federal boards in minutes.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://papercraft.pk">
-  
   <meta property="og:image" content="https://papercraft.pk/og-image.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -25,42 +24,39 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <!-- Load fonts non-blocking with display=swap -->
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&display=swap">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&display=swap" media="print" onload="this.media='all'">
   <noscript>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&display=swap">
   </noscript>
 
-  <!-- Load Tabler Icons non-blocking -->
-  <link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/tabler-icons.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/tabler-icons.min.css" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.17.0/dist/tabler-icons.min.css"
+        onerror="this.onerror=null;this.href='https://unpkg.com/@tabler/icons-webfont@3.17.0/dist/tabler-icons.min.css'">
   <noscript>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/tabler-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.17.0/dist/tabler-icons.min.css">
   </noscript>
-  
+
   <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "PaperCraft",
+    "url": "https://papercraft.pk",
+    "description": "Pakistan's smartest exam paper generator. Create board-ready bilingual question papers for Punjab, KPK and Federal boards.",
+    "applicationCategory": "EducationApplication",
+    "operatingSystem": "Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "4000",
+      "priceCurrency": "PKR"
+    },
+    "publisher": {
+      "@type": "Organization",
       "name": "PaperCraft",
-      "url": "https://papercraft.pk",
-      "description": "Pakistan's smartest exam paper generator. Create board-ready bilingual question papers for Punjab, KPK and Federal boards.",
-      "applicationCategory": "EducationApplication",
-      "operatingSystem": "Web",
-      "offers": {
-        "@type": "Offer",
-        "price": "4000",
-        "priceCurrency": "PKR"
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "PaperCraft",
-        "url": "https://papercraft.pk"
-      }
+      "url": "https://papercraft.pk"
     }
-    </script>
+  }
+  </script>
 
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
@@ -95,15 +91,19 @@
     html{scroll-behavior:smooth}
     body{background:var(--w);color:var(--t1);line-height:1.6;overflow-x:hidden}
 
+    /* FIX: keep anchored sections from hiding under the sticky nav */
+    [id]{scroll-margin-top:80px}
+
     /* ── NAV ── */
     nav{
       display:flex;align-items:center;justify-content:space-between;
       padding:0 48px;height:68px;
-      border-bottom:var(--bdr);background:var(--w);
+      border-bottom:var(--bdr);
       position:sticky;top:0;z-index:100;
       backdrop-filter:blur(12px);
       background:rgba(255,255,255,0.92);
       transition:background 0.3s;
+      flex-wrap:wrap;
     }
     :root.dark nav{background:rgba(15,23,42,0.92)}
     .logo-wrap{display:flex;align-items:center;gap:8px;text-decoration:none;cursor:pointer}
@@ -120,6 +120,8 @@
     .btn-wa:hover{background:#0e7a6d}
     .theme-toggle{width:36px;height:36px;border:var(--bdr);border-radius:8px;background:transparent;color:var(--t1);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
     .theme-toggle:hover{background:var(--w2)}
+    .hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:8px}
+    .hamburger span{width:22px;height:2px;background:var(--t1);border-radius:2px;display:block;transition:all 0.3s}
 
     /* ── HERO ── */
     .hero{
@@ -203,11 +205,7 @@
     .mock-heading{font-size:15px;font-weight:700;color:var(--t1);margin-bottom:4px}
     .mock-sub{font-size:11px;color:var(--t3);margin-bottom:16px}
     .mock-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:9px}
-    .mock-card{
-      background:var(--w);border:1.5px solid #e8edf5;
-      border-radius:10px;padding:14px 10px;text-align:center;
-      transition:all 0.2s;
-    }
+    .mock-card{background:var(--w);border:1.5px solid #e8edf5;border-radius:10px;padding:14px 10px;text-align:center;transition:all 0.2s}
     .mock-card.sel-blue{border-top:3px solid #2563eb;border-color:#2563eb}
     .mock-card.sel-green{border-top:3px solid #10b981;border-color:#10b981}
     .mock-card.sel-purple{border-top:3px solid #8b5cf6;border-color:#8b5cf6}
@@ -247,64 +245,32 @@
     .video-sec{padding:88px 48px;background:var(--w2);border-top:var(--bdr);border-bottom:var(--bdr)}
     .video-inner{max-width:900px;margin:0 auto}
     .video-header{text-align:center;margin-bottom:48px}
-    .video-wrapper{
-      position:relative;padding-bottom:56.25%;height:0;
-      border-radius:16px;overflow:hidden;
-      box-shadow:var(--shadow-lg);
-      border:var(--bdr);
-    }
+    .video-wrapper{position:relative;padding-bottom:56.25%;height:0;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-lg);border:var(--bdr)}
     .video-wrapper iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
 
     /* ── PRICING ── */
     .pricing-sec{padding:88px 48px;background:var(--w)}
     .pricing-inner{max-width:1000px;margin:0 auto}
     .pricing-header{text-align:center;margin-bottom:20px}
-    .billing-toggle{
-      display:inline-flex;align-items:center;gap:0;
-      background:var(--w3);border:var(--bdr);border-radius:10px;
-      padding:4px;margin:0 auto 48px;
-    }
-    .billing-btn{
-      padding:7px 20px;border-radius:7px;font-size:13px;font-weight:500;
-      border:none;background:transparent;color:var(--t2);cursor:pointer;
-      font-family:inherit;transition:all 0.2s;white-space:nowrap;
-    }
+    .billing-toggle{display:inline-flex;align-items:center;gap:0;background:var(--w3);border:var(--bdr);border-radius:10px;padding:4px;margin:0 auto 48px}
+    .billing-btn{padding:7px 20px;border-radius:7px;font-size:13px;font-weight:500;border:none;background:transparent;color:var(--t2);cursor:pointer;font-family:inherit;transition:all 0.2s;white-space:nowrap}
     .billing-btn.active{background:var(--w);color:var(--t1);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
     .billing-toggle-wrap{text-align:center;margin-bottom:48px}
     .plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:start}
-    .plan{
-      background:var(--w);border:1.5px solid #e2e8f0;border-radius:18px;
-      padding:28px 24px 24px;position:relative;
-      transition:box-shadow 0.2s,transform 0.2s,border-color 0.2s;
-    }
+    .plan{background:var(--w);border:1.5px solid #e2e8f0;border-radius:18px;padding:28px 24px 24px;position:relative;transition:box-shadow 0.2s,transform 0.2s,border-color 0.2s}
     .plan:hover{box-shadow:0 8px 32px rgba(15,31,61,0.1);transform:translateY(-2px)}
-    .plan.pop{
-      border-color:var(--n);border-width:2px;
-      box-shadow:0 12px 40px rgba(15,31,61,0.14);
-      transform:translateY(-6px);
-    }
+    .plan.pop{border-color:var(--n);border-width:2px;box-shadow:0 12px 40px rgba(15,31,61,0.14);transform:translateY(-6px)}
     .plan.pop:hover{transform:translateY(-8px)}
     .plan-badge-row{min-height:28px;margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-    .plan-tag{
-      display:inline-flex;align-items:center;gap:4px;
-      background:var(--n);color:white;
-      font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
-      padding:4px 12px;border-radius:20px;
-    }
+    .plan-tag{display:inline-flex;align-items:center;gap:4px;background:var(--n);color:white;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 12px;border-radius:20px}
     .plan-tag i{font-size:11px}
-    .discount-badge{
-      display:inline-flex;align-items:center;
-      background:#dcfce7;color:#15803d;
-      font-size:10px;font-weight:700;letter-spacing:0.5px;
-      padding:4px 10px;border-radius:20px;border:1px solid #bbf7d0;
-    }
+    .discount-badge{display:inline-flex;align-items:center;background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;letter-spacing:0.5px;padding:4px 10px;border-radius:20px;border:1px solid #bbf7d0}
     .plan-dur{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t3);margin-bottom:8px}
     .plan-amount{font-family:'DM Serif Display',serif;font-size:46px;font-weight:400;color:var(--t1);letter-spacing:-2px;line-height:1;margin-bottom:4px}
     .plan-amount small{font-family:'DM Sans',sans-serif;font-size:18px;font-weight:400;color:var(--t3);letter-spacing:0}
     .plan-per-day{font-size:12px;color:var(--g2);font-weight:600;margin-bottom:6px}
     .plan-save{font-size:12px;color:var(--t3);margin-bottom:20px}
     .plan-hr{border:none;border-top:var(--bdr);margin-bottom:18px}
-    /* duration visual bar */
     .plan-duration-bar{margin-bottom:20px}
     .plan-duration-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
     .plan-duration-label span{font-size:11px;color:var(--t2);font-weight:500}
@@ -312,31 +278,16 @@
     .plan-bar-track{height:5px;background:var(--w3);border-radius:99px;overflow:hidden}
     .plan-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--n),var(--n3))}
     .plan.pop .plan-bar-fill{background:linear-gradient(90deg,#f5a623,#e8920a)}
-    /* days breakdown */
-    .plan-days-row{
-      display:flex;align-items:center;justify-content:space-between;
-      background:var(--w3);border-radius:10px;padding:10px 14px;
-      margin-bottom:20px;
-    }
+    .plan-days-row{display:flex;align-items:center;justify-content:space-between;background:var(--w3);border-radius:10px;padding:10px 14px;margin-bottom:20px}
     .plan-days-item{text-align:center}
     .plan-days-num{font-size:16px;font-weight:700;color:var(--t1);font-family:'DM Serif Display',serif}
     .plan-days-lbl{font-size:9.5px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;font-weight:600}
     .plan-days-divider{width:1px;height:28px;background:var(--bdr)}
-    .btn-plan-fill{
-      width:100%;padding:13px;border-radius:10px;
-      font-size:14px;font-weight:600;cursor:pointer;
-      background:var(--n);color:white;border:none;
-      font-family:inherit;transition:all 0.2s;
-    }
+    .btn-plan-fill{width:100%;padding:13px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;background:var(--n);color:white;border:none;font-family:inherit;transition:all 0.2s}
     .btn-plan-fill:hover{background:var(--n2);transform:translateY(-1px)}
     .plan.pop .btn-plan-fill{background:linear-gradient(135deg,#f5a623,#e8920a);color:var(--n)}
     .plan.pop .btn-plan-fill:hover{opacity:0.9}
-    .btn-plan-str{
-      width:100%;padding:12px;border-radius:10px;
-      font-size:14px;font-weight:500;cursor:pointer;
-      background:transparent;color:var(--t1);
-      border:var(--bdr);font-family:inherit;transition:all 0.2s;
-    }
+    .btn-plan-str{width:100%;padding:12px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;background:transparent;color:var(--t1);border:var(--bdr);font-family:inherit;transition:all 0.2s}
     .btn-plan-str:hover{background:var(--w2)}
     .plan-note{text-align:center;font-size:11.5px;color:var(--t3);margin-top:28px;line-height:1.6}
     .plan-note i{color:var(--g2);margin-right:4px}
@@ -347,12 +298,7 @@
     .steps-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin-top:52px}
     .step-item{padding:0 12px;text-align:center;position:relative}
     .step-item:not(:last-child)::after{content:'';position:absolute;top:22px;right:-8px;width:16px;height:1px;background:var(--t3);opacity:0.3}
-    .step-circle{
-      width:44px;height:44px;border-radius:50%;
-      background:var(--n);color:white;font-size:14px;font-weight:700;
-      display:flex;align-items:center;justify-content:center;
-      margin:0 auto 14px;font-family:'DM Serif Display',serif;
-    }
+    .step-circle{width:44px;height:44px;border-radius:50%;background:var(--n);color:white;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-family:'DM Serif Display',serif}
     .step-name{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:5px}
     .step-hint{font-size:11px;color:var(--t3);line-height:1.5}
 
@@ -370,10 +316,7 @@
     .tcard-role{font-size:11px;color:var(--t3)}
 
     /* ── CTA ── */
-    .cta-sec{
-      padding:100px 48px;text-align:center;
-      background:var(--n);position:relative;overflow:hidden;
-    }
+    .cta-sec{padding:100px 48px;text-align:center;background:var(--n);position:relative;overflow:hidden}
     .cta-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0.04}
     .cta-bg i{font-size:420px;color:white}
     .cta-inner{position:relative;z-index:1}
@@ -397,21 +340,64 @@
     .footer-col a:hover{color:white}
     .footer-col a i{font-size:15px;opacity:0.7}
     .footer-social{display:flex;gap:10px;margin-top:6px}
-    .social-btn{
-      width:36px;height:36px;border-radius:8px;
-      background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);
-      display:flex;align-items:center;justify-content:center;
-      color:rgba(255,255,255,0.6);text-decoration:none;font-size:16px;
-      transition:all 0.2s;
-    }
+    .social-btn{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.6);text-decoration:none;font-size:16px;transition:all 0.2s}
     .social-btn:hover{background:rgba(255,255,255,0.16);color:white}
     .footer-bottom{border-top:1px solid rgba(255,255,255,0.08);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
     .footer-bottom p{font-size:12px;color:rgba(255,255,255,0.3)}
 
     /* ── RESPONSIVE ── */
     @media(max-width:900px){
-      nav{padding:0 20px}
-      .nav-links{display:none}
+      nav{padding:0 20px;height:60px;min-height:60px;flex-wrap:nowrap;z-index:10000}
+      .hamburger{display:flex !important}
+      .nav-ctas .btn-wa,
+      .nav-ctas .btn-ghost{display:none}
+      body.menu-open{overflow:hidden}
+      nav .nav-links{
+        display:none !important;
+        position:fixed;
+        top:64px;
+        right:12px;
+        left:12px;
+        max-height:calc(100vh - 80px);
+        flex-direction:column;
+        align-items:stretch;
+        gap:0;
+        background:#ffffff !important;
+        border:1px solid #d7dde8 !important;
+        border-radius:14px;
+        padding:6px;
+        margin:0;
+        z-index:100000;
+        overflow-y:auto;
+        -webkit-overflow-scrolling:touch;
+        box-shadow:0 20px 50px rgba(0,0,0,0.45);
+      }
+      nav .nav-links.open{display:flex !important}
+      nav .nav-links a{
+        padding:15px 16px !important;
+        font-size:16px !important;
+        font-weight:500 !important;
+        width:100%;
+        border:none !important;
+        border-radius:10px;
+        color:#0f1f3d !important;
+        background:transparent !important;
+        text-align:left;
+      }
+      nav .nav-links a:hover{background:#f0f2f8 !important}
+      /* FIX: scrim must sit BELOW the nav (nav has z-index:10000).
+         Before it was 99999, which covered the menu and swallowed all taps. */
+      .menu-scrim{
+        display:none;
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,0.45);
+        z-index:9999;
+      }
+      .menu-scrim.open{display:block}
+      .hamburger.active span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+      .hamburger.active span:nth-child(2){opacity:0}
+      .hamburger.active span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
       .hero{padding:72px 20px 56px}
       h1{font-size:40px;letter-spacing:-1px}
       .screen-mock .mock-sidebar{display:none}
@@ -437,7 +423,8 @@
       .footer-top{grid-template-columns:1fr 1fr}
     }
     @media(max-width:480px){
-      nav{height:58px}
+      nav{height:56px;min-height:56px}
+      nav .nav-links{top:60px}
       .hero{padding:56px 16px 40px}
       h1{font-size:32px}
       .section{padding:48px 16px}
@@ -452,7 +439,7 @@
 
 <!-- NAV -->
 <nav>
-  <a class="logo-wrap" href="#" onclick="window.location.href='/'">
+  <a class="logo-wrap" href="/">
     <img src="/src/assets/logo.png" alt="PaperCraft" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
     <div style="display:none;width:32px;height:32px;background:var(--n);border-radius:7px;align-items:center;justify-content:center;position:relative;overflow:hidden">
       <span style="color:white;font-size:16px;font-weight:700;font-family:Georgia,serif;z-index:1;position:relative">P</span>
@@ -460,11 +447,12 @@
     </div>
     <span class="logo-name">Paper<b>Craft</b></span>
   </a>
-  <div class="nav-links">
+  <div class="nav-links" id="navLinks">
     <a href="#features">Features</a>
     <a href="#demo">Watch Demo</a>
     <a href="#pricing">Pricing</a>
     <a href="#how">How it works</a>
+    <a href="/blog">Blog</a>
   </div>
   <div class="nav-ctas">
     <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle dark mode">
@@ -474,8 +462,14 @@
       <i class="ti ti-brand-whatsapp" style="font-size:15px"></i> WhatsApp
     </a>
     <button class="btn-ghost" onclick="window.location.href='/login'">Sign in</button>
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </nav>
+
+<!-- Scrim behind mobile menu -->
+<div class="menu-scrim" id="menuScrim"></div>
 
 <!-- HERO -->
 <section class="hero">
@@ -599,8 +593,6 @@
       <h2 class="section-title" style="text-align:center;font-size:38px">One price. Every feature.<br>Pick your duration.</h2>
       <p style="font-size:15px;color:var(--t2);text-align:center;max-width:440px;margin:12px auto 0">All plans include everything — bilingual papers, all boards, PDF export, answer keys. The only difference is how long you're covered.</p>
     </div>
-
-    <!-- Toggle -->
     <div class="billing-toggle-wrap">
       <div class="billing-toggle">
         <button class="billing-btn active" onclick="setFilter('all',this)">All plans</button>
@@ -608,46 +600,27 @@
         <button class="billing-btn" onclick="setFilter('short',this)">Short term</button>
       </div>
     </div>
-
     <div class="plan-grid" id="planGrid">
-
-      <!-- 3 months -->
       <div class="plan" data-type="short">
-        <div class="plan-badge-row">
-          <span class="discount-badge">25% off per day vs monthly</span>
-        </div>
+        <div class="plan-badge-row"><span class="discount-badge">25% off per day vs monthly</span></div>
         <div class="plan-dur">3 months</div>
         <div class="plan-amount"><small>₨</small>4,000</div>
         <div class="plan-per-day">≈ ₨44 / day</div>
         <div class="plan-save">90 days of unlimited paper generation</div>
         <hr class="plan-hr">
         <div class="plan-duration-bar">
-          <div class="plan-duration-label">
-            <span>Coverage period</span>
-            <b>90 days</b>
-          </div>
+          <div class="plan-duration-label"><span>Coverage period</span><b>90 days</b></div>
           <div class="plan-bar-track"><div class="plan-bar-fill" style="width:25%"></div></div>
         </div>
         <div class="plan-days-row">
-          <div class="plan-days-item">
-            <div class="plan-days-num">90</div>
-            <div class="plan-days-lbl">Days</div>
-          </div>
+          <div class="plan-days-item"><div class="plan-days-num">90</div><div class="plan-days-lbl">Days</div></div>
           <div class="plan-days-divider"></div>
-          <div class="plan-days-item">
-            <div class="plan-days-num">₨44</div>
-            <div class="plan-days-lbl">Per day</div>
-          </div>
+          <div class="plan-days-item"><div class="plan-days-num">₨44</div><div class="plan-days-lbl">Per day</div></div>
           <div class="plan-days-divider"></div>
-          <div class="plan-days-item">
-            <div class="plan-days-num">∞</div>
-            <div class="plan-days-lbl">Papers</div>
-          </div>
+          <div class="plan-days-item"><div class="plan-days-num">∞</div><div class="plan-days-lbl">Papers</div></div>
         </div>
         <button class="btn-plan-str" onclick="window.open('https://wa.me/923287600959?text=I want the 3 month plan','_blank')">Get started →</button>
       </div>
-
-      <!-- 6 months — popular -->
       <div class="plan pop" data-type="best">
         <div class="plan-badge-row">
           <span class="plan-tag"><i class="ti ti-flame"></i> Most popular</span>
@@ -659,67 +632,38 @@
         <div class="plan-save">Save ₨2,500 vs two 3-month plans</div>
         <hr class="plan-hr">
         <div class="plan-duration-bar">
-          <div class="plan-duration-label">
-            <span>Coverage period</span>
-            <b>180 days</b>
-          </div>
+          <div class="plan-duration-label"><span>Coverage period</span><b>180 days</b></div>
           <div class="plan-bar-track"><div class="plan-bar-fill" style="width:50%"></div></div>
         </div>
         <div class="plan-days-row">
-          <div class="plan-days-item">
-            <div class="plan-days-num">180</div>
-            <div class="plan-days-lbl">Days</div>
-          </div>
+          <div class="plan-days-item"><div class="plan-days-num">180</div><div class="plan-days-lbl">Days</div></div>
           <div class="plan-days-divider"></div>
-          <div class="plan-days-item">
-            <div class="plan-days-num">₨30</div>
-            <div class="plan-days-lbl">Per day</div>
-          </div>
+          <div class="plan-days-item"><div class="plan-days-num">₨30</div><div class="plan-days-lbl">Per day</div></div>
           <div class="plan-days-divider"></div>
-          <div class="plan-days-item">
-            <div class="plan-days-num">∞</div>
-            <div class="plan-days-lbl">Papers</div>
-          </div>
+          <div class="plan-days-item"><div class="plan-days-num">∞</div><div class="plan-days-lbl">Papers</div></div>
         </div>
         <button class="btn-plan-fill" onclick="window.open('https://wa.me/923287600959?text=I want the 6 month plan','_blank')">Get started →</button>
       </div>
-
-      <!-- Annual -->
       <div class="plan" data-type="best">
-        <div class="plan-badge-row">
-          <span class="discount-badge">50% off — best deal</span>
-        </div>
+        <div class="plan-badge-row"><span class="discount-badge">50% off — best deal</span></div>
         <div class="plan-dur">Annual</div>
         <div class="plan-amount"><small>₨</small>8,000</div>
         <div class="plan-per-day">≈ ₨22 / day</div>
         <div class="plan-save">Save ₨8,000 vs paying quarterly</div>
         <hr class="plan-hr">
         <div class="plan-duration-bar">
-          <div class="plan-duration-label">
-            <span>Coverage period</span>
-            <b>365 days</b>
-          </div>
+          <div class="plan-duration-label"><span>Coverage period</span><b>365 days</b></div>
           <div class="plan-bar-track"><div class="plan-bar-fill" style="width:100%"></div></div>
         </div>
         <div class="plan-days-row">
-          <div class="plan-days-item">
-            <div class="plan-days-num">365</div>
-            <div class="plan-days-lbl">Days</div>
-          </div>
+          <div class="plan-days-item"><div class="plan-days-num">365</div><div class="plan-days-lbl">Days</div></div>
           <div class="plan-days-divider"></div>
-          <div class="plan-days-item">
-            <div class="plan-days-num">₨22</div>
-            <div class="plan-days-lbl">Per day</div>
-          </div>
+          <div class="plan-days-item"><div class="plan-days-num">₨22</div><div class="plan-days-lbl">Per day</div></div>
           <div class="plan-days-divider"></div>
-          <div class="plan-days-item">
-            <div class="plan-days-num">∞</div>
-            <div class="plan-days-lbl">Papers</div>
-          </div>
+          <div class="plan-days-item"><div class="plan-days-num">∞</div><div class="plan-days-lbl">Papers</div></div>
         </div>
         <button class="btn-plan-str" onclick="window.open('https://wa.me/923287600959?text=I want the annual plan','_blank')">Get started →</button>
       </div>
-
     </div>
     <p class="plan-note">
       <i class="ti ti-brand-whatsapp"></i> Subscribe via WhatsApp · Instant activation ·
@@ -808,6 +752,7 @@
       <a href="#pricing"><i class="ti ti-receipt"></i> Pricing</a>
       <a href="#how"><i class="ti ti-list-numbers"></i> How it works</a>
       <a href="#demo"><i class="ti ti-player-play"></i> Watch demo</a>
+      <a href="/blog"><i class="ti ti-article"></i> Blog</a>
       <a href="/login"><i class="ti ti-login"></i> Sign in</a>
     </div>
     <div class="footer-col">
@@ -830,6 +775,7 @@
 </footer>
 
 <script>
+// ── Theme ──
 (function(){
   const root = document.documentElement;
   const icon = document.getElementById('themeIcon');
@@ -849,7 +795,7 @@
   };
 })();
 
-// Pricing filter
+// ── Pricing filter ──
 window.setFilter = function(type, btn) {
   document.querySelectorAll('.billing-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -862,6 +808,71 @@ window.setFilter = function(type, btn) {
     }
   });
 };
+
+// ── Hamburger Menu (FIXED) ──
+(function() {
+  const hamburger = document.getElementById('hamburger');
+  const navLinks = document.getElementById('navLinks');
+  const scrim = document.getElementById('menuScrim');
+
+  function toggleMenu() {
+    const isOpen = navLinks.classList.contains('open');
+    navLinks.classList.toggle('open', !isOpen);
+    hamburger.classList.toggle('active', !isOpen);
+    scrim.classList.toggle('open', !isOpen);
+    document.body.classList.toggle('menu-open', !isOpen);
+  }
+
+  function closeMenu() {
+    navLinks.classList.remove('open');
+    hamburger.classList.remove('active');
+    scrim.classList.remove('open');
+    document.body.classList.remove('menu-open');
+  }
+
+  hamburger.addEventListener('click', toggleMenu);
+  scrim.addEventListener('click', closeMenu);
+
+  // FIX: only intercept in-page (#) links; let real pages like /blog navigate.
+  // Also offset the scroll by the sticky nav's height so headings aren't hidden.
+  document.querySelectorAll('#navLinks a').forEach(link => {
+    link.addEventListener('click', function(e) {
+      const href = this.getAttribute('href');
+
+      // Real page links (e.g. /blog) — just close menu and navigate normally
+      if (!href || !href.startsWith('#')) {
+        closeMenu();
+        return;
+      }
+
+      e.preventDefault();
+      closeMenu();
+
+      const target = document.querySelector(href);
+      if (target) {
+        setTimeout(() => {
+          const nav = document.querySelector('nav');
+          const navH = nav ? nav.offsetHeight : 60;
+          const y = target.getBoundingClientRect().top + window.pageYOffset - navH - 8;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }, 250);
+      }
+    });
+  });
+
+  window.addEventListener('resize', function() {
+    if (window.innerWidth > 900) {
+      closeMenu();
+      hamburger.style.display = 'none';
+    } else {
+      hamburger.style.display = 'flex';
+    }
+  });
+
+  if (window.innerWidth > 900) {
+    hamburger.style.display = 'none';
+  }
+})();
 </script>
 
 </body>

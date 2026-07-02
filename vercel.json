@@ -5,7 +5,11 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!assets|favicon\\.svg|icons\\.svg|sitemap\\.xml|robots\\.txt|og-image\\.jpg|app\\.html).*)",
+      "source": "/sitemap.xml",
+      "destination": "https://api.papercraft.pk/sitemap.xml"
+    },
+    {
+      "source": "/((?!assets|favicon\\.svg|icons\\.svg|robots\\.txt|og-image\\.jpg|app\\.html).*)",
       "destination": "/app.html"
     }
   ],

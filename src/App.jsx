@@ -18,6 +18,8 @@ const ProfilePage        = lazy(() => import('./pages/ProfilePage'));
 const ChangePasswordPage = lazy(() => import('./pages/ChangePasswordPage'));
 const AdminPage          = lazy(() => import('./pages/AdminPage'));
 const ExpiredPage        = lazy(() => import('./pages/ExpiredPage'));
+const BlogListPage = lazy(() => import('./pages/blog/BlogListPage'));
+const BlogPostPage = lazy(() => import('./pages/blog/BlogPostPage'));
 
 // ── Page loader ───────────────────────────────────────────────────────────────
 function PageLoader() {
@@ -81,6 +83,8 @@ function App() {
             element={isAuthenticated ? <Navigate to="/test-maker" replace /> : <LoginPage />}
           />
           <Route path="/expired" element={<ExpiredPage />} />
+          <Route path="/blog" element={<BlogListPage />} />
+          <Route path="/blog/:slug" element={<BlogPostPage />} />
 
           {/* Protected — footer included via Private wrapper */}
           <Route path="/test-maker"                 element={<Private><TestMaker /></Private>} />
