@@ -349,8 +349,6 @@
     @media(max-width:900px){
       nav{padding:0 20px;height:60px;min-height:60px;flex-wrap:nowrap;z-index:10000}
       .hamburger{display:flex !important}
-      .nav-ctas .btn-wa,
-      .nav-ctas .btn-ghost{display:none}
       body.menu-open{overflow:hidden}
       nav .nav-links{
         display:none !important;
@@ -385,8 +383,6 @@
         text-align:left;
       }
       nav .nav-links a:hover{background:#f0f2f8 !important}
-      /* FIX: scrim must sit BELOW the nav (nav has z-index:10000).
-         Before it was 99999, which covered the menu and swallowed all taps. */
       .menu-scrim{
         display:none;
         position:fixed;
@@ -398,6 +394,25 @@
       .hamburger.active span:nth-child(1){transform:translateY(7px) rotate(45deg)}
       .hamburger.active span:nth-child(2){opacity:0}
       .hamburger.active span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+      
+      /* NEW: show WhatsApp & Sign in on small screens */
+      .nav-ctas .btn-wa,
+      .nav-ctas .btn-ghost {
+        display: flex !important;
+      }
+      .nav-ctas .btn-wa span,
+      .nav-ctas .btn-ghost {
+        display: inline-flex !important;
+      }
+      .nav-ctas .btn-wa {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+      .nav-ctas .btn-ghost {
+        padding: 5px 12px;
+        font-size: 12px;
+      }
+
       .hero{padding:72px 20px 56px}
       h1{font-size:40px;letter-spacing:-1px}
       .screen-mock .mock-sidebar{display:none}
@@ -425,6 +440,22 @@
     @media(max-width:480px){
       nav{height:56px;min-height:56px}
       nav .nav-links{top:60px}
+      .nav-ctas .btn-wa span,
+      .nav-ctas .btn-ghost span {
+        display: none !important;
+      }
+      .nav-ctas .btn-wa {
+        padding: 6px 10px;
+        font-size: 15px;
+        min-width: 36px;
+        justify-content: center;
+      }
+      .nav-ctas .btn-ghost {
+        padding: 6px 10px;
+        font-size: 15px;
+        min-width: 36px;
+        justify-content: center;
+      }
       .hero{padding:56px 16px 40px}
       h1{font-size:32px}
       .section{padding:48px 16px}
@@ -459,9 +490,9 @@
       <i class="ti ti-moon" id="themeIcon"></i>
     </button>
     <a href="https://wa.me/923287600959" target="_blank" class="btn-wa">
-      <i class="ti ti-brand-whatsapp" style="font-size:15px"></i> WhatsApp
+      <i class="ti ti-brand-whatsapp" style="font-size:15px"></i> <span>WhatsApp</span>
     </a>
-    <button class="btn-ghost" onclick="window.location.href='/login'">Sign in</button>
+    <button class="btn-ghost" onclick="window.location.href='/login'"><span>Sign in</span></button>
     <button class="hamburger" id="hamburger" aria-label="Toggle menu">
       <span></span><span></span><span></span>
     </button>
