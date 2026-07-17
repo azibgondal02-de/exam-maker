@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API_BASE_URL from '../../services/config';
 import AppFooter from '../../components/AppFooter';
-import logoUrl from '../../assets/logo.png';
+import Nav from '../../components/Nav';
 
 const API = API_BASE_URL;
 const WA_NUMBER = import.meta.env.VITE_WA_NUMBER || '923287600959';
@@ -14,9 +14,6 @@ export default function BlogPostPage() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [logoFailed, setLogoFailed] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => { loadPost(); }, [slug]);
 
@@ -47,85 +44,10 @@ export default function BlogPostPage() {
     return new Date(dateStr).toLocaleDateString('en-PK', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
-  const toggleTheme = () => setDarkMode(d => !d);
-
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
 
-      {/* ── Nav ── */}
-      <nav style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '0 48px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
-        <a className="logo-wrap" href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-          {!logoFailed && (
-            <img
-              src={logoUrl}
-              alt="PaperCraft"
-              onError={() => setLogoFailed(true)}
-              style={{ height: '32px' }}
-            />
-          )}
-          {logoFailed && (
-            <div style={{ width: '32px', height: '32px', background: '#0f1f3d', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-              <span style={{ color: 'white', fontSize: '16px', fontWeight: '700', fontFamily: 'Georgia, serif', zIndex: 1, position: 'relative' }}>P</span>
-              <span style={{ position: 'absolute', top: 0, right: 0, borderStyle: 'solid', borderWidth: '0 10px 10px 0', borderColor: 'transparent #e8920a transparent transparent' }} />
-            </div>
-          )}
-          <span className="logo-name" style={{ fontSize: '16px', fontWeight: '700', color: '#0f1f3d' }}>
-            Paper<b>Craft</b>
-          </span>
-        </a>
-
-        <div className="nav-links" style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
-          <a href="/#features" style={{ fontSize: '13px', color: '#64748b', textDecoration: 'none', fontWeight: '500' }}>Features</a>
-          <a href="/#demo" style={{ fontSize: '13px', color: '#64748b', textDecoration: 'none', fontWeight: '500' }}>Watch Demo</a>
-          <a href="/#pricing" style={{ fontSize: '13px', color: '#64748b', textDecoration: 'none', fontWeight: '500' }}>Pricing</a>
-          <a href="/#how" style={{ fontSize: '13px', color: '#64748b', textDecoration: 'none', fontWeight: '500' }}>How it works</a>
-          <button
-            onClick={() => navigate('/blog')}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', color: '#0f1f3d', fontSize: '13px', fontWeight: '700', borderBottom: '2px solid #e8920a', paddingBottom: '2px', cursor: 'pointer' }}
-          >
-            <i className="ti ti-arrow-left" /> Blog
-          </button>
-        </div>
-
-        <div className="nav-ctas" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <a
-            href={WA_LINK}
-            target="_blank"
-            rel="noreferrer"
-            className="btn-wa"
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px', background: '#25d366', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '600', textDecoration: 'none' }}
-          >
-            <i className="ti ti-brand-whatsapp" style={{ fontSize: '15px' }} /> <span>WhatsApp</span>
-          </a>
-          <button
-            className="btn-ghost"
-            onClick={() => navigate('/login')}
-            style={{ padding: '7px 18px', background: '#0f1f3d', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
-          >
-            <span>Sign in</span>
-          </button>
-          <button
-            className="hamburger"
-            aria-label="Toggle menu"
-            onClick={() => setMenuOpen(o => !o)}
-            style={{ display: 'none', flexDirection: 'column', gap: '4px', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}
-          >
-            <span style={{ display: 'block', width: '20px', height: '2px', background: '#0f1f3d' }} />
-            <span style={{ display: 'block', width: '20px', height: '2px', background: '#0f1f3d' }} />
-            <span style={{ display: 'block', width: '20px', height: '2px', background: '#0f1f3d' }} />
-          </button>
-        </div>
-      </nav>
-
-      {menuOpen && (
-        <div style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <a href="/#features" style={{ fontSize: '14px', color: '#64748b', textDecoration: 'none' }}>Features</a>
-          <a href="/#demo" style={{ fontSize: '14px', color: '#64748b', textDecoration: 'none' }}>Watch Demo</a>
-          <a href="/#pricing" style={{ fontSize: '14px', color: '#64748b', textDecoration: 'none' }}>Pricing</a>
-          <a href="/#how" style={{ fontSize: '14px', color: '#64748b', textDecoration: 'none' }}>How it works</a>
-          <a href="/blog" style={{ fontSize: '14px', color: '#0f1f3d', fontWeight: '700', textDecoration: 'none' }}>Blog</a>
-        </div>
-      )}
+      <Nav active="Blog" />
 
       {loading && (
         <div style={{ maxWidth: '760px', margin: '60px auto', padding: '0 24px' }}>
@@ -231,9 +153,6 @@ export default function BlogPostPage() {
             article div hr { border: none; border-top: 1px solid #e2e8f0; margin: 2.5em 0; }
             @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
             @media (max-width: 768px) {
-              nav { padding: 0 20px !important; }
-              nav .nav-links { display: none !important; }
-              nav .hamburger { display: flex !important; }
               article { padding: 40px 16px 60px !important; }
               article h1 { font-size: 28px !important; }
             }
