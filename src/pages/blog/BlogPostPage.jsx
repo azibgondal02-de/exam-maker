@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API_BASE_URL from '../../services/config';
 import AppFooter from '../../components/AppFooter';
+import Logo from '../../components/Logo';
 
 const API = API_BASE_URL;
 const WA_NUMBER = import.meta.env.VITE_WA_NUMBER || '923287600959';
