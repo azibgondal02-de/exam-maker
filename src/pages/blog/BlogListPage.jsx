@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API_BASE_URL from '../../services/config';
 import AppFooter from '../../components/AppFooter';
-import Logo from '../../components/Logo';
+import logoUrl from '../../assets/logo.png';
 
 const API = API_BASE_URL;
 const WA_NUMBER = import.meta.env.VITE_WA_NUMBER || '923287600959';
@@ -54,7 +54,7 @@ export default function BlogListPage() {
         <a className="logo-wrap" href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
           {!logoFailed && (
             <img
-              src="/src/assets/logo.png"
+              src={logoUrl}
               alt="PaperCraft"
               onError={() => setLogoFailed(true)}
               style={{ height: '32px' }}
