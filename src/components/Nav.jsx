@@ -31,7 +31,9 @@ export default function Nav({ active }) {
               <span>P</span>
             </div>
           )}
-          <span className="logo-name">Paper<b>Craft</b></span>
+          <span className="logo-name">
+            Paper<b>Craft</b>
+          </span>
         </a>
 
         <div className="nav-links">

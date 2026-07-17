@@ -36,8 +36,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.17.0/dist/tabler-icons.min.css">
   </noscript>
 
-  <link rel="stylesheet" href="/src/components/Nav.css">
-
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -104,6 +102,35 @@
 
     /* FIX: keep anchored sections from hiding under the sticky nav */
     [id]{scroll-margin-top:80px}
+
+    /* ── NAV ── */
+    nav{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 48px;height:68px;
+      border-bottom:var(--bdr);
+      position:sticky;top:0;z-index:100;
+      backdrop-filter:blur(12px);
+      background:rgba(255,255,255,0.92);
+      transition:background 0.3s;
+      flex-wrap:wrap;
+    }
+    :root.dark nav{background:rgba(15,23,42,0.92)}
+    .logo-wrap{display:flex;align-items:center;gap:8px;text-decoration:none;cursor:pointer}
+    .logo-wrap img{height:32px;width:auto}
+    .logo-name{font-size:16px;font-weight:600;color:var(--t1);letter-spacing:-0.3px}
+    .logo-name b{color:var(--g2);font-weight:700}
+    .nav-links{display:flex;align-items:center;gap:32px}
+    .nav-links a{font-size:13.5px;color:var(--t2);text-decoration:none;font-weight:500;transition:color 0.2s}
+    .nav-links a:hover{color:var(--t1)}
+    .nav-ctas{display:flex;align-items:center;gap:8px}
+    .btn-ghost{padding:7px 18px;border:var(--bdr);border-radius:8px;background:transparent;color:var(--t1);font-size:13px;cursor:pointer;font-family:inherit;font-weight:500;transition:all 0.2s}
+    .btn-ghost:hover{background:var(--w2);border-color:var(--t3)}
+    .btn-wa{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;background:#128c7e;color:white;font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:background 0.2s}
+    .btn-wa:hover{background:#0e7a6d}
+    .theme-toggle{width:36px;height:36px;border:var(--bdr);border-radius:8px;background:transparent;color:var(--t1);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+    .theme-toggle:hover{background:var(--w2)}
+    .hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:8px}
+    .hamburger span{width:22px;height:2px;background:var(--t1);border-radius:2px;display:block;transition:all 0.3s}
 
     /* ── HERO ── */
     .hero{
@@ -329,6 +356,72 @@
 
     /* ── RESPONSIVE ── */
     @media(max-width:900px){
+      nav{padding:0 20px;height:60px;min-height:60px;flex-wrap:nowrap;z-index:10000}
+      .hamburger{display:flex !important}
+      body.menu-open{overflow:hidden}
+      nav .nav-links{
+        display:none !important;
+        position:fixed;
+        top:64px;
+        right:12px;
+        left:12px;
+        max-height:calc(100vh - 80px);
+        flex-direction:column;
+        align-items:stretch;
+        gap:0;
+        background:#ffffff !important;
+        border:1px solid #d7dde8 !important;
+        border-radius:14px;
+        padding:6px;
+        margin:0;
+        z-index:100000;
+        overflow-y:auto;
+        -webkit-overflow-scrolling:touch;
+        box-shadow:0 20px 50px rgba(0,0,0,0.45);
+      }
+      nav .nav-links.open{display:flex !important}
+      nav .nav-links a{
+        padding:15px 16px !important;
+        font-size:16px !important;
+        font-weight:500 !important;
+        width:100%;
+        border:none !important;
+        border-radius:10px;
+        color:#0f1f3d !important;
+        background:transparent !important;
+        text-align:left;
+      }
+      nav .nav-links a:hover{background:#f0f2f8 !important}
+      .menu-scrim{
+        display:none;
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,0.45);
+        z-index:9999;
+      }
+      .menu-scrim.open{display:block}
+      .hamburger.active span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+      .hamburger.active span:nth-child(2){opacity:0}
+      .hamburger.active span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+      
+      /* NEW: show WhatsApp & Sign in on small screens */
+      .nav-ctas .btn-wa,
+      .nav-ctas .btn-ghost {
+        display: flex !important;
+      }
+      .nav-ctas .btn-wa span,
+      .nav-ctas .btn-ghost {
+        display: inline-flex !important;
+      }
+      .nav-ctas .btn-wa {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+      .nav-ctas .btn-ghost {
+        padding: 5px 12px;
+        font-size: 12px;
+      }
+
       .hero{padding:72px 20px 56px}
       h1{font-size:40px;letter-spacing:-1px}
       .screen-mock .mock-sidebar{display:none}
@@ -354,6 +447,24 @@
       .footer-top{grid-template-columns:1fr 1fr}
     }
     @media(max-width:480px){
+      nav{height:56px;min-height:56px}
+      nav .nav-links{top:60px}
+      .nav-ctas .btn-wa span,
+      .nav-ctas .btn-ghost span {
+        display: none !important;
+      }
+      .nav-ctas .btn-wa {
+        padding: 6px 10px;
+        font-size: 15px;
+        min-width: 36px;
+        justify-content: center;
+      }
+      .nav-ctas .btn-ghost {
+        padding: 6px 10px;
+        font-size: 15px;
+        min-width: 36px;
+        justify-content: center;
+      }
       .hero{padding:56px 16px 40px}
       h1{font-size:32px}
       .section{padding:48px 16px}
@@ -369,13 +480,14 @@
 <!-- NAV -->
 <nav>
   <a class="logo-wrap" href="/">
-    <img src="/src/assets/logo.png" alt="PaperCraft" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-    <div class="logo-fallback" style="display:none">
-      <span>P</span>
+    <img src="/src/assets/logo.png" alt="PaperCraft" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
+    <div style="display:none;width:32px;height:32px;background:var(--n);border-radius:7px;align-items:center;justify-content:center;position:relative;overflow:hidden">
+      <span style="color:white;font-size:16px;font-weight:700;font-family:Georgia,serif;z-index:1;position:relative">P</span>
+      <span style="position:absolute;top:0;right:0;border-style:solid;border-width:0 10px 10px 0;border-color:transparent var(--g) transparent transparent"></span>
     </div>
     <span class="logo-name">Paper<b>Craft</b></span>
   </a>
-  <div class="nav-links">
+  <div class="nav-links" id="navLinks">
     <a href="#features">Features</a>
     <a href="#demo">Watch Demo</a>
     <a href="#pricing">Pricing</a>
@@ -383,8 +495,11 @@
     <a href="/blog">Blog</a>
   </div>
   <div class="nav-ctas">
-    <a href="https://wa.me/923287600959?text=Hi%2C%20I%20want%20to%20learn%20more%20about%20PaperCraft." target="_blank" rel="noreferrer" class="btn-wa">
-      <i class="ti ti-brand-whatsapp"></i> <span>WhatsApp</span>
+    <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle dark mode">
+      <i class="ti ti-moon" id="themeIcon"></i>
+    </button>
+    <a href="https://wa.me/923287600959" target="_blank" class="btn-wa">
+      <i class="ti ti-brand-whatsapp" style="font-size:15px"></i> <span>WhatsApp</span>
     </a>
     <button class="btn-ghost" onclick="window.location.href='/login'"><span>Sign in</span></button>
     <button class="hamburger" id="hamburger" aria-label="Toggle menu">
@@ -393,13 +508,8 @@
   </div>
 </nav>
 
-<div class="mobile-menu" id="mobileMenu" style="display:none">
-  <a href="#features">Features</a>
-  <a href="#demo">Watch Demo</a>
-  <a href="#pricing">Pricing</a>
-  <a href="#how">How it works</a>
-  <a href="/blog">Blog</a>
-</div>
+<!-- Scrim behind mobile menu -->
+<div class="menu-scrim" id="menuScrim"></div>
 
 <!-- HERO -->
 <section class="hero">
@@ -739,26 +849,37 @@ window.setFilter = function(type, btn) {
   });
 };
 
-// ── Hamburger Menu ──
+// ── Hamburger Menu (FIXED) ──
 (function() {
   const hamburger = document.getElementById('hamburger');
-  const mobileMenu = document.getElementById('mobileMenu');
+  const navLinks = document.getElementById('navLinks');
+  const scrim = document.getElementById('menuScrim');
 
   function toggleMenu() {
-    const isOpen = mobileMenu.style.display !== 'none';
-    mobileMenu.style.display = isOpen ? 'none' : 'flex';
+    const isOpen = navLinks.classList.contains('open');
+    navLinks.classList.toggle('open', !isOpen);
+    hamburger.classList.toggle('active', !isOpen);
+    scrim.classList.toggle('open', !isOpen);
+    document.body.classList.toggle('menu-open', !isOpen);
   }
 
   function closeMenu() {
-    mobileMenu.style.display = 'none';
+    navLinks.classList.remove('open');
+    hamburger.classList.remove('active');
+    scrim.classList.remove('open');
+    document.body.classList.remove('menu-open');
   }
 
   hamburger.addEventListener('click', toggleMenu);
+  scrim.addEventListener('click', closeMenu);
 
-  document.querySelectorAll('.nav-links a, #mobileMenu a').forEach(link => {
+  // FIX: only intercept in-page (#) links; let real pages like /blog navigate.
+  // Also offset the scroll by the sticky nav's height so headings aren't hidden.
+  document.querySelectorAll('#navLinks a').forEach(link => {
     link.addEventListener('click', function(e) {
       const href = this.getAttribute('href');
 
+      // Real page links (e.g. /blog) — just close menu and navigate normally
       if (!href || !href.startsWith('#')) {
         closeMenu();
         return;
@@ -771,19 +892,26 @@ window.setFilter = function(type, btn) {
       if (target) {
         setTimeout(() => {
           const nav = document.querySelector('nav');
-          const navH = nav ? nav.offsetHeight : 64;
+          const navH = nav ? nav.offsetHeight : 60;
           const y = target.getBoundingClientRect().top + window.pageYOffset - navH - 8;
           window.scrollTo({ top: y, behavior: 'smooth' });
-        }, 100);
+        }, 250);
       }
     });
   });
 
   window.addEventListener('resize', function() {
-    if (window.innerWidth > 768) {
+    if (window.innerWidth > 900) {
       closeMenu();
+      hamburger.style.display = 'none';
+    } else {
+      hamburger.style.display = 'flex';
     }
   });
+
+  if (window.innerWidth > 900) {
+    hamburger.style.display = 'none';
+  }
 })();
 </script>
 
